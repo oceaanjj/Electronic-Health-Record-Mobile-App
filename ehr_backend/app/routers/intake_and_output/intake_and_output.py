@@ -24,32 +24,18 @@ evaluation_engine = CDSSEngine("cdss_rules/dpie/evaluation.yaml")
 class AssessmentCreate(BaseModel):
     """Step 1: Create Intake and Output (Assessment)"""
     patient_id: int
-    oral_intake: Optional[str] = None
-    iv_intake: Optional[str] = None
-    other_intake: Optional[str] = None
-    total_intake: Optional[int] = None
-    urine_output: Optional[str] = None
-    stool_output: Optional[str] = None
-    vomitus: Optional[str] = None
-    other_output: Optional[str] = None
-    total_output: Optional[int] = None
-    fluid_balance: Optional[int] = None
+    oral_intake: Optional[int] = None      # oral intake in mL
+    iv_fluids: Optional[int] = None        # IV fluids in mL
+    urine_output: Optional[int] = None     # urine output in mL
 
     model_config = ConfigDict(extra="forbid")
 
 
 class AssessmentUpdate(BaseModel):
     """Update Assessment fields"""
-    oral_intake: Optional[str] = None
-    iv_intake: Optional[str] = None
-    other_intake: Optional[str] = None
-    total_intake: Optional[int] = None
-    urine_output: Optional[str] = None
-    stool_output: Optional[str] = None
-    vomitus: Optional[str] = None
-    other_output: Optional[str] = None
-    total_output: Optional[int] = None
-    fluid_balance: Optional[int] = None
+    oral_intake: Optional[int] = None      # oral intake in mL
+    iv_fluids: Optional[int] = None        # IV fluids in mL
+    urine_output: Optional[int] = None     # urine output in mL
 
     model_config = ConfigDict(extra="forbid")
 
@@ -86,27 +72,11 @@ class IntakeAndOutputRead(BaseModel):
     """Complete ADPIE record"""
     id: int
     patient_id: int
-    # Assessment
-    oral_intake: Optional[str] = None
-    iv_intake: Optional[str] = None
-    other_intake: Optional[str] = None
-    total_intake: Optional[int] = None
-    urine_output: Optional[str] = None
-    stool_output: Optional[str] = None
-    vomitus: Optional[str] = None
-    other_output: Optional[str] = None
-    total_output: Optional[int] = None
-    fluid_balance: Optional[int] = None
-    oral_intake_alert: Optional[str] = None
-    iv_intake_alert: Optional[str] = None
-    other_intake_alert: Optional[str] = None
-    total_intake_alert: Optional[str] = None
-    urine_output_alert: Optional[str] = None
-    stool_output_alert: Optional[str] = None
-    vomitus_alert: Optional[str] = None
-    other_output_alert: Optional[str] = None
-    total_output_alert: Optional[str] = None
-    fluid_balance_alert: Optional[str] = None
+    # Assessment (combined inputs + combined alert)
+    oral_intake: Optional[int] = None
+    iv_fluids: Optional[int] = None
+    urine_output: Optional[int] = None
+    assessment_alert: Optional[str] = None
     # Diagnosis
     diagnosis: Optional[str] = None
     diagnosis_alert: Optional[str] = None
@@ -129,20 +99,51 @@ class IntakeAndOutputRead(BaseModel):
 # ──────────────── Helper ────────────────
 
 def _run_assessment_cdss(data: dict) -> dict:
-    """Run CDSS on assessment fields and return alert values."""
-    input_fields = {
-        "oral_intake": data.get("oral_intake"),
-        "iv_intake": data.get("iv_intake"),
-        "other_intake": data.get("other_intake"),
-        "total_intake": str(data.get("total_intake")) if data.get("total_intake") else None,
-        "urine_output": data.get("urine_output"),
-        "stool_output": data.get("stool_output"),
-        "vomitus": data.get("vomitus"),
-        "other_output": data.get("other_output"),
-        "total_output": str(data.get("total_output")) if data.get("total_output") else None,
-        "fluid_balance": str(data.get("fluid_balance")) if data.get("fluid_balance") else None,
-    }
-    return assessment_engine.evaluate(input_fields)
+    """Run CDSS on all 3 assessment inputs and return combined alert."""
+    oral = data.get("oral_intake") or 0
+    iv = data.get("iv_fluids") or 0
+    urine = data.get("urine_output") or 0
+    total_intake = oral + iv
+    
+    # Determine severity and alert based on combination of inputs
+    alerts = {}
+    
+    # Check for oliguria (critical)
+    if urine > 0 and urine < 400:
+        alerts["severity"] = "critical"
+        alerts["alert"] = f"⚠️ OLIGURIA: Urine output {urine}mL (< 400mL). Risk of acute kidney injury. Monitor vital signs and assess hydration status."
+    
+    # Check for dehydration (low intake + low output)
+    elif total_intake < 500 and urine < 800:
+        alerts["severity"] = "critical"
+        alerts["alert"] = f"⚠️ DEHYDRATION RISK: Total intake {total_intake}mL is low and urine output {urine}mL is decreased. Increase fluid intake and monitor closely."
+    
+    # Check for fluid overload (high intake + adequate output)
+    elif total_intake > 2000 and urine < 1500:
+        alerts["severity"] = "warning"
+        alerts["alert"] = f"⚠️ FLUID OVERLOAD RISK: High intake ({total_intake}mL) vs lower output ({urine}mL). Monitor for edema, dyspnea, and weight gain."
+    
+    # Check for adequate hydration
+    elif 1000 <= total_intake <= 2000 and 800 <= urine <= 1500:
+        alerts["severity"] = "info"
+        alerts["alert"] = f"✓ Hydration status adequate: Intake {total_intake}mL, Output {urine}mL. Continue current regimen."
+    
+    # Low intake but adequate output (may indicate dehydration or catch-up)
+    elif total_intake < 1000 and urine > 1000:
+        alerts["severity"] = "warning"
+        alerts["alert"] = f"⚠️ OUTPUT EXCEEDS INTAKE: Output {urine}mL exceeds intake {total_intake}mL. Increase fluid replacement."
+    
+    # No data yet
+    elif total_intake == 0 and urine == 0:
+        alerts["severity"] = "info"
+        alerts["alert"] = "Awaiting intake and output data."
+    
+    else:
+        alerts["severity"] = "info"
+        alerts["alert"] = f"Intake {total_intake}mL, Output {urine}mL. Continue monitoring."
+    
+    # Map to database field
+    return {"assessment_alert": f"[{alerts['severity'].upper()}] {alerts['alert']}"}
 
 
 # ──────────────── STEP 1: ASSESSMENT ────────────────
@@ -191,15 +192,8 @@ def update_assessment(record_id: int, payload: AssessmentUpdate, db: Session = D
     # Re-run CDSS with latest values
     current_data = {
         "oral_intake": record.oral_intake,
-        "iv_intake": record.iv_intake,
-        "other_intake": record.other_intake,
-        "total_intake": record.total_intake,
+        "iv_fluids": record.iv_fluids,
         "urine_output": record.urine_output,
-        "stool_output": record.stool_output,
-        "vomitus": record.vomitus,
-        "other_output": record.other_output,
-        "total_output": record.total_output,
-        "fluid_balance": record.fluid_balance,
     }
     alerts = _run_assessment_cdss(current_data)
     for key, value in alerts.items():
@@ -330,25 +324,9 @@ def extract_adpie(record_id: int, db: Session = Depends(get_db)):
         "adpie": {
             "assessment": {
                 "oral_intake": record.oral_intake,
-                "oral_intake_alert": record.oral_intake_alert,
-                "iv_intake": record.iv_intake,
-                "iv_intake_alert": record.iv_intake_alert,
-                "other_intake": record.other_intake,
-                "other_intake_alert": record.other_intake_alert,
-                "total_intake": record.total_intake,
-                "total_intake_alert": record.total_intake_alert,
+                "iv_fluids": record.iv_fluids,
                 "urine_output": record.urine_output,
-                "urine_output_alert": record.urine_output_alert,
-                "stool_output": record.stool_output,
-                "stool_output_alert": record.stool_output_alert,
-                "vomitus": record.vomitus,
-                "vomitus_alert": record.vomitus_alert,
-                "other_output": record.other_output,
-                "other_output_alert": record.other_output_alert,
-                "total_output": record.total_output,
-                "total_output_alert": record.total_output_alert,
-                "fluid_balance": record.fluid_balance,
-                "fluid_balance_alert": record.fluid_balance_alert,
+                "assessment_alert": record.assessment_alert,
             },
             "diagnosis": {
                 "input": record.diagnosis,

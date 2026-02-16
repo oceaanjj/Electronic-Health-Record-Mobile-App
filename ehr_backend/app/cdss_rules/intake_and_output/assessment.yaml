@@ -1,145 +1,25 @@
 # Intake and Output Assessment CDSS Rules
-# Evaluates nurse input for fluid intake/output and flags abnormal patterns
+# Note: Assessment alerts for I&O are now COMBINED based on the relationship between
+# oral intake, IV fluids, and urine output (see router helper function).
+# This file is kept for reference and future enhancements.
 
 fields:
-  oral_intake:
-    alert_field: oral_intake_alert
+  combined:
+    alert_field: assessment_alert
     rules:
-      - keywords: ["NPO", "nothing by mouth"]
-        severity: info
-        alert: "Patient is NPO. Ensure IV hydration is maintained and monitor for signs of dehydration."
-      - keywords: ["limited", "minimal", "poor"]
-        severity: warning
-        alert: "Oral intake is limited. Assess for difficulty swallowing, nausea, or anorexia. Consider nutritional support."
-      - keywords: ["adequate", "good"]
-        severity: info
-        alert: "Adequate oral intake noted. Continue current diet and monitor daily."
-
-  iv_intake:
-    alert_field: iv_intake_alert
-    rules:
-      - keywords: ["NS", "normal saline"]
-        severity: info
-        alert: "IV normal saline running. Monitor IV site for infiltration, infection, and patency."
-      - keywords: ["D5W"]
-        severity: info
-        alert: "D5W (dextrose) infusing. Monitor for hyperglycemia and adjust rate as needed."
-      - keywords: ["LR", "lactated ringer"]
-        severity: info
-        alert: "Lactated Ringer's solution infusing. Monitor electrolytes and fluid balance."
-      - keywords: ["discontinued", "discontinued IV"]
-        severity: info
-        alert: "IV has been discontinued. Ensure transition to oral intake if appropriate."
-
-  other_intake:
-    alert_field: other_intake_alert
-    rules:
-      - keywords: ["medication", "med", "meds"]
-        severity: info
-        alert: "Medications administered. Document route and time in medication record."
-      - keywords: ["tube feeding", "feeding tube"]
-        severity: info
-        alert: "Tube feeding in progress. Monitor residual volume and feeding tolerance."
-
-  total_intake:
-    alert_field: total_intake_alert
-    rules:
-      - keywords: ["<500", "low"]
+      - keywords: ["oliguria", "<400"]
         severity: critical
-        alert: "Total intake < 500 mL. Risk for severe dehydration. Increase fluid intake and monitor urine output."
-      - keywords: ["500-1000"]
+        alert: "OLIGURIA: Urine output < 400mL. Risk of acute kidney injury."
+      
+      - keywords: ["dehydration", "low intake", "low output"]
+        severity: critical
+        alert: "DEHYDRATION RISK: Low total intake with decreased urine output."
+      
+      - keywords: ["fluid overload", "high intake"]
         severity: warning
-        alert: "Total intake 500-1000 mL. Monitor hydration status and urine specific gravity."
-      - keywords: [">2000", ">2500"]
-        severity: warning
-        alert: "Total intake > 2000 mL. Monitor for fluid overload and assess for edema, dyspnea."
-      - keywords: ["adequate"]
+        alert: "FLUID OVERLOAD RISK: High intake vs lower output. Monitor for edema."
+      
+      - keywords: ["adequate", "normal"]
         severity: info
-        alert: "Total intake adequate. Continue current regimen and monitor daily."
+        alert: "Hydration status adequate. Continue current regimen."
 
-  urine_output:
-    alert_field: urine_output_alert
-    rules:
-      - keywords: ["oliguria", "<400", "oligric"]
-        severity: critical
-        alert: "— CRITICAL: Oliguria detected (urine output < 400 mL/day). Risk of acute kidney injury. Assess hydration and notify physician."
-      - keywords: ["clear", "pale yellow"]
-        severity: info
-        alert: "Urine clear and pale yellow. Good hydration status. Continue current fluid intake."
-      - keywords: ["concentrated", "dark yellow", "amber"]
-        severity: warning
-        alert: "Urine dark/concentrated. Indicates dehydration. Increase fluid intake and monitor."
-      - keywords: ["hematuria", "blood", "bloody"]
-        severity: critical
-        alert: "— CRITICAL: Hematuria detected. Assess for UTI, kidney stones, or bleeding disorder. Obtain UA and notify physician."
-
-  stool_output:
-    alert_field: stool_output_alert
-    rules:
-      - keywords: ["diarrhea", "loose", "liquid"]
-        severity: warning
-        alert: "Diarrhea noted. Assess frequency and consistency. Obtain stool culture if infectious cause suspected. Monitor fluid/electrolyte balance."
-      - keywords: ["constipation", "no BM", "none"]
-        severity: warning
-        alert: "No bowel movement noted. Assess last BM date. Consider stool softener or laxative order. Monitor for impaction."
-      - keywords: ["normal", "formed"]
-        severity: info
-        alert: "Normal bowel movement. Continue current diet and fluid intake."
-      - keywords: ["melena", "black stool"]
-        severity: critical
-        alert: "— CRITICAL: Melena (black/tarry stool) detected. Sign of upper GI bleed. Monitor vitals, keep NPO, notify physician."
-
-  vomitus:
-    alert_field: vomitus_alert
-    rules:
-      - keywords: ["absent", "none", "no vomiting"]
-        severity: info
-        alert: "No nausea or vomiting. Continue current diet and hydration plan."
-      - keywords: ["bilious", "yellow", "green"]
-        severity: warning
-        alert: "Bilious vomitus noted. May indicate bowel obstruction. Keep NPO, monitor for abdominal distension, notify physician."
-      - keywords: ["bloody", "hematemesis", "coffee ground"]
-        severity: critical
-        alert: "— CRITICAL: Hematemesis (bloody vomitus) detected. Sign of upper GI bleed. Monitor vitals, keep NPO, notify physician immediately."
-      - keywords: ["projectile"]
-        severity: warning
-        alert: "Projectile vomiting noted. Assess for increased intracranial pressure, obstruction, or severe gastritis."
-
-  other_output:
-    alert_field: other_output_alert
-    rules:
-      - keywords: ["drain", "nasogastric", "NG tube"]
-        severity: info
-        alert: "NG tube draining. Monitor color, consistency, and volume. Document in output record."
-      - keywords: ["dressing", "wound drainage"]
-        severity: info
-        alert: "Wound drainage noted. Monitor amount, color, and odor. Change dressing and assess wound healing."
-
-  total_output:
-    alert_field: total_output_alert
-    rules:
-      - keywords: [">2000", ">2500"]
-        severity: warning
-        alert: "Total output > 2000 mL. Monitor for dehydration and electrolyte loss. Increase fluid replacement."
-      - keywords: ["<500"]
-        severity: critical
-        alert: "— CRITICAL: Total output < 500 mL. Inadequate urine output. Assess hydration and renal function. Notify physician."
-      - keywords: ["adequate"]
-        severity: info
-        alert: "Total output adequate. Continue current monitoring protocol."
-
-  fluid_balance:
-    alert_field: fluid_balance_alert
-    rules:
-      - keywords: [">1500", "positive balance"]
-        severity: critical
-        alert: "— CRITICAL: Positive fluid balance > 1500 mL. Risk of fluid overload. Assess for edema, dyspnea, crackles. Consider diuretics."
-      - keywords: [">500", "positive"]
-        severity: warning
-        alert: "Positive fluid balance > 500 mL. Monitor for fluid overload. Assess vital signs and lung sounds."
-      - keywords: ["<-500", "negative balance", "negative"]
-        severity: critical
-        alert: "— CRITICAL: Negative fluid balance > 500 mL. Risk of dehydration. Increase fluid intake and monitor urine output."
-      - keywords: ["balanced", "even"]
-        severity: info
-        alert: "Fluid balance stable/even. Continue current regimen and monitor daily."
