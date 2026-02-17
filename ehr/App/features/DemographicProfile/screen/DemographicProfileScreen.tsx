@@ -112,6 +112,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
               ID
             </Text>
             <Text style={[styles.headerText, { flex: 0.55 }]}>
+              {'     '}
               PATIENT NAME
             </Text>
             <Text
@@ -169,13 +170,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
-  container: { flex: 1, paddingHorizontal: 20 },
+  container: { flex: 1, paddingHorizontal: 25 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginTop: 25,
-    marginBottom: 15,
+    marginTop: 0,
+    marginBottom: 30,
   },
   title: {
     fontSize: 32,
