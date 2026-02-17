@@ -23,6 +23,7 @@ interface ProfileProps {
   onSelectionChange: (isSelecting: boolean) => void;
 }
 
+// RESTORED: These definitions are necessary for the Image components below
 const activeIcon = require('../../../../assets/icons/active_icon.png');
 const inactiveIcon = require('../../../../assets/icons/inactive_icon.png');
 
@@ -42,6 +43,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
     toggleSelection,
     handleRefresh,
     clearSelection,
+    updateStatus, // Ensure your hook provides this function
   } = useDemographicLogic(onSelectionChange);
 
   useEffect(() => {
@@ -53,6 +55,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
+          {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Demographic{'\n'}Profile</Text>
             {isSelectionMode && (
@@ -60,6 +63,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
             )}
           </View>
 
+          {/* Table Header */}
           <View style={styles.tableHeader}>
             <Text
               style={[styles.headerText, { flex: 0.15, textAlign: 'center' }]}
@@ -77,7 +81,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
             </Text>
           </View>
 
-          {isLoading ? (
+          {isLoading && !isRefreshing ? (
             <ActivityIndicator
               size="large"
               color="#29A539"
@@ -98,7 +102,8 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
                   item={{
                     ...item,
                     name: `${item.last_name}, ${item.first_name}`,
-                    id: item.patient_id, // patient_id from MySQL
+                    id: item.patient_id,
+                    isActive: item.isActive ?? true,
                   }}
                   isSelected={selectedIds.has(item.patient_id)}
                   isSelectionMode={isSelectionMode}
@@ -111,9 +116,13 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
             />
           )}
 
+          {/* Action Footer */}
           {isSelectionMode && (
             <View style={styles.actionFooter}>
-              <TouchableOpacity style={styles.footerItem}>
+              <TouchableOpacity
+                style={styles.footerItem}
+                onPress={() => updateStatus(true)} // Set as Active
+              >
                 <View
                   style={[styles.statusCircle, { backgroundColor: '#E8F5E9' }]}
                 >
@@ -121,7 +130,11 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
                 </View>
                 <Text style={styles.footerText}>Active</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.footerItem}>
+
+              <TouchableOpacity
+                style={styles.footerItem}
+                onPress={() => updateStatus(false)} // Set as Inactive
+              >
                 <View
                   style={[styles.statusCircle, { backgroundColor: '#FFEBEE' }]}
                 >
@@ -169,6 +182,7 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     borderTopWidth: 1,
     borderTopColor: '#F0F0F0',
+    backgroundColor: '#FFF',
   },
   footerItem: { flexDirection: 'row', alignItems: 'center' },
   statusCircle: {
