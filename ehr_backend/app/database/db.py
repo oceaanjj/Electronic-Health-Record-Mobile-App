@@ -4,7 +4,8 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 
 # This is the database credentials
-# Update these to match your MySQL server if needed
+# need palitan 'to na need match din sa web db natin para on sync sila :)
+# For now yung phpMyAdmin nalang muna gamitin
 DATABASE_URL = "mysql+pymysql://root@localhost:3306/ehr_db"
 
 
@@ -50,7 +51,6 @@ SessionLocal = sessionmaker(
     autoflush=False,
     bind=engine
 )
-
 
 # for safe access sa db
 def get_db():
