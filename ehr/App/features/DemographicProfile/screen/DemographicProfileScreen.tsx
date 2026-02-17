@@ -165,8 +165,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 32,
     color: '#004d40',
-    fontWeight: 'bold',
-    fontStyle: 'italic',
     lineHeight: 36,
     fontFamily: 'MinionPro-SemiboldItalic',
   },
