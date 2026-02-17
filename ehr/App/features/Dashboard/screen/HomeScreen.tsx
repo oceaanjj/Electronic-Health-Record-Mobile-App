@@ -4,11 +4,11 @@ import DashboardSummary from '../components/DashboardSummary';
 import { DashboardGrid } from '../../../components/navigation/DashboardGrid';
 import SearchScreen from '../../Search/screen/SearchScreen';
 import CalendarScreen from '../../Calendar/screen/CalendarScreen';
-
 import BottomNav from '../../../components/navigation/BottomNav';
 
-// Corrected import path based on your folder structure
+// Corrected import paths
 import RegisterPatient from '../../PatientRegistration/component/RegisterPatient';
+import DemographicProfileScreen from '../../DemographicProfile/screen/DemographicProfileScreen';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
@@ -17,17 +17,21 @@ export default function HomeScreen() {
 
   const renderPage = () => {
     switch (activeTab) {
-      case "Home":
+      case 'Home':
         return <DashboardSummary onNavigate={handleNavigation} />;
-      case "Search":
+      case 'Search':
         return <SearchScreen />;
-      case "Grid":
+      case 'Grid':
         return <DashboardGrid onPressItem={handleNavigation} />;
-      case "Calendar":
+      case 'Calendar':
         return <CalendarScreen />;
-      case "Register":
-        // 'onBack' is now passed to match the interface in RegisterPatient
+      case 'Register':
         return <RegisterPatient onBack={() => setActiveTab('Home')} />;
+
+      // ADD THIS CASE: Matches the ID from your DashboardGrid items
+      case 'Demographic Profile':
+        return <DemographicProfileScreen onBack={() => setActiveTab('Grid')} />;
+
       default:
         return <DashboardSummary onNavigate={handleNavigation} />;
     }
@@ -35,11 +39,9 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.flex1}>
-        {renderPage()}
-      </View>
+      <View style={styles.flex1}>{renderPage()}</View>
       <BottomNav
-        activeRoute={activeTab}
+        activeRoute={activeTab === 'Demographic Profile' ? 'Grid' : activeTab}
         onNavigate={handleNavigation}
         onAddPatient={() => setActiveTab('Register')}
       />

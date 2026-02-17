@@ -10,13 +10,19 @@ import {
   StatusBar,
 } from 'react-native';
 
-import PatientRow from '../component/patientrow';
+// Importing the row component from your component folder
+import PatientRow from '../component/PatientRow';
 
 // Export the interface so the Row component can import it
 export interface Patient {
   id: number | string | null;
   name: string;
   isActive: boolean;
+}
+
+// Props interface to handle the navigation from HomeScreen.tsx
+interface ProfileProps {
+  onBack: () => void;
 }
 
 const MOCK_PATIENTS: Patient[] = [
@@ -29,9 +35,10 @@ const MOCK_PATIENTS: Patient[] = [
   { id: '14', name: 'Eobles, Rain Louie', isActive: true },
 ];
 
-const DemographicProfileScreen: React.FC = () => {
+const DemographicProfileScreen: React.FC<ProfileProps> = ({ onBack }) => {
   const [search, setSearch] = useState<string>('');
 
+  // Filtering logic for the search bar
   const filteredPatients = MOCK_PATIENTS.filter(p =>
     p.name.toLowerCase().includes(search.toLowerCase()),
   );
@@ -40,13 +47,16 @@ const DemographicProfileScreen: React.FC = () => {
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="dark-content" />
       <View style={styles.container}>
+        {/* Header Section */}
         <View style={styles.header}>
-          <Text style={styles.title}>Demographic{"\n"}Profile</Text>
-          <TouchableOpacity style={styles.doneBtn}>
+          <Text style={styles.title}>Demographic{'\n'}Profile</Text>
+          {/* DONE button now triggers the onBack function to return to the Grid */}
+          <TouchableOpacity style={styles.doneBtn} onPress={onBack}>
             <Text style={styles.doneBtnText}>DONE</Text>
           </TouchableOpacity>
         </View>
 
+        {/* Search Bar Section */}
         <View style={styles.searchBox}>
           <Text style={styles.searchIcon}>🔍</Text>
           <TextInput
@@ -58,10 +68,12 @@ const DemographicProfileScreen: React.FC = () => {
           />
         </View>
 
+        {/* Add Patient FAB */}
         <TouchableOpacity style={styles.addFab}>
           <Text style={styles.addText}>+</Text>
         </TouchableOpacity>
 
+        {/* Table Header Section */}
         <View style={styles.tableHeader}>
           <Text
             style={[styles.headerText, { flex: 0.15, textAlign: 'center' }]}
@@ -74,6 +86,7 @@ const DemographicProfileScreen: React.FC = () => {
           </Text>
         </View>
 
+        {/* List of Patients */}
         <FlatList
           data={filteredPatients}
           keyExtractor={(_, index) => index.toString()}
@@ -82,6 +95,7 @@ const DemographicProfileScreen: React.FC = () => {
           contentContainerStyle={{ paddingBottom: 40 }}
         />
 
+        {/* Status Legend Footer */}
         <View style={styles.legend}>
           <View style={styles.legendItem}>
             <View style={[styles.legendIcon, { backgroundColor: '#E8F5E9' }]}>
