@@ -10,7 +10,6 @@ import {
   useColorScheme,
   Image,
   ActivityIndicator,
-  RefreshControl,
   TouchableOpacity,
 } from 'react-native';
 
@@ -36,7 +35,6 @@ const dotsIcon = require('../../../../assets/icons/dots_icon.png');
 const selectImage = require('../../../../assets/icons/select_icon.png');
 
 const DemographicProfileScreen: React.FC<ProfileProps> = ({
-  onBack,
   onSelectionChange,
 }) => {
   const isDarkMode = useColorScheme() === 'dark';
@@ -50,12 +48,10 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
     isSelectionMode,
     loadPatients,
     toggleSelection,
-    handleRefresh,
     clearSelection,
     updateStatus,
   } = useDemographicLogic(onSelectionChange);
 
-  // Cast patients to Patient[] to fix the "never" TypeScript error
   const typedPatients = patients as Patient[];
 
   useEffect(() => {
@@ -64,7 +60,6 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
 
   const enterSelectionMode = () => {
     setShowSelectMenu(false);
-    // patient_id is now recognized on the typed object
     if (typedPatients.length > 0) {
       toggleSelection(typedPatients[0].patient_id);
     }
@@ -74,15 +69,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
     <View style={styles.root}>
       <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
 
-      {/* 50% Dark Background Overlay - appears only when menu is shown */}
-      {showSelectMenu && (
-        <TouchableOpacity
-          style={styles.darkOverlay}
-          activeOpacity={1}
-          onPress={() => setShowSelectMenu(false)}
-        />
-      )}
-
+      {/* MAIN CONTENT */}
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.container}>
           {/* Header */}
@@ -97,16 +84,6 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
                   onPress={() => setShowSelectMenu(!showSelectMenu)}
                 >
                   <Image source={dotsIcon} style={styles.dotsIcon} />
-                </TouchableOpacity>
-              )}
-
-              {showSelectMenu && (
-                <TouchableOpacity
-                  style={styles.menuPopup}
-                  onPress={enterSelectionMode}
-                >
-                  {/* Image now fills the container 100% */}
-                  <Image source={selectImage} style={styles.fullSelectImage} />
                 </TouchableOpacity>
               )}
             </View>
@@ -188,62 +165,82 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
           )}
         </View>
       </SafeAreaView>
+
+      {/* OVERLAY LAYER - Kept outside SafeAreaView to manage Z-index easily */}
+      {showSelectMenu && (
+        <>
+          <TouchableOpacity
+            style={styles.darkOverlay}
+            activeOpacity={1}
+            onPress={() => setShowSelectMenu(false)}
+          />
+          <TouchableOpacity
+            style={styles.menuPopup}
+            onPress={enterSelectionMode}
+          >
+            <Image source={selectImage} style={styles.fullSelectImage} />
+          </TouchableOpacity>
+        </>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFF' },
-  // Dark Background Overlay Style
+
   darkOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    zIndex: 5,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    zIndex: 10,
   },
+
   safeArea: {
     flex: 1,
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
+
   container: { flex: 1, paddingHorizontal: 20 },
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginBottom: 50,
     paddingHorizontal: 20,
-    zIndex: 10,
   },
+
   headerActions: {
     alignItems: 'flex-end',
-    position: 'relative',
     marginTop: 10,
   },
+
   title: {
     fontSize: 39,
     color: '#035022',
     fontFamily: 'MinionPro-SemiboldItalic',
   },
+
   dotsIcon: { width: 24, height: 24, resizeMode: 'contain', marginTop: 5 },
+
+  menuPopup: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 120 : 90,
+    right: 45,
+    width: 165,
+    height: 60,
+    zIndex: 20,
+    elevation: 10,
+  },
 
   fullSelectImage: {
     width: '100%',
     height: '100%',
     resizeMode: 'contain',
   },
-
-  menuPopup: {
-    position: 'absolute',
-    top: 30,
-    right: 10,
-    width: 165,
-    height: 60,
-  },
-  menuText: { color: '#29A539', fontSize: 16, fontWeight: '500' },
-  checkIconContainer: { marginLeft: 10 },
-  checkIcon: { color: '#29A539', fontSize: 18, fontWeight: 'bold' },
 
   tableHeader: {
     flexDirection: 'row',
@@ -252,12 +249,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     marginHorizontal: 20,
   },
+
   headerText: {
     color: '#29A539',
     fontWeight: 'bold',
     fontSize: 14,
     paddingRight: 10,
   },
+
   actionFooter: {
     flexDirection: 'row',
     justifyContent: 'space-around',
@@ -266,7 +265,9 @@ const styles = StyleSheet.create({
     borderTopColor: '#F0F0F0',
     backgroundColor: '#FFF',
   },
+
   footerItem: { flexDirection: 'row', alignItems: 'center' },
+
   statusCircle: {
     width: 36,
     height: 36,
@@ -276,6 +277,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
     overflow: 'hidden',
   },
+
   footerIcon: { width: '100%', height: '100%', resizeMode: 'cover' },
   footerText: { color: '#004D40', fontSize: 15, fontWeight: '500' },
 });
