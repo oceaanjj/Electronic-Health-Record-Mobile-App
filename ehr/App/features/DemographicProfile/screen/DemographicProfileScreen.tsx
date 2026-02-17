@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -23,15 +23,17 @@ interface ProfileProps {
   onSelectionChange: (isSelecting: boolean) => void;
 }
 
-// RESTORED: These definitions are necessary for the Image components below
 const activeIcon = require('../../../../assets/icons/active_icon.png');
 const inactiveIcon = require('../../../../assets/icons/inactive_icon.png');
+// Ensure you have a 3-dots icon or use a library. Assuming local asset:
+const dotsIcon = require('../../../../assets/icons/dots_icon.png');
 
 const DemographicProfileScreen: React.FC<ProfileProps> = ({
   onBack,
   onSelectionChange,
 }) => {
   const isDarkMode = useColorScheme() === 'dark';
+  const [showSelectMenu, setShowSelectMenu] = useState(false);
 
   const {
     patients,
@@ -43,12 +45,22 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
     toggleSelection,
     handleRefresh,
     clearSelection,
-    updateStatus, // Ensure your hook provides this function
+    updateStatus,
   } = useDemographicLogic(onSelectionChange);
 
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
+
+  // Helper to enter selection mode from the menu
+  const enterSelectionMode = () => {
+    setShowSelectMenu(false);
+    // If no patients are selected yet, we can manually trigger the UI state
+    // by selecting the first one or just relying on your logic's isSelectionMode.
+    if (patients.length > 0) {
+      toggleSelection(patients[0].patient_id);
+    }
+  };
 
   return (
     <View style={styles.root}>
@@ -58,9 +70,31 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.title}>Demographic{'\n'}Profile</Text>
-            {isSelectionMode && (
-              <Button title="DONE" onPress={clearSelection} />
-            )}
+
+            <View style={styles.headerActions}>
+              {isSelectionMode ? (
+                <Button title="DONE" onPress={clearSelection} />
+              ) : (
+                <TouchableOpacity
+                  onPress={() => setShowSelectMenu(!showSelectMenu)}
+                >
+                  <Image source={dotsIcon} style={styles.dotsIcon} />
+                </TouchableOpacity>
+              )}
+
+              {/* Selection Menu Popup (Matches 2nd Picture) */}
+              {showSelectMenu && (
+                <TouchableOpacity
+                  style={styles.menuPopup}
+                  onPress={enterSelectionMode}
+                >
+                  <Text style={styles.menuText}>Select</Text>
+                  <View style={styles.checkIconContainer}>
+                    <Text style={styles.checkIcon}>✓</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
 
           {/* Table Header */}
@@ -121,7 +155,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
             <View style={styles.actionFooter}>
               <TouchableOpacity
                 style={styles.footerItem}
-                onPress={() => updateStatus(true)} // Set as Active
+                onPress={() => updateStatus(true)}
               >
                 <View
                   style={[styles.statusCircle, { backgroundColor: '#E8F5E9' }]}
@@ -133,7 +167,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
 
               <TouchableOpacity
                 style={styles.footerItem}
-                onPress={() => updateStatus(false)} // Set as Inactive
+                onPress={() => updateStatus(false)}
               >
                 <View
                   style={[styles.statusCircle, { backgroundColor: '#FFEBEE' }]}
@@ -162,12 +196,41 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 50,
     paddingHorizontal: 20,
+    zIndex: 10, // Ensure menu stays on top
   },
+  headerActions: { alignItems: 'flex-end', position: 'relative' },
   title: {
     fontSize: 35,
     color: '#035022',
     fontFamily: 'MinionPro-SemiboldItalic',
   },
+  dotsIcon: { width: 24, height: 24, resizeMode: 'contain', marginTop: 10 },
+
+  // Menu Popup Styles (Matches 2nd Picture)
+  menuPopup: {
+    position: 'absolute',
+    top: 45,
+    right: 0,
+    backgroundColor: '#FFF',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    borderRadius: 8,
+    width: 150,
+    borderWidth: 1,
+    borderColor: '#29A539',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+  },
+  menuText: { color: '#29A539', fontSize: 16, fontWeight: '500' },
+  checkIconContainer: { marginLeft: 10 },
+  checkIcon: { color: '#29A539', fontSize: 18, fontWeight: 'bold' },
+
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#E5FFE8',
