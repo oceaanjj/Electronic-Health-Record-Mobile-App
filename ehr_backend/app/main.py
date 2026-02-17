@@ -11,6 +11,10 @@ from app.models.vital_signs.vital_signs import VitalSigns
 from app.models.intake_and_output.intake_and_output import IntakeAndOutput
 from app.models.adl.adl import ADL
 from app.models.lab_values.lab_values import LabValues
+from app.models.medical_history.medical_history import (
+    PresentIllness, PastMedicalSurgical, Allergies, Vaccination, DevelopmentalHistory
+)
+from app.models.diagnostics.diagnostics import Diagnostic
 
 # Router imports
 from app.routers import auth, patient
@@ -19,6 +23,8 @@ from app.routers.vital_signs import vital_signs as vs_router
 from app.routers.intake_and_output import intake_and_output as iao_router
 from app.routers.adl import adl as adl_router
 from app.routers.lab_values import lab_values as lv_router
+from app.routers.medical_history import medical_history as mh_router
+from app.routers.diagnostics import diagnostics as diag_router
 
 app = FastAPI(title="EHR Backend API")
 
@@ -61,6 +67,12 @@ app.include_router(adl_router.router)
 
 # Lab Values (with ADPIE)
 app.include_router(lv_router.router)
+
+# Medical History (5 sub-components: no ADPIE workflow)
+app.include_router(mh_router.router)
+
+# Diagnostics (file upload/storage: medical imaging)
+app.include_router(diag_router.router)
 
 Base.metadata.create_all(bind=engine)
 

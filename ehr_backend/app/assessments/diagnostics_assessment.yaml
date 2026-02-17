@@ -1,0 +1,593 @@
+# Diagnostics Assessment Reference Guide
+# Medical Imaging Documentation and File Management
+# Last Updated: 2024
+# Component Type: File Upload/Storage (No ADPIE Workflow)
+
+component:
+  name: Diagnostics
+  type: File Upload/Storage Component
+  description: |
+    Manages medical diagnostic imaging including X-rays, ultrasounds, CT/MRI, 
+    and echocardiograms. Provides file upload, storage, retrieval, and 
+    interpretation documentation without ADPIE workflow.
+  workflow: None (Data Entry/Retrieval Only)
+  alert_generation: None (No Auto-Generated Alerts)
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DIAGNOSTIC IMAGE TYPES
+# ═══════════════════════════════════════════════════════════════════════════
+
+image_types:
+  X-ray:
+    description: X-ray radiography
+    common_body_parts:
+      - Chest
+      - Abdomen
+      - Extremities (arms, legs, hands, feet)
+      - Spine
+      - Pelvis
+      - Hand/Foot
+    clinical_uses:
+      - Fracture detection
+      - Pneumonia diagnosis
+      - Cardiac silhouette assessment
+      - Abdominal obstruction evaluation
+      - Bone density assessment
+    typical_turnaround: 1-2 hours
+    normal_protocol: PA (posteroanterior) and lateral views standard
+
+  Ultrasound:
+    description: Ultrasonography using sound waves
+    common_body_parts:
+      - Abdomen
+      - Pelvis (OB/GYN)
+      - Thyroid
+      - Breast
+      - Vascular (carotid, veins, arteries)
+      - Soft tissue
+      - Echocardiography
+    clinical_uses:
+      - Pregnancy monitoring
+      - Abdominal organ assessment
+      - Fluid collection detection
+      - Vascular flow evaluation
+      - Thyroid nodule assessment
+      - Breast lesion characterization
+    typical_turnaround: 1-2 hours
+    advantages: No radiation, real-time imaging, portable
+    operator_dependent: true
+
+  CT/MRI:
+    description: Computed Tomography or Magnetic Resonance Imaging
+    ct_uses:
+      - High-resolution anatomy
+      - Trauma evaluation
+      - Pulmonary nodule detection
+      - Abdominal pathology
+      - Head injuries
+      - Bone detail
+    mri_uses:
+      - Soft tissue detail
+      - Brain lesions
+      - Spinal cord assessment
+      - Joint cartilage
+      - Diffusion imaging
+      - Cardiac function
+    common_body_parts:
+      - Head/Brain
+      - Chest
+      - Abdomen/Pelvis
+      - Spine
+      - Extremities
+      - Breast (MRI)
+    typical_turnaround: 2-4 hours
+    processing_time: Reconstruction and interpretation required
+
+  Echocardiogram:
+    description: Ultrasound of the heart
+    types:
+      - Transthoracic (TTE) - standard 2D echo
+      - Transesophageal (TEE) - invasive
+      - Stress Echo - with exercise/dobutamine
+      - 3D Echocardiography - advanced reconstruction
+    clinical_uses:
+      - Ejection fraction measurement
+      - Valve function assessment
+      - Wall motion abnormalities
+      - Pericardial effusion detection
+      - Cardiac chamber dilation
+      - Shunt detection
+    typical_turnaround: 1-2 hours
+    requires_expertise: Cardiology interpretation standard
+
+# ═══════════════════════════════════════════════════════════════════════════
+# DATABASE SCHEMA REFERENCE
+# ═══════════════════════════════════════════════════════════════════════════
+
+database_schema:
+  table_name: diagnostics
+  primary_key: diagnostic_id
+  
+  fields:
+    diagnostic_id:
+      type: Integer
+      nullable: false
+      description: Unique identifier for each diagnostic record
+      
+    patient_id:
+      type: Integer
+      nullable: false
+      foreign_key: patient.patient_id
+      description: Reference to patient
+      cascade_delete: true
+      
+    image_type:
+      type: String(50)
+      nullable: false
+      allowed_values: [X-ray, Ultrasound, CT/MRI, Echocardiogram]
+      description: Type of diagnostic imaging
+      
+    body_part:
+      type: String(100)
+      nullable: false
+      description: Anatomical location examined (e.g., Chest, Abdomen, Brain)
+      
+    findings:
+      type: Text
+      nullable: true
+      description: Detailed clinical findings from initial review
+      
+    impression:
+      type: Text
+      nullable: true
+      description: Clinical impression and conclusion from radiologist
+      
+    performed_by:
+      type: String(100)
+      nullable: true
+      description: Name of technician/sonographer who performed exam
+      
+    interpreted_by:
+      type: String(100)
+      nullable: true
+      description: Name of radiologist/physician who interpreted images
+      
+    file_path:
+      type: String(255)
+      nullable: false
+      description: Relative path to stored image file in storage directory
+      
+    file_name:
+      type: String(255)
+      nullable: false
+      description: Original filename with timestamp prefix
+      format: "YYYYMMDD_HHMMSS_TYPE_ORIGINAL_NAME.ext"
+      
+    file_size:
+      type: Integer
+      nullable: true
+      description: File size in bytes
+      
+    mime_type:
+      type: String(100)
+      nullable: true
+      description: MIME type (image/jpeg, image/png, image/tiff, application/dicom)
+      
+    status:
+      type: String(50)
+      nullable: false
+      default: pending
+      allowed_values: [pending, reviewed, archived]
+      description: |
+        pending - Uploaded, awaiting radiologist review
+        reviewed - Interpreted with impression and findings
+        archived - Stored for record purposes only
+        
+    created_at:
+      type: DateTime
+      nullable: false
+      default: UTC Now
+      description: Timestamp of upload
+      
+    updated_at:
+      type: DateTime
+      nullable: false
+      default: UTC Now
+      on_update: UTC Now
+      description: Timestamp of last update
+      
+    exam_date:
+      type: DateTime
+      nullable: true
+      description: Actual date/time the diagnostic exam was performed
+      
+    reviewed_date:
+      type: DateTime
+      nullable: true
+      description: Timestamp when radiologist completed interpretation
+      
+    clinical_notes:
+      type: Text
+      nullable: true
+      description: Additional clinical context and notes
+      
+    comparison_note:
+      type: Text
+      nullable: true
+      description: Comparison with prior studies if available
+
+# ═══════════════════════════════════════════════════════════════════════════
+# API ENDPOINTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+endpoints:
+  
+  create_diagnostic:
+    method: POST
+    path: /diagnostics/
+    description: Upload new diagnostic image and create record
+    request_body:
+      form_data:
+        patient_id: Integer (required)
+        image_type: String - X-ray|Ultrasound|CT/MRI|Echocardiogram (required)
+        body_part: String - Anatomical location (required)
+        file: File - Image file to upload (required)
+        findings: String - Clinical findings (optional)
+        impression: String - Clinical impression (optional)
+        performed_by: String - Technician name (optional)
+        interpreted_by: String - Radiologist name (optional)
+        exam_date: DateTime - Exam timestamp (optional)
+        clinical_notes: String - Additional notes (optional)
+        comparison_note: String - Prior comparison (optional)
+    response: DiagnosticRead object
+    status_code: 201 Created
+    validations:
+      image_type: Must be X-ray, Ultrasound, CT/MRI, or Echocardiogram
+      file_type: image/jpeg|image/png|image/gif|image/tiff|application/dicom
+      file_size: Recommended < 50MB
+    file_storage: storage/app/public/diagnostics/patient_<ID>/
+    filename_format: "YYYYMMDD_HHMMSS_<TYPE>_<ORIGINAL_NAME>.<ext>"
+
+  list_patient_diagnostics:
+    method: GET
+    path: /diagnostics/patient/{patient_id}
+    description: List all diagnostic images for a patient with pagination
+    parameters:
+      patient_id: Integer - Patient to retrieve (required)
+      skip: Integer - Pagination offset (default 0)
+      limit: Integer - Pagination limit (default 100)
+      image_type: String - Filter by type (optional)
+      status: String - Filter by status (optional)
+    response: List[DiagnosticRead]
+    default_sort: created_at DESC (newest first)
+
+  get_diagnostic:
+    method: GET
+    path: /diagnostics/{diagnostic_id}
+    description: Get details of a single diagnostic record
+    parameters:
+      diagnostic_id: Integer (required)
+    response: DiagnosticRead object
+    status_code_not_found: 404
+
+  download_file:
+    method: GET
+    path: /diagnostics/{diagnostic_id}/file
+    description: Download/stream the actual image file
+    parameters:
+      diagnostic_id: Integer (required)
+    response: File (binary image data)
+    headers:
+      Content-Type: application/octet-stream or mime_type
+      Content-Disposition: attachment; filename="<original_filename>"
+    status_code_not_found: 404
+
+  update_diagnostic:
+    method: PUT
+    path: /diagnostics/{diagnostic_id}
+    description: Update diagnostic interpretation and metadata (cannot change file)
+    request_body:
+      findings: String (optional)
+      impression: String (optional)
+      performed_by: String (optional)
+      interpreted_by: String (optional)
+      status: String - pending|reviewed|archived (optional)
+      clinical_notes: String (optional)
+      comparison_note: String (optional)
+      reviewed_date: DateTime (optional)
+    response: DiagnosticRead object
+    immutable_fields: file_path, file_name, file_size, mime_type, exam_date, created_at
+
+  delete_diagnostic:
+    method: DELETE
+    path: /diagnostics/{diagnostic_id}
+    description: Delete diagnostic record and remove file from storage
+    parameters:
+      diagnostic_id: Integer (required)
+    response: 204 No Content
+    side_effects: Removes both database record and physical file
+    warning: This action is permanent and cannot be undone
+
+  review_diagnostic:
+    method: POST
+    path: /diagnostics/{diagnostic_id}/review
+    description: Mark diagnostic as reviewed with radiologist interpretation
+    request_body:
+      impression: String - Clinical impression (required)
+      interpreted_by: String - Radiologist name (optional)
+      findings: String - Clinical findings (optional)
+      comparison_note: String - Prior comparison (optional)
+    response: DiagnosticRead object
+    side_effects: Sets status=reviewed, sets reviewed_date=UTC Now
+    workflow: Typically final step after radiologist interprets images
+
+  get_diagnostics_summary:
+    method: GET
+    path: /diagnostics/patient/{patient_id}/summary
+    description: Get lightweight summary of all patient diagnostic images
+    parameters:
+      patient_id: Integer (required)
+    response: List[DiagnosticSummary] - Minimal fields for overview
+    fields_returned: diagnostic_id, image_type, body_part, file_name, status, exam_date, created_at
+
+  get_diagnostic_stats:
+    method: GET
+    path: /diagnostics/stats/types/{patient_id}
+    description: Get statistics of diagnostic image types for a patient
+    parameters:
+      patient_id: Integer (required)
+    response:
+      patient_id: Integer
+      total_diagnostics: Integer
+      by_type: Object with counts per image type
+    example_response:
+      patient_id: 1
+      total_diagnostics: 5
+      by_type:
+        X-ray: 3
+        Ultrasound: 1
+        CT/MRI: 1
+
+# ═══════════════════════════════════════════════════════════════════════════
+# FILE STORAGE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+storage:
+  base_directory: storage/app/public/diagnostics
+  organization: By patient - diagnostics/patient_<PATIENT_ID>/<TIMESTAMPED_FILES>
+  
+  filename_convention:
+    format: YYYYMMDD_HHMMSS_<IMAGE_TYPE>_<ORIGINAL_NAME>.<EXTENSION>
+    example: 20240115_143022_X-ray_chest_pa_view.jpg
+    benefits:
+      - Chronological sorting
+      - Prevents name collisions
+      - Type identification
+      - Original name preservation
+  
+  supported_formats:
+    - image/jpeg (.jpg, .jpeg)
+    - image/png (.png)
+    - image/gif (.gif)
+    - image/tiff (.tiff, .tif)
+    - application/dicom (.dcm) - DICOM format for medical imaging
+  
+  file_size_recommendations:
+    typical_image: 2-5 MB
+    maximum_recommended: 50 MB
+    note: DICOM files may be larger due to multi-frame content
+  
+  backup_strategy: Implement regular backups of storage/app/public/diagnostics
+
+# ═══════════════════════════════════════════════════════════════════════════
+# STATUS WORKFLOW
+# ═══════════════════════════════════════════════════════════════════════════
+
+status_workflow:
+  
+  pending:
+    description: Initial status after upload, awaiting radiologist review
+    typical_duration: 1-4 hours (varies by facility)
+    actions_available:
+      - review_diagnostic (transition to reviewed)
+      - update_diagnostic (add notes/findings)
+      - delete_diagnostic (cancel if needed)
+    display: Show "Awaiting Interpretation" in UI
+    
+  reviewed:
+    description: Radiologist has completed interpretation with impression
+    required_fields: impression, interpreted_by, status
+    actions_available:
+      - update_diagnostic (update interpretation if needed)
+      - archive (transition to archived)
+      - delete_diagnostic (remove if error)
+    display: Show with radiologist interpretation in UI
+    checked: Has timestamp in reviewed_date field
+    
+  archived:
+    description: Stored for historical record, no further action expected
+    actions_available:
+      - delete_diagnostic (permanent removal)
+      - update_diagnostic (limited updates)
+    display: Show as archived/historical record
+    usage: Old studies, discharge summaries, reference purposes
+
+# ═══════════════════════════════════════════════════════════════════════════
+# CLINICAL GUIDELINES
+# ═══════════════════════════════════════════════════════════════════════════
+
+clinical_considerations:
+  
+  image_quality:
+    - Document patient cooperation and positioning
+    - Note any artifacts or technical limitations
+    - Compare with prior studies when available
+    
+  radiologist_interpretation:
+    - Findings should be specific and measurable
+    - Impression should address clinical question
+    - Differential diagnoses when appropriate
+    - Recommendations for follow-up studies if needed
+    
+  documentation_standards:
+    - Use standard anatomical terminology
+    - Document comparison with prior studies
+    - Note relevant negative findings
+    - Include clinical correlation statement
+    
+  communication:
+    - Critical findings should be communicated immediately
+    - Preliminary report may be issued before final interpretation
+    - Final report timestamp documents completion
+    
+  retention_policy:
+    - Digital images minimum retention: 5-7 years
+    - Maintain backup of all stored files
+    - Archive old studies separately from active records
+
+# ═══════════════════════════════════════════════════════════════════════════
+# INTEGRATION WITH OTHER COMPONENTS
+# ═══════════════════════════════════════════════════════════════════════════
+
+integrations:
+  
+  patient_extraction:
+    included_in_patient_document: true
+    fields_extracted: |
+      - Diagnostic summary section
+      - List of all imaging studies
+      - Image types and body parts examined
+      - Status and interpretation
+      - Radiologist impression
+    use_case: Complete patient medical record export
+    
+  adpie_components:
+    relationship: Independent
+    integration: Can reference diagnostic findings in Assessment/Plan components
+    example: |
+      "Pneumonia suspected on chest X-ray - included in Vital Signs assessment"
+    
+  medication_management:
+    potential_trigger: Contrast agents for CT/MRI documented in imaging
+    documentation: Include in clinical notes if contrast used
+    
+  care_planning:
+    usage: Diagnostic findings inform nursing diagnoses and interventions
+    documentation: Reference specific diagnostic findings in care plans
+
+# ═══════════════════════════════════════════════════════════════════════════
+# COMMON WORKFLOWS
+# ═══════════════════════════════════════════════════════════════════════════
+
+workflows:
+  
+  standard_workflow:
+    step_1: Provider orders diagnostic image
+    step_2: Technician/Sonographer performs exam and uploads file
+    step_3: System stores file and creates pending record
+    step_4: Radiologist downloads and reviews image
+    step_5: Radiologist uses review_diagnostic endpoint to add interpretation
+    step_6: Status changes to reviewed with timestamp
+    step_7: Healthcare team can access findings and impression
+    step_8: After retention period, archive to archived status
+    
+  urgent_findings_workflow:
+    step_1: Radiologist identifies critical finding during interpretation
+    step_2: Radiologist immediately contacts attending physician (outside system)
+    step_3: Radiologist completes review_diagnostic with impression
+    step_4: Clinical team implements urgent interventions based on findings
+    step_5: Document in assessment components (e.g., Vital Signs assessment)
+    
+  comparative_study_workflow:
+    step_1: New diagnostic ordered with prior study comparison
+    step_2: Technician retrieves prior study using list_patient_diagnostics
+    step_3: Prior study file accessed via download_file endpoint
+    step_4: Comparison study performed, new file uploaded
+    step_5: Radiologist adds comparison_note field in review_diagnostic
+    step_6: Can reference both studies for trend analysis
+
+# ═══════════════════════════════════════════════════════════════════════════
+# EXAMPLES
+# ═══════════════════════════════════════════════════════════════════════════
+
+examples:
+  
+  chest_xray_pneumonia:
+    image_type: X-ray
+    body_part: Chest
+    findings: |
+      Ill-defined opacity in the right middle lobe compatible with 
+      pneumonic infiltrate. No pleural effusion. Cardiac silhouette normal.
+    impression: |
+      Right middle lobe pneumonia. Recommend follow-up chest X-ray in 
+      4-6 weeks to document resolution.
+    status: reviewed
+    clinical_context: |
+      Patient with fever, productive cough, elevated WBC.
+      Findings correlate with vital signs assessment showing elevated 
+      temperature and respiratory rate.
+  
+  abdominal_ultrasound:
+    image_type: Ultrasound
+    body_part: Abdomen
+    findings: |
+      Gallbladder 4.2 cm in diameter containing multiple 2-3 mm echogenic 
+      foci consistent with cholelithiasis. No pericholecystic fluid or 
+      wall thickening noted. Common bile duct 4 mm.
+    impression: |
+      Cholelithiasis. No sonographic evidence of acute cholecystitis.
+      Differential includes biliary colic versus acute cholecystitis 
+      based on clinical presentation.
+    performed_by: John Smith, RUS
+    interpreted_by: Dr. Mary Johnson, MD
+    
+  cardiac_echocardiogram:
+    image_type: Echocardiogram
+    body_part: Heart
+    findings: |
+      LVEF 35-40% (reduced). Anterior and anteroseptal wall motion 
+      abnormalities. Moderate mitral regurgitation. Normal RV function.
+    impression: |
+      Systolic heart failure with reduced ejection fraction (HFrEF).
+      Findings consistent with prior myocardial infarction.
+    comparison_note: |
+      Compared with study from 6 months ago. LVEF decreased from 45% 
+      to 35-40%. Mitral regurgitation worsened from mild to moderate.
+
+# ═══════════════════════════════════════════════════════════════════════════
+# NOTES FOR IMPLEMENTATION
+# ═══════════════════════════════════════════════════════════════════════════
+
+implementation_notes:
+  
+  file_handling:
+    - Implement proper file validation before storage
+    - Consider file size limits based on server capacity
+    - Implement virus scanning for uploaded files (optional)
+    - Use secure file permissions (read-only after creation)
+    
+  security:
+    - All endpoints require proper authentication
+    - Patient data HIPAA-compliant
+    - Implement audit logging for file access
+    - Consider watermarking for sensitive diagnostic images
+    - Restrict viewing to authorized healthcare providers
+    
+  performance:
+    - Use lazy loading for file downloads
+    - Implement caching for frequently accessed images
+    - Consider CDN for large file delivery
+    - Optimize storage with compression if suitable for image type
+    
+  scaling:
+    - Plan for large volume of diagnostic images
+    - Implement pagination for patient diagnostic lists
+    - Monitor storage capacity and implement archival strategy
+    - Consider distributed storage for backup and redundancy
+    
+  future_enhancements:
+    - Image annotation tools (overlays, measurements)
+    - Viewer integration for complex formats (DICOM)
+    - AI-assisted preliminary interpretation
+    - 3D reconstruction for CT/MRI studies
+    - Integration with PACS systems
