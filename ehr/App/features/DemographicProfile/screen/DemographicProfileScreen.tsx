@@ -15,6 +15,7 @@ import {
 
 import PatientRow from '../component/PatientRow';
 import Button from '../../../components/button';
+import SweetAlert from '../../../components/SweetAlert';
 import { useDemographicLogic } from '../hook/useDemographicLogic';
 
 interface Patient {
@@ -50,6 +51,8 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
     toggleSelection,
     clearSelection,
     updateStatus,
+    alertConfig,
+    closeAlert,
   } = useDemographicLogic(onSelectionChange);
 
   const typedPatients = patients as Patient[];
@@ -185,6 +188,15 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
           </TouchableOpacity>
         </>
       )}
+
+      {/* Alert Modal */}
+      <SweetAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={closeAlert}
+      />
     </View>
   );
 };

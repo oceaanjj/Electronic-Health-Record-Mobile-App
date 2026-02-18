@@ -9,6 +9,12 @@ export const useDemographicLogic = (
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>({ visible: false, title: '', message: '', type: 'success' });
 
   const isSelectionMode = selectedIds.size > 0;
 
@@ -62,11 +68,36 @@ export const useDemographicLogic = (
 
         await Promise.all(updatePromises);
 
+        // Show success alert
+        const statusText = status ? 'active' : 'inactive';
+        let message = '';
+        if (selectedIds.size === 1) {
+          const id = Array.from(selectedIds)[0];
+          const p = (patients as any[]).find(ptr => ptr.patient_id === id);
+          const name = p ? `${p.first_name} ${p.last_name}` : 'Patient';
+          message = `${name} set to ${statusText}`;
+        } else {
+          message = `${selectedIds.size} patients set to ${statusText}`;
+        }
+
+        setAlertConfig({
+          visible: true,
+          title: 'Status Updated',
+          message,
+          type: 'success',
+        });
+
         // Reset selection and refresh list on success
         setSelectedIds(new Set());
         await loadPatients(false);
       } catch (error) {
         console.error('Status Update Error:', error);
+        setAlertConfig({
+          visible: true,
+          title: 'Error',
+          message: 'Failed to update patient status',
+          type: 'error',
+        });
       } finally {
         setIsLoading(false);
       }
@@ -92,6 +123,8 @@ export const useDemographicLogic = (
     loadPatients,
     toggleSelection,
     updateStatus, // Expose to the screen
+    alertConfig,
+    closeAlert: () => setAlertConfig(prev => ({ ...prev, visible: false })),
     handleRefresh: () => {
       setIsRefreshing(true);
       loadPatients(false);
