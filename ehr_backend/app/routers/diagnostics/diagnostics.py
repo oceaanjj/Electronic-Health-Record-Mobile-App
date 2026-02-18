@@ -203,14 +203,20 @@ def download_diagnostic_file(
     if not diagnostic:
         raise HTTPException(status_code=404, detail="Diagnostic not found")
     
-    file_path = os.path.join(STORAGE_DIR, diagnostic.file_path)
+    # Normalize relative path to use correct separator for the OS
+    normalized_rel_path = diagnostic.file_path.replace('/', os.sep)
+    file_path = os.path.join(STORAGE_DIR, normalized_rel_path)
     
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found on storage")
     
+    import mimetypes
+    mime_type, _ = mimetypes.guess_type(file_path)
+    
     return FileResponse(
         path=file_path,
         filename=diagnostic.original_name,
+        media_type=mime_type or "application/octet-stream"
     )
 
 
@@ -220,7 +226,9 @@ def get_file_by_path(path: str):
     Get diagnostic file by relative path
     """
     import mimetypes
-    file_path = os.path.join(STORAGE_DIR, path)
+    # Normalize relative path to use correct separator for the OS
+    normalized_path = path.replace('/', os.sep)
+    file_path = os.path.join(STORAGE_DIR, normalized_path)
     if not os.path.exists(file_path):
         raise HTTPException(status_code=404, detail="File not found")
     

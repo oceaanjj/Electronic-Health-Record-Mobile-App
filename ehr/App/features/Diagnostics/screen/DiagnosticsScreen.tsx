@@ -14,7 +14,7 @@ import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Ionicon from 'react-native-vector-icons/Ionicons';
 
 import DiagnosticCard from '../components/DiagnosticCard';
-import apiClient from '../../../api/apiClient';
+import apiClient, { BASE_URL } from '../../../api/apiClient';
 import { useDiagnostics, DiagnosticRecord } from '../hook/useDiagnostics';
 
 export type ViewMode = 'grid' | 'list';
@@ -178,7 +178,7 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
           {diagnosticTypes.map(item => {
             const diagnostic = getDiagnosticForType(item.id);
             const imageUrl = diagnostic 
-              ? `${apiClient.defaults.baseURL}/diagnostics/file-by-path?path=${encodeURIComponent(diagnostic.file_path)}`
+              ? `${BASE_URL}/diagnostics/${diagnostic.diagnostic_id}/file`
               : null;
 
             return (
