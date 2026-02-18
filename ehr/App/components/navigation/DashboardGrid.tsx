@@ -17,12 +17,12 @@ const TEXT_MUTED = '#9E9E9E';
 const dashboardItems = [
   { id: 'Register', title: 'Register Patient', icon: 'person-add' },
   { id: 'Demographic Profile', title: 'Demographic Profile', icon: 'account-box' },
-  { id: 'History', title: 'Medical History', icon: 'history' },
-  { id: 'Physical Exam', title: 'Physical Exam', icon: 'person-search' },
+  { id: 'MedicalHistory', title: 'Medical History', icon: 'history' },
+  { id: 'PhysicalExam', title: 'Physical Exam', icon: 'person-search' },
   { id: 'Vital Signs', title: 'Vital Signs', icon: 'monitor-heart' },
   { id: 'Intake and Output', title: 'Intake and Output', icon: 'water-drop' },
   { id: 'Activities', title: 'Activities of Daily Living', icon: 'extension' },
-  { id: 'Lab Values', title: 'Lab Values', icon: 'science' },
+  { id: 'LabValues', title: 'Lab Values', icon: 'science' },
   { id: 'Diagnostics', title: 'Diagnostics', icon: 'biotech' },
   { id: 'IVs & Lines', title: 'IVs and Lines', icon: 'medication' },
   { id: 'Medication Administration', title: 'Medication Administration', icon: 'medical-services' },
@@ -51,7 +51,7 @@ export const DashboardGrid = ({ onPressItem }: DashboardGridProps) => {
   const renderHeader = () => (
     <View style={styles.headerContainer}>
       <View style={styles.headerRow}>
-        <Text style={styles.mainTitle}>Electronic Health{"\n"}Record</Text>
+        <Text style={styles.mainTitle}>Electronic Health {"\n"}Record</Text>
         <View style={styles.bulbContainer}>
            <Icon name="lightbulb-outline" size={24} color="#FBC02D" />
         </View>
@@ -104,7 +104,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   headerContainer: {
-    paddingVertical: 30,
+    paddingVertical: 45,
+    marginRight:10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -114,8 +115,9 @@ const styles = StyleSheet.create({
   mainTitle: {
     fontSize: 28,
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
-    fontWeight: 'bold',
+    fontWeight: 'semibold',
     color: THEME_GREEN,
+    fontStyle: 'italic',
     lineHeight: 34,
   },
   text:{
@@ -128,6 +130,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FFF59D',
     backgroundColor: '#FFFDE7',
+    marginLeft: 0,
   },
   subTitle: {
     fontSize: 14,

@@ -140,7 +140,7 @@ const DashboardSummary = ({ onNavigate }: { onNavigate: (route: string) => void 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 25 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 35, marginTop: 40 },
-  greeting: { fontSize: 32, fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', color: THEME_GREEN, fontWeight: 'bold' },
+  greeting: { fontSize: 32, fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif', color: THEME_GREEN, fontWeight: 'semibold' },
   dateText: { fontSize: 14, color: '#999', marginTop: 4 },
   section: { marginBottom: 30 },
   sectionTitle: { fontSize: 14, fontWeight: '700', color: '#888', marginBottom: 15 },
@@ -154,13 +154,13 @@ const styles = StyleSheet.create({
   emptyCard: { paddingVertical: 30, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#eee', borderRadius: 15 },
   emptyText: { color: '#999', fontSize: 14, marginBottom: 15 },
   addPatientBtn: { borderWidth: 1, borderColor: '#333', borderRadius: 20, paddingHorizontal: 30, paddingVertical: 8 },
-  addPatientText: { color: '#333', fontWeight: 'bold', fontSize: 12 },
+  addPatientText: { color: '#333', fontWeight: 'semibold', fontSize: 12 },
   recentCard: { width: 110, height: 110, backgroundColor: '#fff', borderRadius: 15, borderWidth: 1.5, borderColor: '#D8F3DC', padding: 15, marginRight: 15, justifyContent: 'space-between' },
-  cardText: { fontSize: 13, fontWeight: 'bold', color: THEME_GREEN, lineHeight: 16 },
+  cardText: { fontSize: 13, fontWeight: 'semibold', color: THEME_GREEN, lineHeight: 16 },
   actionBtn: { backgroundColor: '#F2F2F2', borderRadius: 15, padding: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   btnContent: { flexDirection: 'row', alignItems: 'center' },
   btnIconBg: { backgroundColor: '#CCC', padding: 4, borderRadius: 4 },
-  btnLabel: { marginLeft: 15, fontSize: 15, color: '#888', fontWeight: '600' },
+  btnLabel: { marginLeft: 15, fontSize: 15, color: '#888', fontWeight: 'semibold' },
 });
 
 export default DashboardSummary;
