@@ -29,6 +29,7 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
     sex: '', address: '', 
     religion: '', ethnicity: '',
     chief_complaints: '', room_no: '', bed_no: '',
+    
     user_id: 1 
   });
 
@@ -119,17 +120,17 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
             
             <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>First Name *</Text>
-                <TextInput style={styles.input} placeholder="Enter First Name" value={form.first_name} onChangeText={(v)=>setForm({...form, first_name: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB" placeholder="Enter First Name" value={form.first_name} onChangeText={(v)=>setForm({...form, first_name: v})} />
             </View>
 
             <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Middle Name *</Text>
-                <TextInput style={styles.input} placeholder="Enter Middle Name" value={form.middle_name} onChangeText={(v)=>setForm({...form, middle_name: v})} />
+                <TextInput style={styles.input} placeholder="Enter Middle Name" placeholderTextColor="#EBEBEB" value={form.middle_name} onChangeText={(v)=>setForm({...form, middle_name: v})} />
             </View>
 
             <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Last Name *</Text>
-                <TextInput style={styles.input} placeholder="Enter Last Name" value={form.last_name} onChangeText={(v)=>setForm({...form, last_name: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB" placeholder="Enter Last Name" value={form.last_name} onChangeText={(v)=>setForm({...form, last_name: v})} />
             </View>
 
             <View style={styles.row}>
@@ -165,33 +166,33 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
 
             <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Address *</Text>
-                <TextInput style={styles.input} placeholder="Enter address" value={form.address} onChangeText={(v)=>setForm({...form, address: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB" placeholder="Enter address" value={form.address} onChangeText={(v)=>setForm({...form, address: v})} />
             </View>
 
             <View style={styles.row}>
               <View style={{ width: '48%' }}>
                 <Text style={styles.inputLabel}>Religion *</Text>
-                <TextInput style={styles.input} placeholder="Religion" value={form.religion} onChangeText={(v)=>setForm({...form, religion: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB"placeholder="Religion" value={form.religion} onChangeText={(v)=>setForm({...form, religion: v})} />
               </View>
               <View style={{ width: '48%' }}>
                 <Text style={styles.inputLabel}>Ethnicity *</Text>
-                <TextInput style={styles.input} placeholder="Ethnicity" value={form.ethnicity} onChangeText={(v)=>setForm({...form, ethnicity: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB" placeholder="Ethnicity" value={form.ethnicity} onChangeText={(v)=>setForm({...form, ethnicity: v})} />
               </View>
             </View>
 
             <View style={styles.inputGroup}>
                 <Text style={styles.inputLabel}>Chief of Complaints *</Text>
-                <TextInput style={styles.input} placeholder="Enter symptoms" value={form.chief_complaints} onChangeText={(v)=>setForm({...form, chief_complaints: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB"placeholder="Enter symptoms" value={form.chief_complaints} onChangeText={(v)=>setForm({...form, chief_complaints: v})} />
             </View>
 
             <View style={styles.row}>
               <View style={{ width: '48%' }}>
                 <Text style={styles.inputLabel}>Room No. *</Text>
-                <TextInput style={styles.input} placeholder="Room #" value={form.room_no} onChangeText={(v)=>setForm({...form, room_no: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB"placeholder="Room #" value={form.room_no} onChangeText={(v)=>setForm({...form, room_no: v})} />
               </View>
               <View style={{ width: '48%' }}>
                 <Text style={styles.inputLabel}>Bed No. *</Text>
-                <TextInput style={styles.input} placeholder="Bed #" value={form.bed_no} onChangeText={(v)=>setForm({...form, bed_no: v})} />
+                <TextInput style={styles.input} placeholderTextColor="#EBEBEB" placeholder="Bed #" value={form.bed_no} onChangeText={(v)=>setForm({...form, bed_no: v})} />
               </View>
             </View>
 
@@ -219,15 +220,15 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
                 </View>
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Name *</Text>
-                    <TextInput style={styles.input} placeholder="Enter Name" value={contact.name} onChangeText={(v) => updateContact(index, 'name', v)} />
+                    <TextInput style={styles.input} placeholderTextColor="#EBEBEB"placeholder="Enter Name" value={contact.name} onChangeText={(v) => updateContact(index, 'name', v)} />
                 </View>
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Relationship *</Text>
-                    <TextInput style={styles.input} placeholder="Enter Relationship" value={contact.relationship} onChangeText={(v) => updateContact(index, 'relationship', v)} />
+                    <TextInput style={styles.input} placeholderTextColor="#EBEBEB"placeholder="Enter Relationship" value={contact.relationship} onChangeText={(v) => updateContact(index, 'relationship', v)} />
                 </View>
                 <View style={styles.inputGroup}>
                     <Text style={styles.inputLabel}>Contact Number *</Text>
-                    <TextInput style={styles.input} placeholder="Enter Number" value={contact.number} keyboardType="phone-pad" onChangeText={(v) => updateContact(index, 'number', v)} />
+                    <TextInput style={styles.input} placeholderTextColor="#EBEBEB"   placeholder="Enter Number" value={contact.number} keyboardType="phone-pad" onChangeText={(v) => updateContact(index, 'number', v)} />
                 </View>
               </View>
             ))}
@@ -243,9 +244,9 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
 
 const styles = StyleSheet.create({
   scrollContent: { padding: 25, paddingBottom: 120, backgroundColor: '#fff' },
-  headerTitle: { fontSize: 24, color: '#1B5E20', fontStyle: 'italic', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',marginBottom: 5, fontWeight: '500' },
+  headerTitle: { fontSize: 24, color: '#1B5E20', fontStyle: 'italic', fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',marginBottom: 5, marginTop:20, fontWeight: '500' },
   placeholder: { color: '#EBEBEB', fontSize: 14, marginBottom: 15 },
-  sectionLabel: { fontSize: 16, fontWeight: 'bold', color: '#1a521e', marginBottom: 20 },
+  sectionLabel: { fontSize: 16, fontWeight: 'bold', color: '#1a521e', marginBottom: 20, },
   inputGroup: { marginBottom: 15 },
   inputLabel: { fontSize: 13, color: '#1a521e', marginBottom: 8 },
   input: { borderWidth: 1, borderColor: '#EBEBEB', borderRadius: 10, padding: 12, backgroundColor: '#fff', color: '#333', justifyContent: 'center', minHeight: 48 },

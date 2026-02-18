@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Platform } from 'react-native';
 
-const BACKEND_PORT = 8000;
+const BACKEND_PORT = 8000; // Changed from 8000 to avoid socket conflicts
 
 // Update this to your USB Tethering IP from ipconfig
 const PHYSICAL_DEVICE_HOST = '192.168.1.36';
@@ -16,13 +16,41 @@ const apiClient = axios.create({
     'Content-Type': 'application/json',
     Accept: 'application/json',
   },
-  timeout: 10000, // 10 second timeout helps diagnose connection issues
+  timeout: 15000, // 15 second timeout for slower connections
 });
 
-// Optional: Add a request interceptor to log what IP you are hitting
+// Request interceptor - logs requests for debugging
 apiClient.interceptors.request.use(request => {
-  console.log('Starting Request to:', request.baseURL);
+  console.log('Starting Request to:', request.baseURL, request.url);
   return request;
 });
+
+// Response interceptor - handles connection errors gracefully
+apiClient.interceptors.response.use(
+  response => {
+    console.log('Response received:', response.status);
+    return response;
+  },
+  error => {
+    if (error.response) {
+      // Server responded with error status
+      console.error(
+        'Backend error:',
+        error.response.status,
+        error.response.data,
+      );
+    } else if (error.request) {
+      // Request made but no response received
+      console.error(
+        'No response from backend. Check if server is running on',
+        host + ':' + BACKEND_PORT,
+      );
+    } else {
+      // Error in request setup
+      console.error('Request setup error:', error.message);
+    }
+    return Promise.reject(error);
+  },
+);
 
 export default apiClient;

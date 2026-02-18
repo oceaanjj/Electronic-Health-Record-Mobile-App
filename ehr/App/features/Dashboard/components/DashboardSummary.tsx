@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
     color: THEME_GREEN,
-    fontWeight: 'bold',
+    fontWeight: 'semibold',
   },
   dateText: { fontSize: 14, color: '#999', marginTop: 4 },
   section: { marginBottom: 30 },
@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 8,
   },
-  addPatientText: { color: '#333', fontWeight: 'bold', fontSize: 12 },
+  addPatientText: { color: '#333', fontWeight: 'semibold', fontSize: 12 },
   recentCard: {
     width: 110,
     height: 110,
@@ -254,7 +254,7 @@ const styles = StyleSheet.create({
   },
   cardText: {
     fontSize: 13,
-    fontWeight: 'bold',
+    fontWeight: 'semibold',
     color: THEME_GREEN,
     lineHeight: 16,
   },
@@ -268,7 +268,12 @@ const styles = StyleSheet.create({
   },
   btnContent: { flexDirection: 'row', alignItems: 'center' },
   btnIconBg: { backgroundColor: '#CCC', padding: 4, borderRadius: 4 },
-  btnLabel: { marginLeft: 15, fontSize: 15, color: '#888', fontWeight: '600' },
+  btnLabel: {
+    marginLeft: 15,
+    fontSize: 15,
+    color: '#888',
+    fontWeight: 'semibold',
+  },
 });
 
 export default DashboardSummary;
