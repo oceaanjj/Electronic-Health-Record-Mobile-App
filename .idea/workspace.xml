@@ -5,33 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="64dac766-4f9e-47dc-9efd-004b84659307" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/ehr/App/components/CDSSGuidanceModal.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/components/CDSSModal.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/ADL/components/ADLInputCard.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/ADL/hook/useADL.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/ADL/screen/ADLMainScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/ADL/screen/ADPIEScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/components/LabResultCard.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/hook/useLabValues.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/screen/ADPIEScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/screen/LabValuesScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/MedicalHistory/components/HistoryInputCard.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/MedicalHistory/hook/useMedicalHistory.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/MedicalHistory/screen/MedicalHistoryScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/PhysicalExam/components/PhysicalInputCard.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/PhysicalExam/hook/usePhysicalExam.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/PhysicalExam/screen/ADPIEScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/PhysicalExam/screen/PhysicalExamScreen.tsx" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/App/features/PhysicalExam/utils/verifyData.ts" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/ehr/Seed.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/ehr/App/api/apiClient.ts" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/api/apiClient.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/App/components/navigation/DashboardGrid.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/components/navigation/DashboardGrid.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/App/features/Calendar/screen/CalendarScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/Calendar/screen/CalendarScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/App/features/Dashboard/components/DashboardSummary.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/Dashboard/components/DashboardSummary.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/App/features/Dashboard/screen/HomeScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/Dashboard/screen/HomeScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/App/features/PatientRegistration/component/RegisterPatient.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/PatientRegistration/component/RegisterPatient.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/App/features/Search/screen/SearchScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/Search/screen/SearchScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr_backend/app/database/db.py" beforeDir="false" afterPath="$PROJECT_DIR$/ehr_backend/app/database/db.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/Diagnostics/components/DiagnosticCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/Diagnostics/components/DiagnosticCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/Diagnostics/screen/DiagnosticsScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/Diagnostics/screen/DiagnosticsScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr_backend/app/routers/diagnostics/diagnostics.py" beforeDir="false" afterPath="$PROJECT_DIR$/ehr_backend/app/routers/diagnostics/diagnostics.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -63,7 +43,7 @@
     "RunOnceActivity.readMode.enableVisualFormatting": "true",
     "cf.first.check.clang-format": "false",
     "cidr.known.project.marker": "true",
-    "git-widget-placeholder": "Merging demographic-profile",
+    "git-widget-placeholder": "diagnostics",
     "kotlin-language-version-configured": "true"
   }
 }]]></component>
