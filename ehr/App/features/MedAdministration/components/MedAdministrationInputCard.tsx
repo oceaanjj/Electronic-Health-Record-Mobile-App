@@ -1,6 +1,6 @@
 // MedAdministration/components/MedAdministrationInputCard.tsx
 import React from 'react';
-import { StyleSheet, View, Text, TextInput } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Pressable } from 'react-native';
 
 interface MedAdministrationInputCardProps {
   label: string;
@@ -8,6 +8,8 @@ interface MedAdministrationInputCardProps {
   onChangeText: (text: string) => void;
   placeholder?: string;
   multiline?: boolean;
+  editable?: boolean;
+  onDisabledPress?: () => void;
 }
 
 const MedAdministrationInputCard: React.FC<MedAdministrationInputCardProps> = ({
@@ -16,6 +18,8 @@ const MedAdministrationInputCard: React.FC<MedAdministrationInputCardProps> = ({
   onChangeText,
   placeholder,
   multiline = false,
+  editable = true,
+  onDisabledPress,
 }) => {
   return (
     <View style={styles.container}>
@@ -25,7 +29,10 @@ const MedAdministrationInputCard: React.FC<MedAdministrationInputCardProps> = ({
       </View>
 
       {/* Input Body */}
-      <View style={styles.inputBody}>
+      <Pressable 
+        style={styles.inputBody} 
+        onPress={() => !editable && onDisabledPress && onDisabledPress()}
+      >
         <TextInput
           style={[styles.input, multiline && styles.multilineInput]}
           value={value}
@@ -33,8 +40,10 @@ const MedAdministrationInputCard: React.FC<MedAdministrationInputCardProps> = ({
           placeholder={placeholder}
           multiline={multiline}
           textAlignVertical={multiline ? 'top' : 'center'}
+          editable={editable}
+          pointerEvents={editable ? 'auto' : 'none'}
         />
-      </View>
+      </Pressable>
     </View>
   );
 };

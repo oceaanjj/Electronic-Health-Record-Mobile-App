@@ -1,5 +1,5 @@
 // MedAdministration/screen/MedAdministrationScreen.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,110 +8,279 @@ import {
   SafeAreaView,
   TouchableOpacity,
   TextInput,
+  Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MedAdministrationInputCard from '../components/MedAdministrationInputCard';
 import { useMedAdministration } from '../hook/useMedAdministration';
+import apiClient from '../../../api/apiClient';
+import SweetAlert from '../../../components/SweetAlert';
 
 const THEME_GREEN = '#035022';
 const LIGHT_GREEN_BG = '#DCFCE7';
 
 const MedAdministrationScreen = ({ onBack }: any) => {
-  const { step, timeSlots, formData, setFormData, updateCurrentMed, nextStep } =
-    useMedAdministration();
+  const {
+    step,
+    timeSlots,
+    formData,
+    setFormData,
+    updateCurrentMed,
+    nextStep,
+    saveMedAdministration,
+  } = useMedAdministration();
+
+  const [patients, setPatients] = useState<any[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchText, setSearchText] = useState('');
+
+  // SweetAlert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'error',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' = 'error',
+  ) => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await apiClient.get('/patients/');
+        const raw = response.data || [];
+        const normalized = raw.map((p: any) => ({
+          ...p,
+          id: p.patient_id ?? p.id ?? null,
+          fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+        }));
+        setPatients(normalized);
+      } catch (error) {
+        console.error('Fetch Error:', error);
+      }
+    };
+    fetchPatients();
+  }, []);
+
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    if (text.length > 0) {
+      const filtered = patients.filter(p =>
+        p.fullName.toLowerCase().includes(text.toLowerCase()),
+      );
+      setFilteredPatients(filtered);
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+      setFormData({ ...formData, patient_id: null, patientName: '' });
+    }
+  };
+
+  const onSelectPatient = (patient: any) => {
+    setSearchText(patient.fullName);
+    setFormData({
+      ...formData,
+      patient_id: patient.id,
+      patientName: patient.fullName,
+    });
+    setShowDropdown(false);
+  };
 
   const currentMed = formData.medications[step];
 
-  const handleAction = () => {
+  const handleAction = async () => {
+    if (!formData.patient_id) {
+      return showAlert(
+        'Patient Required',
+        'Please select a patient first in the search bar.',
+      );
+    }
+
+    // Validation: Medication name is required to proceed
+    if (!currentMed.medication || currentMed.medication.trim() === '') {
+      return showAlert(
+        'Input Required',
+        'Please enter the medication name before proceeding.',
+      );
+    }
+
     if (step === 2) {
-      console.log('Submitting Med Administration Data:', formData);
-      // Logic for API submission goes here
+      try {
+        await saveMedAdministration();
+        showAlert(
+          'Success',
+          'Medication Administration records saved successfully.',
+          'success',
+        );
+        setTimeout(() => {
+          onBack();
+        }, 1500);
+      } catch (error: any) {
+        showAlert(
+          'Error',
+          error.message || 'Failed to save medication administration.',
+        );
+      }
     } else {
       nextStep();
     }
   };
 
+  const formatDate = () => {
+    const date = new Date();
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const onDisabledPress = () => {
+    showAlert('Patient Required', 'Please select a patient first in the search bar.');
+  };
+
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView
-        style={styles.container}
-        contentContainerStyle={{ paddingBottom: 100 }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <View>
-            <Text style={styles.title}>Medication {'\n'}Administration</Text>
-            <Text style={styles.dateText}>Monday, January 26</Text>
+      <Pressable style={{ flex: 1 }} onPress={() => setShowDropdown(false)}>
+        <ScrollView
+          style={styles.container}
+          contentContainerStyle={{ paddingBottom: 100 }}
+          showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="always"
+        >
+          {/* Header */}
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.title}>Medication {'\n'}Administration</Text>
+              <Text style={styles.dateText}>{formatDate()}</Text>
+            </View>
+            <TouchableOpacity onPress={onBack}>
+              <Icon name="more-vert" size={35} color={THEME_GREEN} />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity>
-            <Icon name="more-vert" size={35} color={THEME_GREEN} />
+
+          {/* Patient Selection & Date */}
+          <View style={[styles.section, showDropdown && { zIndex: 9999 }]}>
+            <Text style={styles.sectionLabel}>PATIENT NAME :</Text>
+            <View style={styles.searchWrap}>
+              <View style={styles.searchBar}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Select Patient name"
+                  placeholderTextColor="#BDBDBD"
+                  value={searchText}
+                  onChangeText={handleSearch}
+                  onFocus={() => {
+                    if (patients.length > 0) {
+                      setFilteredPatients(
+                        searchText.length > 0
+                          ? patients.filter(p =>
+                              p.fullName
+                                .toLowerCase()
+                                .includes(searchText.toLowerCase()),
+                            )
+                          : patients,
+                      );
+                      setShowDropdown(true);
+                    }
+                  }}
+                />
+              </View>
+
+              {showDropdown && filteredPatients.length > 0 && (
+                <View style={styles.dropdown}>
+                  {filteredPatients.map((item, index) => (
+                    <Pressable
+                      key={item.id ? item.id.toString() : `p-${index}`}
+                      style={({ pressed }) => [
+                        styles.dropdownItem,
+                        pressed && { opacity: 0.6 },
+                      ]}
+                      onPress={() => onSelectPatient(item)}
+                    >
+                      <Text style={styles.dropdownText}>{item.fullName}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+
+          <View style={[styles.section, { zIndex: 1 }]}>
+            <Text style={styles.sectionLabel}>DATE :</Text>
+            <TextInput
+              style={styles.inputField}
+              value={formData.date}
+              onChangeText={t => setFormData({ ...formData, date: t })}
+            />
+          </View>
+
+          {/* Time Progress Banner */}
+          <View style={styles.timeBanner}>
+            <Text style={styles.timeText}>{timeSlots[step]}</Text>
+          </View>
+
+          {/* Input Cards */}
+          <MedAdministrationInputCard
+            label="Medication"
+            value={currentMed.medication}
+            onChangeText={t => updateCurrentMed('medication', t)}
+            editable={!!formData.patient_id}
+            onDisabledPress={onDisabledPress}
+          />
+          <MedAdministrationInputCard
+            label="Dose"
+            value={currentMed.dose}
+            onChangeText={t => updateCurrentMed('dose', t)}
+            editable={!!formData.patient_id}
+            onDisabledPress={onDisabledPress}
+          />
+          <MedAdministrationInputCard
+            label="Route"
+            value={currentMed.route}
+            onChangeText={t => updateCurrentMed('route', t)}
+            editable={!!formData.patient_id}
+            onDisabledPress={onDisabledPress}
+          />
+          <MedAdministrationInputCard
+            label="Frequency"
+            value={currentMed.frequency}
+            onChangeText={t => updateCurrentMed('frequency', t)}
+            editable={!!formData.patient_id}
+            onDisabledPress={onDisabledPress}
+          />
+          <MedAdministrationInputCard
+            label="Comments"
+            value={currentMed.comments}
+            onChangeText={t => updateCurrentMed('comments', t)}
+            multiline
+            editable={!!formData.patient_id}
+            onDisabledPress={onDisabledPress}
+          />
+
+          {/* Footer Navigation Button */}
+          <TouchableOpacity style={styles.actionBtn} onPress={handleAction}>
+            <Text style={styles.actionBtnText}>
+              {step === 2 ? 'SUBMIT' : 'NEXT'}
+            </Text>
+            {step < 2 && (
+              <Icon name="chevron-right" size={24} color={THEME_GREEN} />
+            )}
           </TouchableOpacity>
-        </View>
-
-        {/* Patient Selection & Date */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>PATIENT NAME :</Text>
-          <TextInput
-            style={styles.inputField}
-            placeholder="Select or type Patient name"
-            value={formData.patientName}
-            onChangeText={t => setFormData({ ...formData, patientName: t })}
-          />
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>DATE :</Text>
-          <TextInput
-            style={styles.inputField}
-            value={formData.date}
-            onChangeText={t => setFormData({ ...formData, date: t })}
-          />
-        </View>
-
-        {/* Time Progress Banner */}
-        <View style={styles.timeBanner}>
-          <Text style={styles.timeText}>{timeSlots[step]}</Text>
-        </View>
-
-        {/* Input Cards */}
-        <MedAdministrationInputCard
-          label="Medication"
-          value={currentMed.medication}
-          onChangeText={t => updateCurrentMed('medication', t)}
-        />
-        <MedAdministrationInputCard
-          label="Dose"
-          value={currentMed.dose}
-          onChangeText={t => updateCurrentMed('dose', t)}
-        />
-        <MedAdministrationInputCard
-          label="Route"
-          value={currentMed.route}
-          onChangeText={t => updateCurrentMed('route', t)}
-        />
-        <MedAdministrationInputCard
-          label="Frequency"
-          value={currentMed.frequency}
-          onChangeText={t => updateCurrentMed('frequency', t)}
-        />
-        <MedAdministrationInputCard
-          label="Comments"
-          value={currentMed.comments}
-          onChangeText={t => updateCurrentMed('comments', t)}
-          multiline
-        />
-
-        {/* Footer Navigation Button */}
-        <TouchableOpacity style={styles.actionBtn} onPress={handleAction}>
-          <Text style={styles.actionBtnText}>
-            {step === 2 ? 'SUBMIT' : 'NEXT'}
-          </Text>
-          {step < 2 && (
-            <Icon name="chevron-right" size={24} color={THEME_GREEN} />
-          )}
-        </TouchableOpacity>
-      </ScrollView>
+        </ScrollView>
+      </Pressable>
 
       {/* Bottom Navigation Mockup */}
       <View style={styles.bottomNav}>
@@ -123,6 +292,15 @@ const MedAdministrationScreen = ({ onBack }: any) => {
         <Icon name="grid-view" size={28} color={THEME_GREEN} />
         <Icon name="calendar-today" size={28} color={THEME_GREEN} />
       </View>
+
+      <SweetAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={() => setAlertConfig({ ...alertConfig, visible: false })}
+        confirmText="OK"
+      />
     </SafeAreaView>
   );
 };
@@ -142,13 +320,44 @@ const styles = StyleSheet.create({
     fontFamily: 'MinionPro-SemiboldItalic',
   },
   dateText: { fontSize: 14, color: '#999', marginTop: 5 },
-  section: { marginBottom: 15 },
+  section: { marginBottom: 15, zIndex: 10 },
+  searchWrap: { position: 'relative', zIndex: 999 },
   sectionLabel: {
     fontSize: 12,
     fontWeight: 'bold',
     color: THEME_GREEN,
     marginBottom: 8,
   },
+  searchBar: {
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    height: 48,
+    borderWidth: 1,
+    borderColor: '#F2F2F2',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+  },
+  searchInput: { fontSize: 14, color: '#333' },
+  dropdown: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 56,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    marginTop: 5,
+    borderWidth: 1,
+    borderColor: '#eee',
+    elevation: 8,
+    zIndex: 9999,
+    maxHeight: 220,
+  },
+  dropdownItem: {
+    padding: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f9f9f9',
+  },
+  dropdownText: { fontSize: 14, color: '#333' },
   inputField: {
     borderRadius: 25,
     paddingHorizontal: 20,
