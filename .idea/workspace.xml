@@ -4,13 +4,7 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64dac766-4f9e-47dc-9efd-004b84659307" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.idea/deviceManager.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/App/features/Dashboard/screen/HomeScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/Dashboard/screen/HomeScreen.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/ehr/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/package.json" afterDir="false" />
-    </list>
+    <list default="true" id="64dac766-4f9e-47dc-9efd-004b84659307" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

@@ -15,13 +15,14 @@ import {
 
 import PatientRow from '../component/PatientRow';
 import Button from '../../../components/button';
+import SweetAlert from '../../../components/SweetAlert';
 import { useDemographicLogic } from '../hook/useDemographicLogic';
 
 interface Patient {
   patient_id: number;
   first_name: string;
   last_name: string;
-  isActive?: boolean;
+  is_active: number | boolean;
 }
 
 interface ProfileProps {
@@ -50,6 +51,8 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
     toggleSelection,
     clearSelection,
     updateStatus,
+    alertConfig,
+    closeAlert,
   } = useDemographicLogic(onSelectionChange);
 
   const typedPatients = patients as Patient[];
@@ -122,7 +125,10 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
                     ...item,
                     name: `${item.last_name}, ${item.first_name}`,
                     id: item.patient_id,
-                    isActive: item.isActive ?? true,
+                    isActive:
+                      typeof item.is_active === 'number'
+                        ? item.is_active === 1
+                        : Boolean(item.is_active ?? true),
                   }}
                   isSelected={selectedIds.has(item.patient_id)}
                   isSelectionMode={isSelectionMode}
@@ -182,6 +188,15 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
           </TouchableOpacity>
         </>
       )}
+
+      {/* Alert Modal */}
+      <SweetAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={closeAlert}
+      />
     </View>
   );
 };
@@ -204,7 +219,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 
-  container: { flex: 1, paddingHorizontal: 20 },
+  container: { flex: 1, paddingHorizontal: 8, marginTop: -5 },
 
   header: {
     flexDirection: 'row',
@@ -219,7 +234,7 @@ const styles = StyleSheet.create({
   },
 
   title: {
-    fontSize: 39,
+    fontSize: 35,
     color: '#035022',
     fontFamily: 'MinionPro-SemiboldItalic',
   },
