@@ -1,5 +1,5 @@
-import { useState, useMemo } from 'react';
-import { Alert } from 'react-native';
+import { useState, useMemo, useEffect } from 'react';
+import apiClient from '../../../api/apiClient';
 
 const TIME_SLOTS = ['6:00 AM', '8:00 AM', '12:00 PM', '2:00 PM', '6:00 PM', '8:00 PM', '12:00 AM'];
 
@@ -19,19 +19,48 @@ const initialVitals: Vitals = {
   spo2: '',
 };
 
-// Normal Ranges for Validation
-const NORMAL_RANGES = {
-  temp: { min: 36.1, max: 37.5 },
-  hr: { min: 60, max: 100 },
-  rr: { min: 12, max: 20 },
-  spo2: { min: 95, max: 100 },
+const convertTo24h = (timeStr: string) => {
+  const [time, modifier] = timeStr.split(' ');
+  let [hours, minutes] = time.split(':');
+  if (hours === '12') {
+    hours = modifier === 'AM' ? '00' : '12';
+  } else if (modifier === 'PM') {
+    hours = (parseInt(hours, 10) + 12).toString();
+  }
+  return `${hours.padStart(2, '0')}:${minutes.padStart(2, '0')}:00`;
 };
 
 export const useVitalSignsLogic = () => {
   const [patientName, setPatientName] = useState('');
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
+  const [patients, setPatients] = useState<any[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const [vitalsHistory, setVitalsHistory] = useState<Record<string, Vitals>>({});
   const [currentVitals, setCurrentVitals] = useState<Vitals>(initialVitals);
   const [currentTimeIndex, setCurrentTimeIndex] = useState(0);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
+  
+  // Storage for alerts returned by the backend
+  const [backendAlert, setBackendAlert] = useState<{ title: string, message: string, type: 'success' | 'error' } | null>(null);
+
+  // Load patient list on mount
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await apiClient.get('/patients/');
+        const normalized = (response.data || []).map((p: any) => ({
+          id: (p.patient_id ?? p.id).toString(),
+          fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+        }));
+        setPatients(normalized);
+      } catch (e) {
+        console.error('Failed to load patients');
+      }
+    };
+    fetchPatients();
+  }, []);
 
   const currentTime = useMemo(() => TIME_SLOTS[currentTimeIndex], [currentTimeIndex]);
 
@@ -39,38 +68,54 @@ export const useVitalSignsLogic = () => {
     return Object.values(currentVitals).some(value => value.trim() !== '');
   }, [currentVitals]);
 
-  // --- ENGLISH ALERT LOGIC ---
-  const handleAlertPress = () => {
-    let alerts: string[] = [];
+  // Submit to Backend
+  const saveAssessment = async () => {
+    if (!selectedPatientId) return null;
 
-    const temp = parseFloat(currentVitals.temperature);
-    if (temp > NORMAL_RANGES.temp.max) alerts.push(`High Temperature: ${temp}°C`);
-    if (temp < NORMAL_RANGES.temp.min && temp > 0) alerts.push(`Low Temperature: ${temp}°C`);
+    const payload = {
+      patient_id: parseInt(selectedPatientId, 10),
+      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      time: convertTo24h(currentTime),
+      day_no: 1, // Optional: logic could be added to calculate day_no
+      ...currentVitals
+    };
 
-    const hr = parseFloat(currentVitals.hr);
-    if ((hr > NORMAL_RANGES.hr.max || hr < NORMAL_RANGES.hr.min) && hr > 0) alerts.push(`Abnormal Heart Rate: ${hr} bpm`);
-
-    const spo2 = parseFloat(currentVitals.spo2);
-    if (spo2 < NORMAL_RANGES.spo2.min && spo2 > 0) alerts.push(`Low SpO2: ${spo2}%`);
-
-    if (alerts.length > 0) {
-      // Alert title and messages in English
-      Alert.alert("Vital Signs Alert!", alerts.join('\n'), [{ text: "OK" }]);
-    } else {
-      // Normal status in English
-      Alert.alert("Normal Vitals", "All current inputs are within the normal range.", [{ text: "OK" }]);
+    try {
+      const response = await apiClient.post('/vital-signs/', payload);
+      const data = response.data;
+      
+      if (data.assessment_alert) {
+        const isCritical = data.assessment_alert.includes('🔴') || data.assessment_alert.includes('CRITICAL');
+        const alertObj = {
+          title: isCritical ? 'CRITICAL ALERT' : 'VITAL SIGNS ASSESSMENT',
+          message: data.assessment_alert.replace(/ \| /g, '\n'),
+          type: isCritical ? 'error' : ('success' as const)
+        };
+        setBackendAlert(alertObj);
+      }
+      return data;
+    } catch (e) {
+      console.error('API Error saving vital signs:', e);
+      return null;
     }
   };
 
   const handleUpdateVital = (key: keyof Vitals, value: string) => {
     setCurrentVitals(prev => ({ ...prev, [key]: value }));
+    // Reset alert when user starts typing again
+    if (backendAlert) setBackendAlert(null);
   };
 
   const handleNextTime = () => {
-    if (isDataEntered && currentTimeIndex < TIME_SLOTS.length - 1) {
-      setVitalsHistory(prev => ({ ...prev, [currentTime]: currentVitals }));
-      setCurrentTimeIndex(prev => prev + 1);
-      setCurrentVitals(initialVitals);
+    // We remove the automatic saveAssessment here so the UI can handle it explicitly
+    setVitalsHistory(prev => ({ ...prev, [currentTime]: currentVitals }));
+    
+    if (currentTimeIndex < TIME_SLOTS.length - 1) {
+      const nextIndex = currentTimeIndex + 1;
+      setCurrentTimeIndex(nextIndex);
+      const historyForNext = vitalsHistory[TIME_SLOTS[nextIndex]];
+      setCurrentVitals(historyForNext || initialVitals);
+      setBackendAlert(null); // Clear alert for new time slot
     }
   };
 
@@ -83,16 +128,73 @@ export const useVitalSignsLogic = () => {
     return [...historicalData, currentPoint];
   };
 
+  const handleSearchPatient = (text: string) => {
+    setPatientName(text);
+    setFilteredPatients(
+      patients.filter(p =>
+        p.fullName.toLowerCase().includes(text.toLowerCase()),
+      ),
+    );
+    setShowDropdown(true);
+  };
+
+  const selectPatient = (p: any) => {
+    setPatientName(p.fullName);
+    setSelectedPatientId(p.id);
+    setShowDropdown(false);
+  };
+
+  const selectTime = (index: number) => {
+    setVitalsHistory(prev => ({ ...prev, [currentTime]: currentVitals }));
+    setCurrentTimeIndex(index);
+    const historyForSlot = vitalsHistory[TIME_SLOTS[index]];
+    setCurrentVitals(historyForSlot || initialVitals);
+  };
+
+  const reset = () => {
+    setPatientName('');
+    setSelectedPatientId(null);
+    setVitalsHistory({});
+    setCurrentVitals(initialVitals);
+    setCurrentTimeIndex(0);
+    setBackendAlert(null);
+  };
+
+  const updateDPIE = async (recordId: number, stepKey: string, text: string) => {
+    try {
+      const response = await apiClient.put(`/vital-signs/${recordId}/${stepKey}`, {
+        [stepKey]: text
+      });
+      return response.data;
+    } catch (err) {
+      console.error(`Error updating Vital Signs ${stepKey}:`, err);
+      return null;
+    }
+  };
+
   return {
     patientName,
-    setPatientName,
+    selectedPatientId,
+    filteredPatients,
+    showDropdown,
+    setShowDropdown,
+    handleSearchPatient,
+    selectPatient,
     vitals: currentVitals,
     handleUpdateVital,
     isDataEntered,
     currentTime,
+    currentTimeIndex,
     handleNextTime,
+    saveAssessment,
+    updateDPIE,
+    isMenuVisible,
+    setIsMenuVisible,
+    selectTime,
+    reset,
+    TIME_SLOTS,
     getChartData,
-    handleAlertPress,
+    currentAlert: backendAlert,
     vitalKeys: Object.keys(initialVitals) as (keyof Vitals)[],
   };
 };

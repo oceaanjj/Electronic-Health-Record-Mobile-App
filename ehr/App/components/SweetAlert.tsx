@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Modal, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, Modal as RNModal, TouchableOpacity, StyleSheet } from 'react-native';
 
 interface SweetAlertProps {
   visible: boolean;
@@ -27,7 +27,7 @@ const SweetAlert: React.FC<SweetAlertProps> = ({
   const icon = isError ? '✕' : '✓';
 
   return (
-    <Modal transparent visible={visible} animationType="fade">
+    <RNModal transparent visible={visible} animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.alertBox}>
           <View style={[styles.iconCircle, { backgroundColor: mainColor }]}>
@@ -56,7 +56,7 @@ const SweetAlert: React.FC<SweetAlertProps> = ({
           </View>
         </View>
       </View>
-    </Modal>
+    </RNModal>
   );
 };
 

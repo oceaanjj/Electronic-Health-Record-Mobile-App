@@ -47,7 +47,7 @@ export default function HomeScreen() {
         );
 
       case 'Vital Signs':
-        return <VitalSignsScreen />;
+        return <VitalSignsScreen onBack={() => setActiveTab('Grid')} />;
 
       case 'Register':
         return <RegisterPatient onBack={() => setActiveTab('Home')} />;
