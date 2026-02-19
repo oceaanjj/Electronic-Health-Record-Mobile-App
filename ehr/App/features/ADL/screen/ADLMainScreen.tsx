@@ -7,7 +7,6 @@ import {
   ScrollView,
   TextInput,
   SafeAreaView,
-  Alert,
   Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -15,6 +14,7 @@ import ADLInputCard from '../components/ADLInputCard';
 import ADLCDSSStepper from './ADPIEScreen';
 import apiClient from '../../../api/apiClient';
 import { useADL } from '../hook/useADL';
+import SweetAlert from '../../../components/SweetAlert';
 
 const THEME_GREEN = '#035022';
 
@@ -25,6 +25,23 @@ const ADLScreen = ({ onBack }: any) => {
   const [patients, setPatients] = useState<any[]>([]);
   const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
   const [showDropdown, setShowDropdown] = useState(false);
+
+  // SweetAlert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'error',
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   // UPDATED: Store full patient object to access admission_date
   const [selectedPatient, setSelectedPatient] = useState<any | null>(null);
@@ -97,7 +114,9 @@ const ADLScreen = ({ onBack }: any) => {
   }, [formData, selectedPatient, adlId]);
 
   const handleCDSSPress = async () => {
-    if (!selectedPatient) return Alert.alert('Error', 'Select patient first.');
+    if (!selectedPatient) {
+      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+    }
     try {
       const result = await saveADLAssessment({
         patient_id: selectedPatient.id,
@@ -109,21 +128,23 @@ const ADLScreen = ({ onBack }: any) => {
         setIsAdpieActive(true);
       }
     } catch (e) {
-      Alert.alert('Error', 'Could not initiate clinical support.');
+      showAlert('Error', 'Could not initiate clinical support.');
     }
   };
 
   const handleSave = async () => {
-    if (!selectedPatient) return Alert.alert('Error', 'Select patient first.');
+    if (!selectedPatient) {
+      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+    }
     try {
       const result = await saveADLAssessment({
         patient_id: selectedPatient.id,
         ...formData,
       });
       if (result.id) setAdlId(result.id);
-      Alert.alert('Success', 'ADL Assessment Saved!');
+      showAlert('Success', 'ADL Assessment Saved!', 'success');
     } catch (e) {
-      Alert.alert('Error', 'Submission failed.');
+      showAlert('Error', 'Submission failed.');
     }
   };
 
@@ -278,6 +299,15 @@ const ADLScreen = ({ onBack }: any) => {
         </View>
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <SweetAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={() => setAlertConfig({ ...alertConfig, visible: false })}
+        confirmText="OK"
+      />
     </SafeAreaView>
   );
 };

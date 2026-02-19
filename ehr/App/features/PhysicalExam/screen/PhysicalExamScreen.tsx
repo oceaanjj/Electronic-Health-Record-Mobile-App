@@ -7,7 +7,6 @@ import {
   ScrollView,
   TextInput,
   SafeAreaView,
-  Alert,
   Pressable,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -15,6 +14,7 @@ import ExamInputCard from '../components/PhysicalInputCard';
 import ADPIEScreen from './ADPIEScreen'; // Integrated Stepper
 import apiClient from '../../../api/apiClient';
 import { usePhysicalExam } from '../hook/usePhysicalExam';
+import SweetAlert from '../../../components/SweetAlert';
 
 const THEME_GREEN = '#035022';
 
@@ -31,6 +31,23 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
     null,
   );
+
+  // SweetAlert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'error',
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' = 'error') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
 
   const [examId, setExamId] = useState<number | null>(null);
   const [backendAlerts, setBackendAlerts] = useState<any>({});
@@ -90,8 +107,9 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   // NEW: CDSS Button Handler to trigger ADPIE Workflow
   const handleCDSSPress = async () => {
-    if (!selectedPatientId)
-      return Alert.alert('Error', 'Select patient first.');
+    if (!selectedPatientId) {
+      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+    }
 
     try {
       // Step 1: POST to /physical-exam/ to create the record
@@ -107,13 +125,14 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
       }
     } catch (e) {
       // Backend error check for 405 Method Not Allowed
-      Alert.alert('Error', 'Could not initiate clinical support.');
+      showAlert('Error', 'Could not initiate clinical support.');
     }
   };
 
   const handleSave = async () => {
-    if (!selectedPatientId)
-      return Alert.alert('Error', 'Select patient first.');
+    if (!selectedPatientId) {
+      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+    }
     try {
       const result = await saveAssessment({
         patient_id: selectedPatientId,
@@ -122,9 +141,9 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
       if (result.id || result.physical_exam_id) {
         setExamId(result.id || result.physical_exam_id);
       }
-      Alert.alert('Success', 'Assessment Saved!');
+      showAlert('Success', 'Assessment Saved!', 'success');
     } catch (e) {
-      Alert.alert('Error', 'Submission failed. Check backend (405 error).');
+      showAlert('Error', 'Submission failed. Check backend (405 error).');
     }
   };
 
@@ -276,6 +295,15 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <SweetAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={() => setAlertConfig({ ...alertConfig, visible: false })}
+        confirmText="OK"
+      />
     </SafeAreaView>
   );
 };

@@ -6,12 +6,12 @@ import {
   TouchableOpacity,
   TextInput,
   SafeAreaView,
-  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { usePhysicalExam } from '../hook/usePhysicalExam';
 import LinearGradient from 'react-native-linear-gradient';
 import CDSSGuidanceModal from '../../../components/CDSSGuidanceModal'; //
+import SweetAlert from '../../../components/SweetAlert';
 
 const THEME_GREEN = '#035022';
 const STEPS = [
@@ -27,6 +27,29 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
   const [text, setText] = useState('');
   const [alert, setAlert] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false); //
+
+  // SweetAlert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error';
+    onConfirm?: () => void;
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'error',
+  });
+
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' = 'error',
+    onConfirm?: () => void,
+  ) => {
+    setAlertConfig({ visible: true, title, message, type, onConfirm });
+  };
 
   // REAL-TIME CDSS: Debounced polling
   useEffect(() => {
@@ -52,11 +75,12 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
         setText('');
         setAlert(null);
       } else {
-        Alert.alert('Complete', 'ADPIE Workflow Finished.');
-        onBack();
+        showAlert('Complete', 'ADPIE Workflow Finished.', 'success', () => {
+          onBack();
+        });
       }
     } catch (e: any) {
-      Alert.alert('Error', 'Workflow update failed: NOT FOUND');
+      showAlert('Error', 'Workflow update failed: NOT FOUND');
     }
   };
 
@@ -184,6 +208,18 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         alertText={alert}
+      />
+
+      <SweetAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={() => {
+          setAlertConfig({ ...alertConfig, visible: false });
+          if (alertConfig.onConfirm) alertConfig.onConfirm();
+        }}
+        confirmText="OK"
       />
     </SafeAreaView>
   );

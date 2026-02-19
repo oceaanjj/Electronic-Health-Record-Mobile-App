@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import CDSSModal from '../../../components/CDSSModal';
+import SweetAlert from '../../../components/SweetAlert';
 
 interface ExamInputProps {
   label: string;
@@ -13,6 +14,7 @@ interface ExamInputProps {
 
 const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamInputProps) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
   
   // LOGIC: The bell is only active if the input is not empty
   const isBellActive = value.trim().length > 0;
@@ -24,7 +26,14 @@ const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamI
       <View style={styles.cardHeader}><Text style={styles.headerText}>{label}</Text></View>
       <View style={styles.content}>
         <View style={styles.badge}><Text style={styles.badgeText}>Findings</Text></View>
-        <View style={styles.inputArea}>
+        <Pressable 
+          style={styles.inputArea} 
+          onPress={() => {
+            if (disabled) {
+              setShowAlert(true);
+            }
+          }}
+        >
           <View style={styles.linesContainer}>
             {[...Array(3)].map((_, i) => <View key={i} style={styles.line} />)}
           </View>
@@ -35,8 +44,9 @@ const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamI
             multiline
             editable={!disabled}
             placeholder="Type findings..."
+            pointerEvents={disabled ? 'none' : 'auto'}
           />
-        </View>
+        </Pressable>
         
         {/* The Bell: Faded/Disabled by default, Gold/Active only when typing */}
         <TouchableOpacity 
@@ -61,6 +71,15 @@ const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamI
         onClose={() => setModalVisible(false)} 
         category={label} 
         alertText={alertText || "Analyzing findings for potential risks..."} 
+      />
+
+      <SweetAlert
+        visible={showAlert}
+        title="Patient Required"
+        message="Please select a patient first in the search bar before entering findings."
+        type="error"
+        onConfirm={() => setShowAlert(false)}
+        confirmText="OK"
       />
     </View>
   );
