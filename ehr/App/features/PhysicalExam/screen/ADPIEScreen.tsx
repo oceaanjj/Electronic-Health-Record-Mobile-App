@@ -1,16 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, TouchableOpacity, TextInput, SafeAreaView, Alert } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  TouchableOpacity,
+  TextInput,
+  SafeAreaView,
+  Alert,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { usePhysicalExam } from '../hook/usePhysicalExam';
 import LinearGradient from 'react-native-linear-gradient';
 import CDSSGuidanceModal from '../../../components/CDSSGuidanceModal'; //
 
-const THEME_GREEN = '#1B5E20';
+const THEME_GREEN = '#035022';
 const STEPS = [
   { id: 1, label: 'Diagnosis', key: 'diagnosis' },
   { id: 2, label: 'Planning', key: 'planning' },
   { id: 3, label: 'Intervention', key: 'intervention' },
-  { id: 4, label: 'Evaluation', key: 'evaluation' }
+  { id: 4, label: 'Evaluation', key: 'evaluation' },
 ];
 
 const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
@@ -28,7 +36,9 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
         const step = STEPS[currentIdx];
         const res = await updateStep(examId, step.key, text);
         if (res) setAlert((res as any)[`${step.key}_alert`]);
-      } catch (e) { console.error("Real-time Error:", e); }
+      } catch (e) {
+        console.error('Real-time Error:', e);
+      }
     }, 1000);
     return () => clearTimeout(timer);
   }, [text, currentIdx, examId]);
@@ -39,14 +49,14 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
       await updateStep(examId, step.key, text);
       if (currentIdx < 3) {
         setCurrentIdx(currentIdx + 1);
-        setText(''); 
+        setText('');
         setAlert(null);
       } else {
-        Alert.alert("Complete", "ADPIE Workflow Finished.");
+        Alert.alert('Complete', 'ADPIE Workflow Finished.');
         onBack();
       }
     } catch (e: any) {
-      Alert.alert("Error", "Workflow update failed: NOT FOUND");
+      Alert.alert('Error', 'Workflow update failed: NOT FOUND');
     }
   };
 
@@ -60,20 +70,49 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
       <View style={styles.patientSection}>
         <Text style={styles.patientLabel}>PATIENT NAME :</Text>
         <View style={styles.patientDisplay}>
-          <Text style={styles.patientNameText}>{patientName || "Select or type Patient name"}</Text>
+          <Text style={styles.patientNameText}>
+            {patientName || 'Select or type Patient name'}
+          </Text>
         </View>
       </View>
 
       <View style={styles.stepperContainer}>
-        <View style={styles.progressLine} /> 
-        <View style={[styles.progressLineActive, { width: `${(currentIdx / (STEPS.length - 1)) * 100 - 10}%` }]} />
+        <View style={styles.progressLine} />
+        <View
+          style={[
+            styles.progressLineActive,
+            { width: `${(currentIdx / (STEPS.length - 1)) * 100 - 10}%` },
+          ]}
+        />
         <View style={styles.stepperRow}>
           {STEPS.map((s, idx) => (
             <View key={s.id} style={styles.stepGroup}>
-              <View style={[styles.circle, idx <= currentIdx ? styles.activeCircle : styles.inactiveCircle]}>
-                <Text style={idx <= currentIdx ? styles.activeCircleText : styles.inactiveCircleText}>{s.id}</Text>
+              <View
+                style={[
+                  styles.circle,
+                  idx <= currentIdx
+                    ? styles.activeCircle
+                    : styles.inactiveCircle,
+                ]}
+              >
+                <Text
+                  style={
+                    idx <= currentIdx
+                      ? styles.activeCircleText
+                      : styles.inactiveCircleText
+                  }
+                >
+                  {s.id}
+                </Text>
               </View>
-              <Text style={[styles.stepLabel, idx === currentIdx && styles.activeStepLabel]}>{s.label}</Text>
+              <Text
+                style={[
+                  styles.stepLabel,
+                  idx === currentIdx && styles.activeStepLabel,
+                ]}
+              >
+                {s.label}
+              </Text>
             </View>
           ))}
         </View>
@@ -94,34 +133,54 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
             <Text style={styles.bannerTitle}>Clinical Support</Text>
             {/* Logic: If an alert exists, show 'Recommendation ready', otherwise show analyzing status */}
             <Text style={styles.bannerSubText}>
-              {alert ? "Recommendation ready" : "Analyzing findings..."}
+              {alert ? 'Recommendation ready' : 'Analyzing findings...'}
             </Text>
           </View>
         </View>
-        
-        <TouchableOpacity style={styles.viewBtn} onPress={() => setModalVisible(true)}>
+
+        <TouchableOpacity
+          style={styles.viewBtn}
+          onPress={() => setModalVisible(true)}
+        >
           <Text style={styles.viewBtnText}>VIEW</Text>
           <Icon name="play-arrow" size={14} color="#10B981" />
         </TouchableOpacity>
       </LinearGradient>
 
       <View style={styles.notepad}>
-        <View style={styles.notepadHeader}><Text style={styles.headerText}>{STEPS[currentIdx].label.toUpperCase()}</Text></View>
+        <View style={styles.notepadHeader}>
+          <Text style={styles.headerText}>
+            {STEPS[currentIdx].label.toUpperCase()}
+          </Text>
+        </View>
         <View style={styles.inputArea}>
-          <View style={styles.linesContainer}>{[...Array(10)].map((_, i) => <View key={i} style={styles.line} />)}</View>
-          <TextInput multiline style={styles.input} value={text} onChangeText={setText} />
+          <View style={styles.linesContainer}>
+            {[...Array(10)].map((_, i) => (
+              <View key={i} style={styles.line} />
+            ))}
+          </View>
+          <TextInput
+            multiline
+            style={styles.input}
+            value={text}
+            onChangeText={setText}
+          />
         </View>
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.backBtn} onPress={onBack}><Icon name="arrow-back" size={24} color="#666" /></TouchableOpacity>
+        <TouchableOpacity style={styles.backBtn} onPress={onBack}>
+          <Icon name="arrow-back" size={24} color="#666" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-          <Text style={styles.nextText}>{currentIdx === 3 ? "SUBMIT" : "NEXT"}</Text>
+          <Text style={styles.nextText}>
+            {currentIdx === 3 ? 'SUBMIT' : 'NEXT'}
+          </Text>
         </TouchableOpacity>
       </View>
 
       {/* REUSABLE COMPONENT CALL */}
-      <CDSSGuidanceModal 
+      <CDSSGuidanceModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         alertText={alert}
@@ -131,23 +190,75 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 25, marginBottom: 60},
-  header: {  marginTop: 40, marginBottom: 25 },
-  title: { fontSize: 28, color: THEME_GREEN, fontWeight: 'semibold', fontStyle: 'italic', fontFamily: 'serif' },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+    paddingHorizontal: 25,
+    marginBottom: 60,
+  },
+  header: { marginTop: 40, marginBottom: 25 },
+  title: {
+    fontSize: 35,
+    color: THEME_GREEN,
+    fontFamily: 'MinionPro-SemiboldItalic',
+  },
   subtitle: { fontSize: 10, color: '#999', letterSpacing: 0.5 },
   patientSection: { marginBottom: 20 },
-  patientLabel: { fontSize: 11, fontWeight: 'bold', color: THEME_GREEN, marginBottom: 8 },
-  patientDisplay: { borderRadius: 25, paddingHorizontal: 20, height: 45, justifyContent: 'center', borderWidth: 1, borderColor: '#F2F2F2' },
+  patientLabel: {
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: THEME_GREEN,
+    marginBottom: 8,
+  },
+  patientDisplay: {
+    borderRadius: 25,
+    paddingHorizontal: 20,
+    height: 45,
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F2F2F2',
+  },
   patientNameText: { color: '#CCC', fontSize: 13 },
-  stepperContainer: { marginBottom: 30, paddingHorizontal: 10, position: 'relative' },
+  stepperContainer: {
+    marginBottom: 30,
+    paddingHorizontal: 10,
+    position: 'relative',
+  },
   // Gray base line
-  progressLine: { position: 'absolute', top: 18, left: 40, right: 40, height: 2, backgroundColor: '#F3F4F6', zIndex: 0 },
+  progressLine: {
+    position: 'absolute',
+    top: 18,
+    left: 40,
+    right: 40,
+    height: 2,
+    backgroundColor: '#F3F4F6',
+    zIndex: 0,
+  },
   // Gold active line
-  progressLineActive: { position: 'absolute', top: 18, left: 40, height: 2, backgroundColor: '#FDE68A', zIndex: 1 },
-  stepperRow: { flexDirection: 'row', justifyContent: 'space-between', zIndex: 2 },
+  progressLineActive: {
+    position: 'absolute',
+    top: 18,
+    left: 40,
+    height: 2,
+    backgroundColor: '#FDE68A',
+    zIndex: 1,
+  },
+  stepperRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 2,
+  },
   stepGroup: { alignItems: 'center' },
   // Ensure circles have solid backgrounds to hide line segments beneath them
-  circle: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center', borderWidth: 0, zIndex: 3 },
+  circle: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 0,
+    zIndex: 3,
+  },
   activeCircle: { backgroundColor: '#FDE68A' },
   inactiveCircle: { backgroundColor: '#F3F4F6' },
   activeCircleText: { color: '#B45309', fontWeight: 'bold' },
@@ -211,16 +322,54 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
 
-  notepad: { flex: 1, backgroundColor: '#FFFBEB', borderRadius: 25, borderWidth: 1, borderColor: '#FEF3C7', overflow: 'hidden', marginBottom: 20 },
-  notepadHeader: { backgroundColor: '#FEF3C7', paddingVertical: 8, alignItems: 'center' },
+  notepad: {
+    flex: 1,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 25,
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
+  notepadHeader: {
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 8,
+    alignItems: 'center',
+  },
   headerText: { color: '#B45309', fontWeight: 'bold', fontSize: 11 },
   inputArea: { flex: 1, position: 'relative' },
-  input: { flex: 1, padding: 20, textAlignVertical: 'top', fontSize: 15, color: '#333', zIndex: 2 },
+  input: {
+    flex: 1,
+    padding: 20,
+    textAlignVertical: 'top',
+    fontSize: 15,
+    color: '#333',
+    zIndex: 2,
+  },
   linesContainer: { ...StyleSheet.absoluteFillObject, paddingTop: 40 },
   line: { height: 1, backgroundColor: '#FEF3C7', marginBottom: 30 },
-  footer: { flexDirection: 'row', justifyContent: 'space-between', paddingBottom: 30, alignItems: 'center' },
-  backBtn: { width: 50, height: 50, borderRadius: 25, backgroundColor: '#E1E8E1', justifyContent: 'center', alignItems: 'center' },
-  nextBtn: { backgroundColor: '#DCFCE7', paddingHorizontal: 65, paddingVertical: 15, borderRadius: 28, borderWidth: 1, borderColor: THEME_GREEN },
-  nextText: { color: THEME_GREEN, fontWeight: 'bold', fontSize: 14 }
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingBottom: 30,
+    alignItems: 'center',
+  },
+  backBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: '#E1E8E1',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  nextBtn: {
+    backgroundColor: '#DCFCE7',
+    paddingHorizontal: 65,
+    paddingVertical: 15,
+    borderRadius: 28,
+    borderWidth: 1,
+    borderColor: THEME_GREEN,
+  },
+  nextText: { color: THEME_GREEN, fontWeight: 'bold', fontSize: 14 },
 });
 export default ADPIEScreen;

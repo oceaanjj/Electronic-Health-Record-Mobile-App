@@ -133,9 +133,10 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
     if (result && result.success) {
       showAlert('Success', 'Image uploaded successfully', 'success');
     } else if (result && result.error) {
-      const msg = typeof result.error === 'string' 
-        ? result.error 
-        : JSON.stringify(result.error);
+      const msg =
+        typeof result.error === 'string'
+          ? result.error
+          : JSON.stringify(result.error);
       showAlert('Error', msg, 'error');
     }
   };
@@ -369,10 +370,9 @@ const styles = StyleSheet.create({
   backButton: { marginRight: 10 },
   titleContainer: { flex: 1 },
   titleText: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: '#14532d',
-    fontStyle: 'italic',
+    fontSize: 35,
+    color: '#035022',
+    fontFamily: 'MinionPro-SemiboldItalic',
   },
   dateText: { fontSize: 16, color: '#A1A1A1', marginTop: -5 },
   toggleContainer: {
