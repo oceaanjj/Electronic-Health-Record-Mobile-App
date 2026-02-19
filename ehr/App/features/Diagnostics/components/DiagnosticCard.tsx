@@ -80,7 +80,7 @@ const DiagnosticCard: React.FC<Props> = ({
 };
 
 const styles = StyleSheet.create({
-  cardWrapper: { width: '48%', marginBottom: 20 },
+  cardWrapper: { width: '100%', marginBottom: 20 },
   fullWidth: { width: '100%' },
   pillLabel: {
     backgroundColor: '#e6f9ed',

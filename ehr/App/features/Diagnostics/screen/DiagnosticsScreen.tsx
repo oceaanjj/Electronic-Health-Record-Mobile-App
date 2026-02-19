@@ -9,9 +9,14 @@ import {
   StatusBar,
   Pressable,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Ionicon from 'react-native-vector-icons/Ionicons';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_WIDTH = 333;
+const SIDE_PADDING = (SCREEN_WIDTH - CARD_WIDTH) / 4;
 
 import DiagnosticCard from '../components/DiagnosticCard';
 import apiClient, { BASE_URL } from '../../../api/apiClient';
@@ -24,7 +29,7 @@ interface DiagnosticsProps {
 }
 
 const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
 
   // Patient Search State (Copied logic from PhysicalExam)
   const [searchText, setSearchText] = useState('');
@@ -105,9 +110,6 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
       >
         {/* HEADER SECTION */}
         <View style={styles.headerRow}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Ionicon name="chevron-back" size={28} color="#14532d" />
-          </TouchableOpacity>
           <View style={styles.titleContainer}>
             <Text style={styles.titleText}>Diagnostics</Text>
             <Text style={styles.dateText}>{formatDate()}</Text>
@@ -189,29 +191,62 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
         )}
 
         {/* DIAGNOSTIC CARDS GRID/LIST */}
-        <View style={viewMode === 'grid' ? styles.gridWrap : styles.listWrap}>
-          {diagnosticTypes.map(item => {
-            const diagnostic = getDiagnosticForType(item.id);
-            const imageUrl = diagnostic
-              ? `${BASE_URL}/diagnostics/${diagnostic.diagnostic_id}/file`
-              : null;
+        {viewMode === 'list' ? (
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.horizontalScroll}
+            snapToInterval={CARD_WIDTH + 20} // Width + Margin
+            decelerationRate="fast"
+            snapToAlignment="center"
+          >
+            {diagnosticTypes.map(item => {
+              const diagnostic = getDiagnosticForType(item.id);
+              const imageUrl = diagnostic
+                ? `${BASE_URL}/diagnostics/${diagnostic.diagnostic_id}/file`
+                : null;
 
-            return (
-              <DiagnosticCard
-                key={item.id}
-                label={item.label}
-                viewMode={viewMode}
-                imageUrl={imageUrl}
-                onImport={() => handleImport(item.id)}
-                onDelete={() =>
-                  diagnostic && handleDelete(diagnostic.diagnostic_id)
-                }
-                disabled={!selectedPatientId || loading}
-              />
-            );
-          })}
-        </View>
+              return (
+                <View key={item.id} style={styles.horizontalCardLarge}>
+                  <DiagnosticCard
+                    label={item.label}
+                    viewMode={viewMode}
+                    imageUrl={imageUrl}
+                    onImport={() => handleImport(item.id)}
+                    onDelete={() =>
+                      diagnostic && handleDelete(diagnostic.diagnostic_id)
+                    }
+                    disabled={!selectedPatientId || loading}
+                  />
+                </View>
+              );
+            })}
+          </ScrollView>
+        ) : (
+          <View style={styles.gridWrap}>
+            {diagnosticTypes.map(item => {
+              const diagnostic = getDiagnosticForType(item.id);
+              const imageUrl = diagnostic
+                ? `${BASE_URL}/diagnostics/${diagnostic.diagnostic_id}/file`
+                : null;
 
+              return (
+                <View key={item.id} style={styles.gridCard}>
+                  <DiagnosticCard
+                    label={item.label}
+                    viewMode={viewMode}
+                    imageUrl={imageUrl}
+                    onImport={() => handleImport(item.id)}
+                    onDelete={() =>
+                      diagnostic && handleDelete(diagnostic.diagnostic_id)
+                    }
+                    disabled={!selectedPatientId || loading}
+                  />
+                </View>
+              );
+            })}
+          </View>
+        )}
         {/* SUBMIT BUTTON */}
         <TouchableOpacity
           style={[
@@ -288,10 +323,24 @@ const styles = StyleSheet.create({
     zIndex: 99,
   },
   dropItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
+  horizontalScroll: {
+    paddingLeft: SIDE_PADDING,
+    paddingRight: SIDE_PADDING,
+    paddingBottom: 10,
+    flexDirection: 'row',
+    gap: 20,
+  },
+  horizontalCardLarge: {
+    width: CARD_WIDTH,
+    marginRight: 20,
+  },
   gridWrap: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+  },
+  gridCard: {
+    width: '46%',
   },
   listWrap: { flexDirection: 'column' },
   submitButton: {
