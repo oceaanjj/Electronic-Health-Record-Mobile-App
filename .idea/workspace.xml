@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64dac766-4f9e-47dc-9efd-004b84659307" name="Changes" comment="" />
+    <list default="true" id="64dac766-4f9e-47dc-9efd-004b84659307" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/components/LabResultCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/components/LabResultCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/screen/LabValuesScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/LaboratoryValues/screen/LabValuesScreen.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/MedicalHistory/components/HistoryInputCard.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/MedicalHistory/components/HistoryInputCard.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/MedicalHistory/screen/MedicalHistoryScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/MedicalHistory/screen/MedicalHistoryScreen.tsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
