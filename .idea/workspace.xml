@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="NONE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="64dac766-4f9e-47dc-9efd-004b84659307" name="Changes" comment="" />
+    <list default="true" id="64dac766-4f9e-47dc-9efd-004b84659307" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/VitalSigns/hook/useVitalSignsLogic.ts" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/VitalSigns/hook/useVitalSignsLogic.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/ehr/App/features/VitalSigns/screen/VitalSignsScreen.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/ehr/App/features/VitalSigns/screen/VitalSignsScreen.tsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -16,12 +20,12 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/bryngrl/EHR.git",
-    "accountId": "6ecc126c-f291-495f-bc18-cc865de1b25c"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/bryngrl/EHR.git&quot;,
+    &quot;accountId&quot;: &quot;6ecc126c-f291-495f-bc18-cc865de1b25c&quot;
   }
-}]]></component>
+}</component>
   <component name="ProjectColorInfo">{
   &quot;customColor&quot;: &quot;&quot;,
   &quot;associatedIndex&quot;: 0
