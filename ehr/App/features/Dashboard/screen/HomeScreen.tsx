@@ -7,6 +7,7 @@ import CalendarScreen from '../../Calendar/screen/CalendarScreen';
 import BottomNav from '../../../components/navigation/BottomNav';
 import RegisterPatient from '../../PatientRegistration/component/RegisterPatient';
 import DemographicProfileScreen from '../../DemographicProfile/screen/DemographicProfileScreen';
+import VitalSignsScreen from '../../VitalSigns/screen/VitalSignsScreen';
 
 import MedicalHistoryScreen from '../../MedicalHistory/screen/MedicalHistoryScreen';
 import PhysicalExamScreen from '../../PhysicalExam/screen/PhysicalExamScreen';
@@ -45,6 +46,9 @@ export default function HomeScreen() {
             onSelectionChange={selecting => setIsSelecting(selecting)}
           />
         );
+
+      case 'Vital Signs':
+        return <VitalSignsScreen onBack={() => setActiveTab('Grid')} />;
 
       case 'Register':
         return <RegisterPatient onBack={() => setActiveTab('Home')} />;
