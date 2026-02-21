@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from datetime import date, time, datetime
 from typing import Optional, List
 from app.database.db import get_db
 from app.models.medication_administration.medication_administration import MedicationAdministration
@@ -19,8 +18,8 @@ class MedicationAdministrationCreate(BaseModel):
     route: Optional[str] = None
     frequency: Optional[str] = None
     comments: Optional[str] = None
-    time: Optional[time] = None
-    date: Optional[date] = None
+    time: Optional[str] = None  # HH:MM:SS format
+    date: Optional[str] = None   # YYYY-MM-DD format
 
 
 class MedicationAdministrationUpdate(BaseModel):
@@ -30,8 +29,8 @@ class MedicationAdministrationUpdate(BaseModel):
     route: Optional[str] = None
     frequency: Optional[str] = None
     comments: Optional[str] = None
-    time: Optional[time] = None
-    date: Optional[date] = None
+    time: Optional[str] = None  # HH:MM:SS format
+    date: Optional[str] = None   # YYYY-MM-DD format
 
 
 class MedicationAdministrationRead(BaseModel):
@@ -43,10 +42,10 @@ class MedicationAdministrationRead(BaseModel):
     route: Optional[str] = None
     frequency: Optional[str] = None
     comments: Optional[str] = None
-    time: Optional[time] = None
-    date: Optional[date] = None
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
+    time: Optional[str] = None  # HH:MM:SS format
+    date: Optional[str] = None   # YYYY-MM-DD format
+    created_at: Optional[str] = None
+    updated_at: Optional[str] = None
     
     model_config = ConfigDict(from_attributes=True)
 
