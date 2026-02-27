@@ -15,6 +15,7 @@ import ADLMainScreen from '../../ADL/screen/ADLMainScreen';
 import LabValuesScreen from '../../LaboratoryValues/screen/LabValuesScreen';
 import DiagnosticsScreen from '../../Diagnostics/screen/DiagnosticsScreen';
 import MedAdministrationScreen from '../../MedAdministration/screen/MedAdministrationScreen';
+import MedicalReconciliationScreen from '../../medicalReconciliation/screen/MedicalReconciliationScreen';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
@@ -35,8 +36,6 @@ export default function HomeScreen() {
         return <DashboardGrid onPressItem={handleNavigation} />;
       case 'Calendar':
         return <CalendarScreen />;
-      case 'Register':
-        return <RegisterPatient onBack={() => setActiveTab('Home')} />;
 
       // Pass the onSelectionChange prop to detect when to hide BottomNav
       case 'Demographic Profile':
@@ -64,6 +63,10 @@ export default function HomeScreen() {
         return <DiagnosticsScreen onBack={() => setActiveTab('Grid')} />;
       case 'Medication Administration':
         return <MedAdministrationScreen onBack={() => setActiveTab('Grid')} />;
+      case 'Medical Reconciliation':
+        return (
+          <MedicalReconciliationScreen onBack={() => setActiveTab('Grid')} />
+        );
 
       default:
         return <DashboardSummary onNavigate={handleNavigation} />;
