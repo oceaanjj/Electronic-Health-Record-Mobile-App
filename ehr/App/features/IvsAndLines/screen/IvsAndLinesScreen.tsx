@@ -1,4 +1,3 @@
-// File: src/screens/IvsAndLinesScreen.tsx (TSX for main screen)
 import React, { useState } from 'react';
 import {
   StyleSheet,
@@ -20,13 +19,21 @@ interface IvsAndLinesScreenProps {
 
 const IvsAndLinesScreen: React.FC<IvsAndLinesScreenProps> = ({ onBack }) => {
   // Use the custom hook
-  const { 
-    patientName, setPatientName, setSelectedPatientId, selectedPatientId,
-    ivFluid, setIvFluid,
-    rate, setRate,
-    site, setSite,
-    status, setStatus,
-    handleSubmit, isSubmitting
+  const {
+    patientName,
+    setPatientName,
+    setSelectedPatientId,
+    selectedPatientId,
+    ivFluid,
+    setIvFluid,
+    rate,
+    setRate,
+    site,
+    setSite,
+    status,
+    setStatus,
+    handleSubmit,
+    isSubmitting,
   } = useIvsAndLinesData();
 
   // SweetAlert State
@@ -51,45 +58,49 @@ const IvsAndLinesScreen: React.FC<IvsAndLinesScreenProps> = ({ onBack }) => {
     });
   };
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' | 'warning' | 'info' = 'info',
+  ) => {
     setAlertConfig({ visible: true, title, message, type });
   };
 
   const showDisabledAlert = () => {
     showAlert(
-        'Patient Required',
-        'Please select a patient first in the search bar before filling out the form.',
-        'error'
+      'Patient Required',
+      'Please select a patient first in the search bar before filling out the form.',
+      'error',
     );
   };
 
   const handleFormSubmit = async () => {
     if (!selectedPatientId) {
-        showDisabledAlert();
-        return;
+      showDisabledAlert();
+      return;
     }
 
     try {
-        const result = await handleSubmit();
-        if (result.action === 'update') {
-          showAlert(
-              'Edit Success',
-              'IVs and Lines record updated successfully!',
-              'success'
-          );
-        } else {
-          showAlert(
-              'Success',
-              'IVs and Lines record saved successfully!',
-              'success'
-          );
-        }
-    } catch (error: any) {
+      const result = await handleSubmit();
+      if (result.action === 'update') {
         showAlert(
-            'Submission Failed',
-            error.message || 'Something went wrong. Please try again.',
-            'error'
+          'Edit Success',
+          'IVs and Lines record updated successfully!',
+          'success',
         );
+      } else {
+        showAlert(
+          'Success',
+          'IVs and Lines record saved successfully!',
+          'success',
+        );
+      }
+    } catch (error: any) {
+      showAlert(
+        'Submission Failed',
+        error.message || 'Something went wrong. Please try again.',
+        'error',
+      );
     }
   };
 
@@ -117,49 +128,52 @@ const IvsAndLinesScreen: React.FC<IvsAndLinesScreenProps> = ({ onBack }) => {
         />
 
         {/* Form Sections */}
-        <DataCard 
-            badgeText="IV FLUID" 
-            value={ivFluid}
-            onChangeText={setIvFluid}
-            placeholder="e.g., D5W, NS, LR"
-            disabled={!selectedPatientId}
-            onDisabledPress={showDisabledAlert}
+        <DataCard
+          badgeText="IV FLUID"
+          value={ivFluid}
+          onChangeText={setIvFluid}
+          placeholder="e.g., D5W, NS, LR"
+          disabled={!selectedPatientId}
+          onDisabledPress={showDisabledAlert}
         />
-        <DataCard 
-            badgeText="RATE" 
-            value={rate}
-            onChangeText={setRate}
-            placeholder="e.g., 100 ml/hr"
-            disabled={!selectedPatientId}
-            onDisabledPress={showDisabledAlert}
+        <DataCard
+          badgeText="RATE"
+          value={rate}
+          onChangeText={setRate}
+          placeholder="e.g., 100 ml/hr"
+          disabled={!selectedPatientId}
+          onDisabledPress={showDisabledAlert}
         />
-        <DataCard 
-            badgeText="SITE" 
-            value={site}
-            onChangeText={setSite}
-            placeholder="e.g., Left hand"
-            disabled={!selectedPatientId}
-            onDisabledPress={showDisabledAlert}
+        <DataCard
+          badgeText="SITE"
+          value={site}
+          onChangeText={setSite}
+          placeholder="e.g., Left hand"
+          disabled={!selectedPatientId}
+          onDisabledPress={showDisabledAlert}
         />
-        <DataCard 
-            badgeText="STATUS" 
-            value={status}
-            onChangeText={setStatus}
-            placeholder="e.g., Running"
-            disabled={!selectedPatientId}
-            onDisabledPress={showDisabledAlert}
+        <DataCard
+          badgeText="STATUS"
+          value={status}
+          onChangeText={setStatus}
+          placeholder="e.g., Running"
+          disabled={!selectedPatientId}
+          onDisabledPress={showDisabledAlert}
         />
 
         {/* Submit Button */}
-        <TouchableOpacity 
-          style={[styles.submitButton, (isSubmitting || !selectedPatientId) && { opacity: 0.7 }]} 
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            (isSubmitting || !selectedPatientId) && { opacity: 0.7 },
+          ]}
           onPress={handleFormSubmit}
           disabled={isSubmitting}
         >
           {isSubmitting ? (
-              <ActivityIndicator color="#227145" />
+            <ActivityIndicator color="#227145" />
           ) : (
-              <Text style={styles.submitButtonText}>SUBMIT</Text>
+            <Text style={styles.submitButtonText}>SUBMIT</Text>
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -187,7 +201,7 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 25,
-    paddingTop: 20, 
+    paddingTop: 20,
     paddingBottom: 100,
   },
   headerContainer: {

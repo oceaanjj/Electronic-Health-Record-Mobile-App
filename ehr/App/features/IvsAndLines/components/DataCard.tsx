@@ -29,12 +29,12 @@ const DataCard: React.FC<DataCardProps> = ({
       </View>
 
       {/* Input Section: Simulating the horizontal lines from the image */}
-      <Pressable 
+      <Pressable
         style={styles.inputContainer}
         onPress={() => {
-            if (disabled && onDisabledPress) {
-                onDisabledPress();
-            }
+          if (disabled && onDisabledPress) {
+            onDisabledPress();
+          }
         }}
       >
         <TextInput
