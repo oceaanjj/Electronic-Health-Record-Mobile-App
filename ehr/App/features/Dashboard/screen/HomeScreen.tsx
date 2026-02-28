@@ -16,6 +16,7 @@ import LabValuesScreen from '../../LaboratoryValues/screen/LabValuesScreen';
 import DiagnosticsScreen from '../../Diagnostics/screen/DiagnosticsScreen';
 import MedAdministrationScreen from '../../MedAdministration/screen/MedAdministrationScreen';
 import MedicalReconciliationScreen from '../../medicalReconciliation/screen/MedicalReconciliationScreen';
+import IntakeAndOutputScreen from '../../IntakeAndOutput/screen/IntakeAndOutputScreen';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
@@ -67,6 +68,8 @@ export default function HomeScreen() {
         return (
           <MedicalReconciliationScreen onBack={() => setActiveTab('Grid')} />
         );
+      case 'Intake and Output':
+        return <IntakeAndOutputScreen onBack={() => setActiveTab('Grid')} />;
 
       default:
         return <DashboardSummary onNavigate={handleNavigation} />;
