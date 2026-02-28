@@ -2,3 +2,4 @@ ehr/android/local.properties
 ehr/.env
 ehr/App/api/apiClient.ts
 ehr/Seed.js
+.idea\workspace.xml
