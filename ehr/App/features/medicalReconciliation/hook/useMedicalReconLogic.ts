@@ -28,7 +28,11 @@ export const useMedicalReconLogic = () => {
   const [stageIndex, setStageIndex] = useState(0);
   const [patientId, setPatientId] = useState<number | null>(null);
   const [patientName, setPatientName] = useState('');
-  const [patients, setPatients] = useState<Patient[]>([]);
+  const [searchText, setSearchText] = useState('');
+  const [patients, setPatients] = useState<any[]>([]);
+  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [reconData, setReconData] = useState<Record<number, ReconEntry>>({
@@ -52,13 +56,41 @@ export const useMedicalReconLogic = () => {
     setIsLoading(true);
     try {
       const response = await apiClient.get('/patients/');
-      setPatients(response.data || []);
+      const raw = response.data || [];
+      const normalized = raw.map((p: any) => ({
+        ...p,
+        id: p.patient_id ?? p.id ?? null,
+        fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+      }));
+      setPatients(normalized);
     } catch (error) {
       console.error('Error fetching patients:', error);
     } finally {
       setIsLoading(false);
     }
   }, []);
+
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    if (text.length > 0) {
+      const filtered = patients.filter(p =>
+        p.fullName.toLowerCase().includes(text.toLowerCase()),
+      );
+      setFilteredPatients(filtered);
+      setShowDropdown(true);
+    } else {
+      setShowDropdown(false);
+      setPatientId(null);
+      setPatientName('');
+    }
+  };
+
+  const selectPatient = (patient: any) => {
+    setSearchText(patient.fullName);
+    setPatientName(patient.fullName);
+    setPatientId(patient.id);
+    setShowDropdown(false);
+  };
 
   // VALIDATION: Hindi makaka-next kung walang maski isang input
   const isDataEntered = useMemo(() => {
@@ -76,9 +108,9 @@ export const useMedicalReconLogic = () => {
     if (!patientId) {
       setAlertConfig({
         visible: true,
-        title: 'Selection Required',
-        message: 'Please select a patient first',
-        type: 'warning'
+        title: 'Patient Required',
+        message: 'Please select a patient first in the search bar.',
+        type: 'error'
       });
       return;
     }
@@ -159,6 +191,26 @@ export const useMedicalReconLogic = () => {
     setAlertConfig(prev => ({ ...prev, visible: false }));
   };
 
+  const triggerPatientAlert = useCallback(() => {
+    setAlertConfig({
+      visible: true,
+      title: 'Patient Required',
+      message: 'Please select a patient first in the search bar.',
+      type: 'error'
+    });
+  }, []);
+
+  const resetForm = useCallback(() => {
+    setStageIndex(0);
+    setPatientId(null);
+    setPatientName('');
+    setReconData({
+      0: { ...initialEntry },
+      1: { ...initialEntry },
+      2: { ...initialEntry }
+    });
+  }, []);
+
   return {
     stageIndex,
     currentStage,
@@ -176,6 +228,16 @@ export const useMedicalReconLogic = () => {
     isDataEntered,
     isLastStage: stageIndex === RECON_STAGES.length - 1,
     alertConfig,
-    closeAlert
+    closeAlert,
+    triggerPatientAlert,
+    resetForm,
+    setStageIndex,
+    RECON_STAGES,
+    searchText,
+    handleSearch,
+    filteredPatients,
+    showDropdown,
+    setShowDropdown,
+    selectPatient
   };
 };

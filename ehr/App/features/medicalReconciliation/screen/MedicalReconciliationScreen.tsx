@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, FlatList, Modal } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, StatusBar, ActivityIndicator, FlatList, Modal, TextInput, Pressable } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MedicalReconCard from '../components/MedicalReconCard';
-import { useMedicalReconLogic, Patient } from '../hook/useMedicalReconLogic';
+import { useMedicalReconLogic } from '../hook/useMedicalReconLogic';
 import SweetAlert from '../../../components/SweetAlert';
 
 interface MedicalReconciliationProps {
@@ -18,10 +18,14 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({ onB
     isLoading, isSubmitting,
     handleUpdate,
     handleNext, isDataEntered, isLastStage,
-    alertConfig, closeAlert
+    alertConfig, closeAlert, resetForm,
+    triggerPatientAlert,
+    setStageIndex, RECON_STAGES,
+    searchText, handleSearch, filteredPatients, 
+    showDropdown, setShowDropdown, selectPatient
   } = useMedicalReconLogic();
 
-  const [showPatientModal, setShowPatientModal] = useState(false);
+  const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [currentDate, setCurrentDate] = useState('');
 
   useEffect(() => {
@@ -40,12 +44,6 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({ onB
     return "Reason for change";
   };
 
-  const handleSelectPatient = (patient: Patient) => {
-    setPatientId(patient.patient_id);
-    setPatientName(`${patient.last_name}, ${patient.first_name}`);
-    setShowPatientModal(false);
-  };
-
   const handleAlertConfirm = () => {
     if (alertConfig.type === 'success') {
       onBack();
@@ -53,19 +51,15 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({ onB
     closeAlert();
   };
 
-  const renderPatientItem = ({ item }: { item: Patient }) => (
-    <TouchableOpacity 
-      style={styles.patientItem} 
-      onPress={() => handleSelectPatient(item)}
-    >
-      <Text style={styles.patientItemText}>{item.last_name}, {item.first_name} (ID: {item.patient_id})</Text>
-    </TouchableOpacity>
-  );
+  const handleSelectStage = (index: number) => {
+    setStageIndex(index);
+    setIsMenuVisible(false);
+  };
 
   return (
     <SafeAreaView style={styles.root}>
       <StatusBar barStyle="dark-content" />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {/* HEADER Section */}
         <View style={styles.header}>
@@ -73,22 +67,32 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({ onB
             <Text style={styles.title}>Medical{"\n"}Reconciliation</Text>
             <Text style={styles.subDate}>{currentDate}</Text>
           </View>
-          <TouchableOpacity onPress={() => {/* More options if needed */}}>
+          <TouchableOpacity onPress={() => setIsMenuVisible(true)}>
             <Icon name="more-vert" size={35} color="#035022" />
           </TouchableOpacity>
         </View>
 
         <View style={styles.inputGroup}>
           <Text style={styles.fieldLabel}>PATIENT NAME :</Text>
-          <TouchableOpacity 
-            style={styles.pillInputContainer} 
-            onPress={() => setShowPatientModal(true)}
-          >
-            <Text style={[styles.pillInputText, !patientName && styles.placeholderText]}>
-              {patientName || "Select Patient"}
-            </Text>
-            <Icon name="arrow-drop-down" size={24} color="#999" />
-          </TouchableOpacity>
+          <TextInput 
+            style={styles.pillInput} 
+            placeholder="Select Patient" 
+            value={searchText} 
+            onChangeText={handleSearch} 
+          />
+          {showDropdown && filteredPatients.length > 0 && (
+            <View style={styles.dropdown}>
+              {filteredPatients.map(p => (
+                <Pressable
+                  key={p.id}
+                  onPress={() => selectPatient(p)}
+                  style={styles.dropItem}
+                >
+                  <Text>{p.fullName}</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* STAGE Indicator */}
@@ -96,18 +100,22 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({ onB
           <Text style={styles.stageText}>{currentStage}</Text>
         </View>
 
-        {/* INPUT Cards Flow */}
-        <MedicalReconCard label="Medication" value={values.med} onChangeText={(v: string) => handleUpdate('med', v)} />
-        <MedicalReconCard label="Dose" value={values.dose} onChangeText={(v: string) => handleUpdate('dose', v)} />
-        <MedicalReconCard label="Route" value={values.route} onChangeText={(v: string) => handleUpdate('route', v)} />
-        <MedicalReconCard label="Frequency" value={values.freq} onChangeText={(v: string) => handleUpdate('freq', v)} />
-        
-        {/* Indication is hidden in Stage 3 */}
-        {stageIndex !== 2 && (
-          <MedicalReconCard label="Indication" value={values.indication} onChangeText={(v: string) => handleUpdate('indication', v)} />
-        )}
+        {/* INPUT Cards Flow - Wrapped in Pressable for validation */}
+        <Pressable onPress={() => !patientId && triggerPatientAlert()}>
+          <View pointerEvents={patientId ? 'auto' : 'none'} style={{ opacity: patientId ? 1 : 0.6 }}>
+            <MedicalReconCard label="Medication" value={values.med} onChangeText={(v: string) => handleUpdate('med', v)} />
+            <MedicalReconCard label="Dose" value={values.dose} onChangeText={(v: string) => handleUpdate('dose', v)} />
+            <MedicalReconCard label="Route" value={values.route} onChangeText={(v: string) => handleUpdate('route', v)} />
+            <MedicalReconCard label="Frequency" value={values.freq} onChangeText={(v: string) => handleUpdate('freq', v)} />
+            
+            {/* Indication is hidden in Stage 3 */}
+            {stageIndex !== 2 && (
+              <MedicalReconCard label="Indication" value={values.indication} onChangeText={(v: string) => handleUpdate('indication', v)} />
+            )}
 
-        <MedicalReconCard label={getExtraLabel()} value={values.extra} onChangeText={(v: string) => handleUpdate('extra', v)} />
+            <MedicalReconCard label={getExtraLabel()} value={values.extra} onChangeText={(v: string) => handleUpdate('extra', v)} />
+          </View>
+        </Pressable>
 
         {/* FOOTER: Disabled until data is entered or while submitting */}
         <TouchableOpacity 
@@ -127,32 +135,33 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({ onB
 
       </ScrollView>
 
-      {/* Patient Selection Modal */}
-      <Modal
-        visible={showPatientModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowPatientModal(false)}
-      >
+      {/* Options Menu Modal */}
+      <Modal transparent visible={isMenuVisible} animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Select Patient</Text>
-              <TouchableOpacity onPress={() => setShowPatientModal(false)}>
-                <Icon name="close" size={24} color="#333" />
-              </TouchableOpacity>
-            </View>
-            {isLoading ? (
-              <ActivityIndicator size="large" color="#29A539" style={{ margin: 20 }} />
-            ) : (
-              <FlatList
-                data={patients}
-                keyExtractor={(item) => item.patient_id.toString()}
-                renderItem={renderPatientItem}
-                ListEmptyComponent={<Text style={styles.emptyText}>No patients found.</Text>}
-                style={styles.patientList}
-              />
-            )}
+          <View style={styles.menuContainer}>
+            <Text style={styles.menuTitle}>SELECT STAGE</Text>
+            
+            <FlatList 
+              data={RECON_STAGES}
+              keyExtractor={(item, index) => index.toString()}
+              renderItem={({ item, index }) => (
+                <TouchableOpacity 
+                  style={styles.menuItem}
+                  onPress={() => handleSelectStage(index)}
+                >
+                  <Text style={[styles.menuItemText, stageIndex === index && styles.activeMenuText]}>
+                    {item}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            />
+
+            <TouchableOpacity 
+              style={styles.closeMenuBtn}
+              onPress={() => setIsMenuVisible(false)}
+            >
+              <Text style={styles.closeMenuText}>CLOSE</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -164,7 +173,6 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({ onB
         message={alertConfig.message}
         type={alertConfig.type}
         onConfirm={handleAlertConfirm}
-        onCancel={closeAlert}
       />
 
       {/* BOTTOM NAV */}
@@ -189,21 +197,22 @@ const styles = StyleSheet.create({
   },
   subDate: { color: '#999', fontSize: 13 },
   menuDots: { fontSize: 32, color: '#035022' },
-  inputGroup: { marginBottom: 20 },
+  inputGroup: { marginBottom: 20, zIndex: 100 },
   fieldLabel: { color: '#29A539', fontWeight: 'bold', fontSize: 13, marginBottom: 5 },
-  pillInputContainer: { 
-    borderWidth: 1, 
-    borderColor: '#F0F0F0', 
-    borderRadius: 25, 
-    height: 45, 
-    paddingHorizontal: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FAFAFA'
+  pillInput: { borderWidth: 1, borderColor: '#F0F0F0', borderRadius: 25, height: 45, paddingHorizontal: 20, fontSize: 14, color: '#333' },
+  dropdown: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+    elevation: 3,
+    position: 'absolute',
+    top: 70,
+    left: 0,
+    right: 0,
+    zIndex: 99,
   },
-  pillInputText: { fontSize: 14, color: '#333' },
-  placeholderText: { color: '#999' },
+  dropItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
   stageTab: { backgroundColor: '#E5FFE8', paddingVertical: 10, borderRadius: 20, alignItems: 'center', marginBottom: 20 },
   stageText: { color: '#29A539', fontWeight: 'bold', fontSize: 12 },
   actionBtn: { backgroundColor: '#E5FFE8', height: 50, borderRadius: 25, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 10, borderWidth: 1, borderColor: '#C8E6C9' },
@@ -215,15 +224,15 @@ const styles = StyleSheet.create({
   fab: { width: 60, height: 60, borderRadius: 30, backgroundColor: '#FFF', elevation: 5, marginTop: -35, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#EEE' },
   plusSign: { fontSize: 24, color: '#29A539', fontWeight: 'bold' },
   
-  // Modal Styles
+  // Menu Modal Styles
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center' },
-  modalContent: { backgroundColor: '#FFF', width: '90%', maxHeight: '80%', borderRadius: 20, padding: 20, elevation: 5 },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  modalTitle: { fontSize: 18, fontWeight: 'bold', color: '#035022' },
-  patientList: { marginBottom: 10 },
-  patientItem: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#EEE' },
-  patientItemText: { fontSize: 16, color: '#333' },
-  emptyText: { textAlign: 'center', color: '#999', marginVertical: 20 }
+  menuContainer: { width: '85%', backgroundColor: '#FFF', borderRadius: 25, padding: 25, maxHeight: '80%' },
+  menuTitle: { fontSize: 18, fontWeight: 'bold', color: '#035022', marginBottom: 20, textAlign: 'center' },
+  menuItem: { paddingVertical: 15, borderBottomWidth: 1, borderBottomColor: '#F0F0F0' },
+  menuItemText: { fontSize: 16, color: '#333', textAlign: 'center' },
+  activeMenuText: { color: '#29A539', fontWeight: 'bold' },
+  closeMenuBtn: { marginTop: 20, backgroundColor: '#E5FFE8', paddingVertical: 12, borderRadius: 20, alignItems: 'center' },
+  closeMenuText: { color: '#035022', fontWeight: 'bold' }
 });
 
 export default MedicalReconciliationScreen;
