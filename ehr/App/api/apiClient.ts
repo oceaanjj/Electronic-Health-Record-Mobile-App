@@ -9,7 +9,6 @@ const host = PHYSICAL_DEVICE_HOST;
 export const BASE_URL = `http://${host}:${BACKEND_PORT}`;
 
 const apiClient = axios.create({
-  // Adding /api if your FastAPI routes are prefixed with /api
   baseURL: BASE_URL,
   headers: {
     'Content-Type': 'application/json',

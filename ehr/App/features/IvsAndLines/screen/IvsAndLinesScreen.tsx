@@ -1,16 +1,18 @@
 // File: src/screens/IvsAndLinesScreen.tsx (TSX for main screen)
-import React from 'react';
+import React, { useState } from 'react';
 import {
   StyleSheet,
   View,
   Text,
-  TextInput,
   ScrollView,
+  SafeAreaView,
+  ActivityIndicator,
   TouchableOpacity,
-  Image,
 } from 'react-native';
-import useIvsAndLinesData from '../hook/useIvsAndLinesData'; // Assuming same directory for simplicity
+import useIvsAndLinesData from '../hook/useIvsAndLinesData';
 import DataCard from '../components/DataCard';
+import PatientSearchBar from '../../../components/PatientSearchBar';
+import SweetAlert from '../../../components/SweetAlert';
 
 interface IvsAndLinesScreenProps {
   onBack: () => void;
@@ -18,53 +20,160 @@ interface IvsAndLinesScreenProps {
 
 const IvsAndLinesScreen: React.FC<IvsAndLinesScreenProps> = ({ onBack }) => {
   // Use the custom hook
-  const { patientName, setPatientName, handleSubmit } = useIvsAndLinesData();
+  const { 
+    patientName, setPatientName, setSelectedPatientId, selectedPatientId,
+    ivFluid, setIvFluid,
+    rate, setRate,
+    site, setSite,
+    status, setStatus,
+    handleSubmit, isSubmitting
+  } = useIvsAndLinesData();
 
-  const handleNavPress = (index: number) => {
-    console.log('Pressed nav item:', index);
-    // Add logic to change screens or manage state
+  // SweetAlert State
+  const [alertConfig, setAlertConfig] = useState<{
+    visible: boolean;
+    title: string;
+    message: string;
+    type: 'success' | 'error' | 'warning' | 'info';
+  }>({
+    visible: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
+
+  const formatDate = () => {
+    const date = new Date();
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      month: 'long',
+      day: 'numeric',
+    });
+  };
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setAlertConfig({ visible: true, title, message, type });
+  };
+
+  const showDisabledAlert = () => {
+    showAlert(
+        'Patient Required',
+        'Please select a patient first in the search bar before filling out the form.',
+        'error'
+    );
+  };
+
+  const handleFormSubmit = async () => {
+    if (!selectedPatientId) {
+        showDisabledAlert();
+        return;
+    }
+
+    try {
+        const result = await handleSubmit();
+        if (result.action === 'update') {
+          showAlert(
+              'Edit Success',
+              'IVs and Lines record updated successfully!',
+              'success'
+          );
+        } else {
+          showAlert(
+              'Success',
+              'IVs and Lines record saved successfully!',
+              'success'
+          );
+        }
+    } catch (error: any) {
+        showAlert(
+            'Submission Failed',
+            error.message || 'Something went wrong. Please try again.',
+            'error'
+        );
+    }
   };
 
   return (
-    <View style={styles.mainContainer}>
+    <SafeAreaView style={styles.mainContainer}>
       <ScrollView
         style={styles.container}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="always"
       >
         {/* Header and Date */}
         <View style={styles.headerContainer}>
-          <TouchableOpacity onPress={onBack} style={styles.backButton}>
-            <Text style={styles.backButtonText}>←</Text>
-          </TouchableOpacity>
           <Text style={styles.titleText}>IVs and Lines</Text>
-          <Text style={styles.dateText}>Monday, January 26</Text>
+          <Text style={styles.dateText}>{formatDate()}</Text>
         </View>
 
         {/* Patient Name Section */}
-        <View style={styles.patientNameSection}>
-          <Text style={styles.patientLabel}>PATIENT NAME :</Text>
-          <TextInput
-            style={styles.patientInput}
-            value={patientName}
-            onChangeText={setPatientName}
-            placeholder="Select or type Patient name"
-            placeholderTextColor="#D1D1D1"
-          />
-        </View>
+        <PatientSearchBar
+          onPatientSelect={(id, name) => {
+            setSelectedPatientId(id);
+            setPatientName(name);
+          }}
+          initialPatientName={patientName}
+        />
 
-        {/* Form Sections using DataCard component */}
-        <DataCard badgeText="IV FLUID" />
-        <DataCard badgeText="RATE" />
-        <DataCard badgeText="SITE" />
-        <DataCard badgeText="STATUS" />
+        {/* Form Sections */}
+        <DataCard 
+            badgeText="IV FLUID" 
+            value={ivFluid}
+            onChangeText={setIvFluid}
+            placeholder="e.g., D5W, NS, LR"
+            disabled={!selectedPatientId}
+            onDisabledPress={showDisabledAlert}
+        />
+        <DataCard 
+            badgeText="RATE" 
+            value={rate}
+            onChangeText={setRate}
+            placeholder="e.g., 100 ml/hr"
+            disabled={!selectedPatientId}
+            onDisabledPress={showDisabledAlert}
+        />
+        <DataCard 
+            badgeText="SITE" 
+            value={site}
+            onChangeText={setSite}
+            placeholder="e.g., Left hand"
+            disabled={!selectedPatientId}
+            onDisabledPress={showDisabledAlert}
+        />
+        <DataCard 
+            badgeText="STATUS" 
+            value={status}
+            onChangeText={setStatus}
+            placeholder="e.g., Running"
+            disabled={!selectedPatientId}
+            onDisabledPress={showDisabledAlert}
+        />
 
         {/* Submit Button */}
-        <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-          <Text style={styles.submitButtonText}>SUBMIT</Text>
+        <TouchableOpacity 
+          style={[styles.submitButton, (isSubmitting || !selectedPatientId) && { opacity: 0.7 }]} 
+          onPress={handleFormSubmit}
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? (
+              <ActivityIndicator color="#227145" />
+          ) : (
+              <Text style={styles.submitButtonText}>SUBMIT</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
-    </View>
+
+      <SweetAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        type={alertConfig.type}
+        onConfirm={() => setAlertConfig({ ...alertConfig, visible: false })}
+        onCancel={() => setAlertConfig({ ...alertConfig, visible: false })}
+        confirmText="OK"
+      />
+    </SafeAreaView>
   );
 };
 
@@ -77,20 +186,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 50, // Enough space for the status bar
-    paddingBottom: 100, // Space for the bottom navbar
+    paddingHorizontal: 25,
+    paddingTop: 20, 
+    paddingBottom: 100,
   },
   headerContainer: {
+    marginTop: 20,
     marginBottom: 20,
-  },
-  backButton: {
-    marginBottom: 10,
-  },
-  backButtonText: {
-    fontSize: 24,
-    color: '#227145',
-    fontWeight: 'bold',
   },
   titleText: {
     fontSize: 35,
@@ -98,43 +200,27 @@ const styles = StyleSheet.create({
     fontFamily: 'MinionPro-SemiboldItalic',
   },
   dateText: {
-    color: '#9B9B9B', // Gray color
+    color: '#9B9B9B',
     fontSize: 16,
     marginTop: 5,
   },
-  patientNameSection: {
-    marginBottom: 20,
-  },
-  patientLabel: {
-    color: '#227145', // Main green
-    fontWeight: '700',
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  patientInput: {
-    borderColor: '#E0E0E0', // Light gray border
-    borderWidth: 1,
-    borderRadius: 16, // Rounded input like in image
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: 'black',
-  },
   submitButton: {
-    backgroundColor: '#EAF8EF', // Light green background
-    borderColor: '#227145', // Dark green border
+    backgroundColor: '#EAF8EF',
+    borderColor: '#227145',
     borderWidth: 1.5,
-    borderRadius: 24, // Highly rounded corners
+    borderRadius: 24,
     paddingVertical: 15,
     marginTop: 30,
-    marginBottom: 30, // Extra bottom padding
+    marginBottom: 30,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 56,
   },
   submitButtonText: {
-    color: '#227145', // Dark green text
+    color: '#227145',
     fontWeight: '700',
     fontSize: 16,
-    letterSpacing: 1, // Matching the text's character spacing
+    letterSpacing: 1,
   },
 });
 

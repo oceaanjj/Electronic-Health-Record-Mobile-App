@@ -1,11 +1,13 @@
 import React from 'react';
-import { StyleSheet, View, Text, TextInput } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Pressable } from 'react-native';
 
 interface DataCardProps {
   badgeText: string;
   value?: string;
   onChangeText?: (text: string) => void;
   placeholder?: string;
+  disabled?: boolean;
+  onDisabledPress?: () => void;
 }
 
 const DataCard: React.FC<DataCardProps> = ({
@@ -13,6 +15,8 @@ const DataCard: React.FC<DataCardProps> = ({
   value,
   onChangeText,
   placeholder = 'Enter details here...',
+  disabled = false,
+  onDisabledPress,
 }) => {
   return (
     <View style={styles.card}>
@@ -25,7 +29,14 @@ const DataCard: React.FC<DataCardProps> = ({
       </View>
 
       {/* Input Section: Simulating the horizontal lines from the image */}
-      <View style={styles.inputContainer}>
+      <Pressable 
+        style={styles.inputContainer}
+        onPress={() => {
+            if (disabled && onDisabledPress) {
+                onDisabledPress();
+            }
+        }}
+      >
         <TextInput
           style={styles.input}
           value={value}
@@ -34,12 +45,14 @@ const DataCard: React.FC<DataCardProps> = ({
           placeholderTextColor="#D1D1D1"
           multiline={true}
           blurOnSubmit={true}
+          editable={!disabled}
+          pointerEvents={disabled ? 'none' : 'auto'}
         />
         {/* Visual guide lines to match the UI in the image */}
         <View style={styles.guideLine} />
         <View style={styles.guideLine} />
         <View style={styles.guideLine} />
-      </View>
+      </Pressable>
     </View>
   );
 };
