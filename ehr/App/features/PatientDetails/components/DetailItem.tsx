@@ -21,7 +21,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#9B9B9B',
+    color: '#29A539',
     marginBottom: 4,
   },
   value: {

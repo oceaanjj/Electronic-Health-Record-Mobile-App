@@ -8,22 +8,28 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Dimensions,
+  Image,
 } from 'react-native';
 import { usePatients } from '../../DemographicProfile/hook/usePatients';
 import DetailItem from '../components/DetailItem';
 
 const { width } = Dimensions.get('window');
+const backArrow = require('../../../../assets/icons/back_arrow.png');
 
 interface PatientDetailsScreenProps {
-  route: any;
-  navigation: any;
+  route?: any;
+  navigation?: any;
+  patientId?: number;
+  onBack?: () => void;
 }
 
 const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
   route,
   navigation,
+  patientId: propPatientId,
+  onBack,
 }) => {
-  const { patientId } = route.params || { patientId: 1 };
+  const patientId = propPatientId || route?.params?.patientId || 1;
   const { getPatientById } = usePatients();
 
   const [patient, setPatient] = useState<any>(null);
@@ -56,8 +62,10 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
   return (
     <SafeAreaView style={styles.mainContainer}>
       {/* Decorative Background Circles from Image */}
-      <View style={[styles.circle, styles.topCircle]} />
-      <View style={[styles.circle, styles.bottomCircle]} />
+      <View style={[styles.circle1, styles.topCircle1]} />
+      <View style={[styles.circle2, styles.topCircle2]} />
+      <View style={[styles.circle1, styles.bottomCircle1]} />
+      <View style={[styles.circle2, styles.bottomCircle2]} />
 
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -66,10 +74,10 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
         {/* Header Section */}
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => navigation.goBack()}
+            onPress={() => (onBack ? onBack() : navigation?.goBack())}
             style={styles.backButton}
           >
-            <Text style={styles.backArrow}>←</Text>
+            <Image source={backArrow} style={styles.backIcon} />
           </TouchableOpacity>
           <View>
             <Text style={styles.titleText}>Patient Details</Text>
@@ -180,51 +188,69 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   scrollContent: {
-    paddingHorizontal: 25,
-    paddingTop: 20,
+    paddingHorizontal: 40,
+    paddingTop: 0,
     paddingBottom: 50,
   },
   // Decorative Circles Styling
-  circle: {
+  circle1: {
     position: 'absolute',
     width: width * 0.7,
     height: width * 0.7,
     borderRadius: (width * 0.7) / 2,
-    backgroundColor: '#C8F2C8',
+    backgroundColor: 'rgba(73, 214, 91, 1)',
+
     opacity: 0.5,
   },
-  topCircle: {
-    top: -50,
+  circle2: {
+    position: 'absolute',
+    width: width * 0.7,
+    height: width * 0.7,
+    borderRadius: (width * 0.7) / 2,
+    backgroundColor: 'rgba(200, 255, 207, 1)',
+    opacity: 0.5,
+  },
+  topCircle1: {
+    top: -220,
     right: -80,
   },
-  bottomCircle: {
-    bottom: -100,
-    left: -100,
+  topCircle2: {
+    top: -100,
+    right: -200,
+    zIndex: 100,
+  },
+  bottomCircle1: {
+    bottom: -170,
+    left: -150,
+  },
+  bottomCircle2: {
+    bottom: -200,
+    left: -50,
   },
   header: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 35,
+    justifyContent: 'flex-start',
+    marginTop: 20,
+    marginBottom: 50,
   },
   backButton: {
     marginRight: 15,
+    marginTop: 10,
+  },
+  backIcon: {
+    width: 24,
+    height: 24,
+    resizeMode: 'contain',
     marginTop: 5,
   },
-  backArrow: {
-    fontSize: 24,
-    color: '#8E8E8E',
-  },
   titleText: {
-    fontSize: 34,
+    fontSize: 35,
     color: '#035022',
-    fontFamily: 'serif', // Mimicking Minion Pro
-    fontStyle: 'italic',
-    fontWeight: 'bold',
+    fontFamily: 'MinionPro-SemiboldItalic',
   },
   admittedDate: {
     fontSize: 14,
     color: '#9B9B9B',
-    marginTop: 4,
     fontWeight: '600',
   },
   profileRow: {
@@ -251,7 +277,7 @@ const styles = StyleSheet.create({
   fullName: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#9B9B9B',
+    color: '#035022',
   },
   ageText: {
     fontSize: 14,
@@ -268,7 +294,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#9B9B9B',
+    color: '#29A539',
     marginTop: 15,
     marginBottom: 20,
     letterSpacing: 0.5,
