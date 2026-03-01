@@ -179,6 +179,8 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
 
 const styles = StyleSheet.create({
   mainContainer: {
+    marginTop: 40,
+
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
@@ -211,20 +213,20 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   topCircle1: {
-    top: -220,
+    top: -270,
     right: -80,
   },
   topCircle2: {
-    top: -100,
+    top: -150,
     right: -200,
     zIndex: 100,
   },
   bottomCircle1: {
     bottom: -170,
-    left: -150,
+    left: -180,
   },
   bottomCircle2: {
-    bottom: -200,
+    bottom: -220,
     left: -50,
   },
   header: {

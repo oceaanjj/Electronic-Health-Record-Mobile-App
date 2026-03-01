@@ -86,10 +86,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
 
   if (selectedPatientId) {
     return (
-      <PatientDetailsScreen
-        patientId={selectedPatientId}
-        onBack={onBack}
-      />
+      <PatientDetailsScreen patientId={selectedPatientId} onBack={onBack} />
     );
   }
 
@@ -251,7 +248,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: 10,
     marginBottom: 50,
     paddingHorizontal: 20,
   },
