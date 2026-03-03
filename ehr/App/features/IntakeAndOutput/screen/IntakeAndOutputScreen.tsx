@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -17,7 +17,8 @@ import IntakeOutputCard from '../component/IntakeOutputCard';
 import SweetAlert from '../../../components/SweetAlert';
 import PatientSearchBar from '../../../components/PatientSearchBar';
 import { useIntakeAndOutputLogic } from '../hook/useIntakeAndOutputLogic';
-import ADPIEScreen from '../../VitalSigns/screen/ADPIEScreen'; // Re-using ADPIE screen structure
+import ADPIEScreen from '../../VitalSigns/screen/ADPIEScreen'; 
+import CDSSGuidanceModal from '../../../components/CDSSGuidanceModal';
 
 const alertIcon = require('../../../../assets/icons/alert.png');
 
@@ -36,8 +37,9 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
     handleUpdateField,
     isDataEntered,
     saveAssessment,
-    currentAlert,
+    checkRealTimeAlerts,
     assessmentAlert,
+    currentAlert,
     setBackendAlert,
     triggerPatientAlert,
     loading,
@@ -46,14 +48,18 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
   } = useIntakeAndOutputLogic();
 
   const [alertVisible, setAlertVisible] = useState(false);
+  const [cdssModalVisible, setCdssModalVisible] = useState(false);
   const [successVisible, setSuccessVisible] = useState(false);
+  const [successMessage, setSuccessMessage] = useState({
+    title: '',
+    message: '',
+  });
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [isAdpieActive, setIsAdpieActive] = useState(false);
   const [currentDate, setCurrentDate] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
 
   useEffect(() => {
-    // Simplified date formatting that's safer for React Native
     const now = new Date();
     const days = [
       'Sunday',
@@ -83,6 +89,28 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
     );
   }, []);
 
+  // REAL-TIME CDSS: Debounced polling
+  useEffect(() => {
+    if (!selectedPatientId) return;
+
+    const timer = setTimeout(async () => {
+      if (isDataEntered) {
+        try {
+          await checkRealTimeAlerts({
+            patient_id: parseInt(selectedPatientId, 10),
+            oral_intake: parseInt(intakeOutput.oral_intake, 10) || 0,
+            iv_fluids: parseInt(intakeOutput.iv_fluids, 10) || 0,
+            urine_output: parseInt(intakeOutput.urine_output, 10) || 0,
+          });
+        } catch (e) {
+          console.error('I&O CDSS Error:', e);
+        }
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [intakeOutput, selectedPatientId, isDataEntered, checkRealTimeAlerts]);
+
   const handleSubmit = async () => {
     if (!selectedPatientId) {
       triggerPatientAlert();
@@ -102,6 +130,14 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
 
     const result = await saveAssessment();
     if (result) {
+      const isUpdate =
+        recordId === result.id || result.updated_at !== result.created_at;
+      setSuccessMessage({
+        title: isUpdate ? 'SUCCESSFULLY UPDATED' : 'SUCCESSFULLY SUBMITTED',
+        message: isUpdate
+          ? 'Intake and output updated successfully.'
+          : 'Intake and output submitted successfully.',
+      });
       setSuccessVisible(true);
     } else {
       setAlertVisible(true);
@@ -132,7 +168,7 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
     if (isDataEntered) {
       await saveAssessment();
     }
-    setAlertVisible(true);
+    setCdssModalVisible(true);
   };
 
   const handleAlertConfirm = () => {
@@ -145,7 +181,7 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
         recordId={recordId}
         patientName={patientName}
         onBack={() => setIsAdpieActive(false)}
-        feature="intake-output" // Tell ADPIE screen which API to use
+        feature="intake-output"
       />
     );
   }
@@ -161,7 +197,6 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
         contentContainerStyle={styles.scrollContent}
         scrollEnabled={scrollEnabled}
       >
-        {/* Header Section */}
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
             <Text style={styles.title} numberOfLines={1} adjustsFontSizeToFit>
@@ -171,14 +206,12 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
           </View>
         </View>
 
-        {/* Patient Name Section */}
         <PatientSearchBar
           initialPatientName={patientName}
           onPatientSelect={handleSelectPatient}
           onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
         />
 
-        {/* Intake and Output Cards */}
         <Pressable
           onPress={() =>
             !selectedPatientId && (triggerPatientAlert(), setAlertVisible(true))
@@ -208,7 +241,6 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
           </View>
         </Pressable>
 
-        {/* Action Buttons */}
         <View style={styles.footerAction}>
           <TouchableOpacity
             style={[
@@ -241,12 +273,24 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
             <TouchableOpacity
               style={[
                 styles.cdssButton,
+                isDataEntered &&
+                  selectedPatientId && {
+                    backgroundColor: '#DCFCE7',
+                    borderColor: '#035022',
+                  },
                 (!isDataEntered || !selectedPatientId) && styles.disabledButton,
               ]}
               onPress={handleCDSSPress}
               disabled={!isDataEntered || !selectedPatientId}
             >
-              <Text style={styles.cdssBtnText}>CDSS</Text>
+              <Text
+                style={[
+                  styles.cdssBtnText,
+                  isDataEntered && selectedPatientId && { color: '#035022' },
+                ]}
+              >
+                CDSS
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[
@@ -259,86 +303,52 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
               {loading ? (
                 <ActivityIndicator size="small" color="#035022" />
               ) : (
-                <Text style={styles.submitBtnText}>SUBMIT</Text>
+                <Text
+                  style={[
+                    styles.submitBtnText,
+                    (!isDataEntered || !selectedPatientId) && {
+                      color: '#9E9E9E',
+                    },
+                  ]}
+                >
+                  SUBMIT
+                </Text>
               )}
             </TouchableOpacity>
           </View>
         </View>
       </ScrollView>
 
-      {/* Options Menu Modal */}
-      <Modal transparent visible={isMenuVisible} animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.menuContainer}>
-            <Text style={styles.menuTitle}>SELECT STAGE</Text>
-            <FlatList
-              data={ADPIE_STAGES}
-              keyExtractor={(item, index) => index.toString()}
-              renderItem={({ item, index }) => (
-                <TouchableOpacity
-                  style={styles.menuItem}
-                  onPress={() => {
-                    if (index > 0) handleCDSSPress();
-                    setIsMenuVisible(false);
-                  }}
-                >
-                  <Text
-                    style={[
-                      styles.menuItemText,
-                      index === 0 && styles.activeMenuText,
-                    ]}
-                  >
-                    {item}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            />
-            <TouchableOpacity
-              style={styles.closeMenuBtn}
-              onPress={() => setIsMenuVisible(false)}
-            >
-              <Text style={styles.closeMenuText}>CLOSE</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+      <CDSSGuidanceModal
+        visible={cdssModalVisible}
+        onClose={() => setCdssModalVisible(false)}
+        category="I&O Assessment"
+        alertText={assessmentAlert || 'Continue documenting to receive real-time support.'}
+      />
 
       {/* Alert Component */}
       <SweetAlert
         visible={alertVisible}
         title={
-          !selectedPatientId
-            ? 'Patient Required'
-            : hasRealAlert
-            ? 'CDSS ASSESSMENT'
-            : currentAlert?.title || 'ALERT'
+          !selectedPatientId ? 'Patient Required' : currentAlert?.title || 'ALERT'
         }
         message={
           !selectedPatientId
             ? 'Please select a patient first in the search bar.'
-            : hasRealAlert
-            ? assessmentAlert
             : currentAlert?.message || 'Please fill out the form.'
         }
-        type={
-          !selectedPatientId
-            ? 'error'
-            : hasRealAlert
-            ? 'warning'
-            : currentAlert?.type || 'success'
-        }
+        type={!selectedPatientId ? 'error' : currentAlert?.type || 'success'}
         onConfirm={handleAlertConfirm}
       />
 
       {/* Success Alert */}
       <SweetAlert
         visible={successVisible}
-        title="SUCCESS"
-        message="Intake and Output record saved successfully!"
+        title={successMessage.title}
+        message={successMessage.message}
         type="success"
         onConfirm={() => {
           setSuccessVisible(false);
-          onBack();
         }}
       />
 
@@ -387,15 +397,15 @@ const styles = StyleSheet.create({
   cdssButton: {
     flex: 1,
     height: 48,
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#F3F4F6',
     borderRadius: 25,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#035022',
+    borderColor: '#D1D5DB',
     marginRight: 5,
   },
-  cdssBtnText: { color: '#035022', fontWeight: 'bold', fontSize: 14 },
+  cdssBtnText: { color: '#6B7280', fontWeight: 'bold', fontSize: 14 },
   submitButton: {
     flex: 1,
     height: 48,
@@ -413,44 +423,6 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     opacity: 0.6,
   },
-
-  // Menu Modal Styles
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  menuContainer: {
-    width: '85%',
-    backgroundColor: '#FFF',
-    borderRadius: 25,
-    padding: 25,
-    maxHeight: '80%',
-  },
-  menuTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#035022',
-    marginBottom: 20,
-    textAlign: 'center',
-  },
-  menuItem: {
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-  },
-  menuItemText: { fontSize: 16, color: '#333', textAlign: 'center' },
-  activeMenuText: { color: '#29A539', fontWeight: 'bold' },
-  closeMenuBtn: {
-    marginTop: 20,
-    backgroundColor: '#E5FFE8',
-    paddingVertical: 12,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  closeMenuText: { color: '#035022', fontWeight: 'bold' },
-
   bottomNav: {
     position: 'absolute',
     bottom: 0,

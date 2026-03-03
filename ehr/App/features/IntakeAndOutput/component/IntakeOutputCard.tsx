@@ -38,6 +38,7 @@ const IntakeOutputCard: React.FC<IntakeOutputCardProps> = ({
 
 const styles = StyleSheet.create({
   cardContainer: {
+    marginTop: 10,
     backgroundColor: '#FFEDC1',
     borderRadius: 25,
     marginBottom: 15,

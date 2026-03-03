@@ -99,19 +99,21 @@ const ADPIEScreen = ({ onBack, adlId, patientName }: any) => {
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <KeyboardAvoidingView 
+      <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
-        <ScrollView 
-          style={styles.container} 
+        <ScrollView
+          style={styles.container}
           contentContainerStyle={styles.scrollContent}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.header}>
             <Text style={styles.title}>Activities of Daily Living</Text>
-            <Text style={styles.subtitle}>CLINICAL DECISION SUPPORT SYSTEM</Text>
+            <Text style={styles.subtitle}>
+              CLINICAL DECISION SUPPORT SYSTEM
+            </Text>
           </View>
 
           <View style={styles.patientSection}>
@@ -129,15 +131,16 @@ const ADPIEScreen = ({ onBack, adlId, patientName }: any) => {
               <View
                 style={[
                   styles.progressLineActive,
-                  { 
-                    width: currentIdx === STEPS.length - 1 
-                      ? '100%' 
-                      : `${((currentIdx + 0.5) / (STEPS.length - 1)) * 100}%` 
+                  {
+                    width:
+                      currentIdx === STEPS.length - 1
+                        ? '100%'
+                        : `${((currentIdx + 0.5) / (STEPS.length - 1)) * 100}%`,
                   },
                 ]}
               />
             </View>
-            
+
             <View style={styles.stepperRow}>
               {STEPS.map((s, idx) => (
                 <View key={s.id} style={styles.stepGroup}>
@@ -217,7 +220,9 @@ const ADPIEScreen = ({ onBack, adlId, patientName }: any) => {
                 value={text}
                 onChangeText={setText}
                 scrollEnabled={false}
-                placeholder={`Document ${STEPS[currentIdx].label.toLowerCase()}...`}
+                placeholder={`Document ${STEPS[
+                  currentIdx
+                ].label.toLowerCase()}...`}
               />
             </View>
           </View>
@@ -239,7 +244,9 @@ const ADPIEScreen = ({ onBack, adlId, patientName }: any) => {
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         category={STEPS[currentIdx].label}
-        alertText={alert || 'Continue documenting to receive real-time support.'}
+        alertText={
+          alert || 'Continue documenting to receive real-time support.'
+        }
       />
 
       <SweetAlert
@@ -410,7 +417,7 @@ const styles = StyleSheet.create({
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    paddingBottom: 20,
+    paddingBottom: 120,
     alignItems: 'center',
   },
   backBtn: {
