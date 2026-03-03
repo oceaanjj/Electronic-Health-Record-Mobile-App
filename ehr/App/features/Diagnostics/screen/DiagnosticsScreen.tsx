@@ -22,6 +22,7 @@ import DiagnosticCard from '../components/DiagnosticCard';
 import SweetAlert from '../../../components/SweetAlert';
 import apiClient, { BASE_URL } from '../../../api/apiClient';
 import { useDiagnostics, DiagnosticRecord } from '../hook/useDiagnostics';
+import PatientSearchBar from '../../../components/PatientSearchBar';
 
 export type ViewMode = 'grid' | 'list';
 
@@ -46,14 +47,12 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
     }
   }, [windowWidth]);
 
-  // Patient Search State (Copied logic from PhysicalExam)
+  // Patient Search State
   const [searchText, setSearchText] = useState('');
-  const [patients, setPatients] = useState<any[]>([]);
-  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
     null,
   );
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -95,23 +94,6 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
   const hideAlert = () => {
     setAlertConfig(prev => ({ ...prev, visible: false }));
   };
-
-  // Load patient list on mount
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const response = await apiClient.get('/patients/');
-        const normalized = (response.data || []).map((p: any) => ({
-          id: (p.patient_id ?? p.id).toString(),
-          fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
-        }));
-        setPatients(normalized);
-      } catch (e) {
-        console.error('Failed to load patients');
-      }
-    };
-    fetchPatients();
-  }, []);
 
   // Fetch diagnostics when patient is selected
   useEffect(() => {
@@ -161,6 +143,11 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
     );
   };
 
+  const handlePatientSelect = (id: number | null, name: string) => {
+    setSelectedPatientId(id ? id.toString() : null);
+    setSearchText(name);
+  };
+
   const diagnosticTypes = [
     { id: 'X-RAY', label: 'X-RAY' },
     { id: 'ULTRASOUND', label: 'ULTRASOUND' },
@@ -186,6 +173,7 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={scrollEnabled}
       >
         {/* HEADER SECTION */}
         <View style={styles.headerRow}>
@@ -224,42 +212,11 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
           </View>
         </View>
 
-        {/* PATIENT SEARCH (Copied from PhysicalExam) */}
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>PATIENT NAME :</Text>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Select or type Patient name"
-            placeholderTextColor="#afafaf"
-            value={searchText}
-            onChangeText={(text: string) => {
-              setSearchText(text);
-              setFilteredPatients(
-                patients.filter(p =>
-                  p.fullName.toLowerCase().includes(text.toLowerCase()),
-                ),
-              );
-              setShowDropdown(true);
-            }}
-          />
-          {showDropdown && filteredPatients.length > 0 && (
-            <View style={styles.dropdown}>
-              {filteredPatients.map(p => (
-                <Pressable
-                  key={p.id}
-                  onPress={() => {
-                    setSearchText(p.fullName);
-                    setSelectedPatientId(p.id);
-                    setShowDropdown(false);
-                  }}
-                  style={styles.dropItem}
-                >
-                  <Text>{p.fullName}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
-        </View>
+        <PatientSearchBar
+          initialPatientName={searchText}
+          onPatientSelect={handlePatientSelect}
+          onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
+        />
 
         {loading && diagnostics.length === 0 && (
           <ActivityIndicator
@@ -341,7 +298,14 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
           disabled={!selectedPatientId}
           onPress={onBack}
         >
-          <Text style={styles.submitText}>DONE</Text>
+          <Text
+            style={[
+              styles.submitText,
+              !selectedPatientId && { color: '#9E9E9E' },
+            ]}
+          >
+            DONE
+          </Text>
         </TouchableOpacity>
       </ScrollView>
 
@@ -389,35 +353,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 2,
   },
-  // Patient Search Styles
-  section: { marginBottom: 25, zIndex: 10 },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#14532d',
-    marginBottom: 8,
-  },
-  searchBar: {
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    height: 50,
-    borderWidth: 1,
-    borderColor: '#E8E8E8',
-    backgroundColor: '#FFF',
-  },
-  dropdown: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
-    elevation: 3,
-    position: 'absolute',
-    top: 75,
-    left: 0,
-    right: 0,
-    zIndex: 99,
-  },
-  dropItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
   horizontalScroll: {
     paddingBottom: 10,
     flexDirection: 'row',
@@ -435,9 +370,9 @@ const styles = StyleSheet.create({
   },
   listWrap: { flexDirection: 'column' },
   submitButton: {
-    backgroundColor: '#e6f9ed',
+    backgroundColor: '#DCFCE7',
     borderWidth: 1,
-    borderColor: '#22c55e',
+    borderColor: '#035022',
     borderRadius: 25,
     height: 55,
     justifyContent: 'center',
@@ -445,10 +380,11 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   disabledButton: {
-    opacity: 0.5,
-    borderColor: '#ccc',
+    backgroundColor: '#F0F0F0',
+    borderColor: '#E0E0E0',
+    opacity: 0.6,
   },
-  submitText: { color: '#14532d', fontWeight: 'bold', fontSize: 16 },
+  submitText: { color: '#035022', fontWeight: 'bold', fontSize: 16 },
 });
 
 export default DiagnosticsScreen;
