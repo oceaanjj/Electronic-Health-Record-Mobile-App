@@ -127,13 +127,21 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     }
   };
 
+  const [successMessage, setSuccessMessage] = useState({
+    title: '',
+    message: '',
+  });
+
   const handleAlertPress = async () => {
     if (!selectedPatientId) {
       return setAlertVisible(true);
     }
-    const res = await saveAssessment();
-    if (res && res.id) setRecordId(res.id);
-    setCdssVisible(true);
+    const dayNo = parseInt(calculateDayNumber(), 10);
+    const res = await saveAssessment(dayNo);
+    if (res && res.id) {
+      setRecordId(res.id);
+      setCdssVisible(true);
+    }
   };
 
   const handleSelectTimeSlot = (index: number) => {
@@ -147,11 +155,19 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     }
 
     if (isDataEntered) {
-      const res = await saveAssessment();
+      const dayNo = parseInt(calculateDayNumber(), 10);
+      const res = await saveAssessment(dayNo);
       if (res && res.id) {
         setRecordId(res.id);
-        // If it's the last slot, show success message
+
         if (currentTimeIndex === TIME_SLOTS.length - 1) {
+          const isUpdate = res.updated_at !== res.created_at;
+          setSuccessMessage({
+            title: isUpdate ? 'Successully Updated' : 'Successfully Submitted',
+            message: isUpdate
+              ? 'Vital signs updated successfully.'
+              : 'Vital signs submitted successfully.',
+          });
           setSuccessVisible(true);
           return;
         }
@@ -164,7 +180,8 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     if (!selectedPatientId) {
       return setAlertVisible(true);
     }
-    const res = await saveAssessment();
+    const dayNo = parseInt(calculateDayNumber(), 10);
+    const res = await saveAssessment(dayNo);
     if (res && res.id) {
       setRecordId(res.id);
       setIsAdpieActive(true);
@@ -431,14 +448,19 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
       {/* Success Alert */}
       <SweetAlert
         visible={successVisible}
-        title="SUCCESS"
-        message="Vital Signs Assessment has been saved successfully."
+        title={successMessage.title || 'SUCCESS'}
+        message={
+          successMessage.message ||
+          'Vital Signs Assessment has been saved successfully.'
+        }
         type="success"
         onConfirm={() => {
           setSuccessVisible(false);
-          setRecordId(null);
-          reset(); // Returns to 6:00 AM and clears patient
-          setSelectedPatientFull(null);
+          if (currentTimeIndex === TIME_SLOTS.length - 1) {
+            setRecordId(null);
+            reset();
+            setSelectedPatientFull(null);
+          }
         }}
         confirmText="OK"
       />

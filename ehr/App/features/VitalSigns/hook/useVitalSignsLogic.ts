@@ -62,14 +62,14 @@ export const useVitalSignsLogic = () => {
     return Object.values(currentVitals).every(value => value.trim() !== '');
   }, [currentVitals]);
 
-  const saveAssessment = async () => {
+  const saveAssessment = async (dayNo?: number) => {
     if (!selectedPatientId) return null;
 
     const payload = {
       patient_id: parseInt(selectedPatientId, 10),
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toLocaleDateString('en-CA'),
       time: convertTo24h(currentTime),
-      day_no: 1,
+      day_no: dayNo || 1,
       ...currentVitals
     };
 
@@ -140,7 +140,7 @@ export const useVitalSignsLogic = () => {
       const records = response.data || [];
       setExistingRecords(records);
       
-      const today = new Date().toISOString().split('T')[0];
+      const today = new Date().toLocaleDateString('en-CA');
       const history: Record<string, Vitals> = {};
       
       records.forEach((rec: any) => {
