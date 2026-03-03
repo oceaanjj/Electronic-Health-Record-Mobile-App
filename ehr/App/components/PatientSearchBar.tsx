@@ -24,11 +24,14 @@ interface Patient {
   patient_id?: number;
   first_name?: string;
   last_name?: string;
+  middle_name?: string;
+  is_active?: string | number | boolean;
   [key: string]: any;
 }
 
 interface PatientSearchBarProps {
   onPatientSelect: (patientId: number | null, patientName: string) => void;
+  onToggleDropdown?: (isOpen: boolean) => void;
   containerStyle?: ViewStyle;
   labelStyle?: TextStyle;
   inputBarStyle?: ViewStyle;
@@ -40,6 +43,7 @@ interface PatientSearchBarProps {
 
 const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   onPatientSelect,
+  onToggleDropdown,
   containerStyle,
   labelStyle,
   inputBarStyle,
@@ -56,7 +60,6 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
 
-  // Sync with initialPatientName if it changes from parent
   useEffect(() => {
     if (initialPatientName !== undefined) {
       setSearchText(initialPatientName);
@@ -64,13 +67,15 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   }, [initialPatientName]);
 
   useEffect(() => {
+    onToggleDropdown?.(showDropdown);
+  }, [showDropdown, onToggleDropdown]);
+
+  useEffect(() => {
     const fetchPatients = async () => {
       setLoading(true);
       setError(null);
       try {
-        console.log('PatientSearchBar: Fetching patients from /patients/');
         const response = await apiClient.get('/patients/');
-
         let raw = [];
         if (Array.isArray(response.data)) {
           raw = response.data;
@@ -84,16 +89,32 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
           .map((p: any) => ({
             ...p,
             id: p.patient_id ?? p.id ?? null,
-            fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+            fullName: `${p.last_name || ''}, ${p.first_name || ''}${
+              p.middle_name ? ' ' + p.middle_name.charAt(0) + '.' : ''
+            }`.trim(),
           }))
-          .filter((p: any) => p.id !== null);
+          .filter((p: any) => {
+            const hasId = p.id !== null;
+            // Robust check for is_active: covers '1', 1, true
+            const isActive =
+              String(p.is_active) === '1' ||
+              p.is_active === true ||
+              p.is_active === 1;
+            return hasId && isActive;
+          })
+          .sort((a, b) => {
+            const lastCompare = (a.last_name || '').localeCompare(
+              b.last_name || '',
+            );
+            if (lastCompare !== 0) return lastCompare;
+            return (a.first_name || '').localeCompare(b.first_name || '');
+          });
 
-        console.log(`PatientSearchBar: Loaded ${normalized.length} patients`);
         setPatients(normalized);
         setFilteredPatients(normalized);
       } catch (err: any) {
-        console.error('PatientSearchBar: Fetch Error:', err);
-        setError('Connection failed. Please check backend.');
+        console.error('PatientSearchBar Error:', err);
+        setError('Connection failed.');
       } finally {
         setLoading(false);
       }
@@ -116,7 +137,6 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   };
 
   const onSelectPatient = (patient: Patient) => {
-    console.log('PatientSearchBar: Selected', patient.fullName);
     setSearchText(patient.fullName);
     setShowDropdown(false);
     onPatientSelect(patient.id, patient.fullName);
@@ -124,10 +144,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   };
 
   const handleFocus = () => {
-    console.log('PatientSearchBar: Input Focused');
     setShowDropdown(true);
-    // Show all patients when focusing, regardless of current text,
-    // so the user can see the list to select from.
     setFilteredPatients(patients);
   };
 
@@ -140,7 +157,6 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
         <Pressable
           style={[styles.searchBar, inputBarStyle]}
           onPress={() => {
-            console.log('PatientSearchBar: Bar Pressed');
             setShowDropdown(true);
             inputRef.current?.focus();
           }}
@@ -169,16 +185,15 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
           <View style={styles.dropdown}>
             <ScrollView
               style={styles.dropdownScroll}
+              contentContainerStyle={styles.dropdownScrollContent}
               nestedScrollEnabled={true}
               keyboardShouldPersistTaps="always"
-              contentContainerStyle={
-                filteredPatients.length === 0 ? { flexGrow: 1 } : null
-              }
+              persistentScrollbar={true}
             >
               {loading && patients.length === 0 ? (
                 <View style={styles.infoContainer}>
                   <ActivityIndicator size="small" color={THEME_GREEN} />
-                  <Text style={styles.infoText}>Loading patients...</Text>
+                  <Text style={styles.infoText}>Loading...</Text>
                 </View>
               ) : filteredPatients.length > 0 ? (
                 filteredPatients.map((item, index) => (
@@ -196,7 +211,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
               ) : (
                 <View style={styles.infoContainer}>
                   <Text style={styles.infoText}>
-                    {error || 'No matching patients found'}
+                    {error || 'No patients found'}
                   </Text>
                 </View>
               )}
@@ -254,18 +269,20 @@ const styles = StyleSheet.create({
     marginTop: 5,
     borderWidth: 1,
     borderColor: '#ddd',
-    elevation: 100, // Highest for Android
+    elevation: 100,
     zIndex: 9999,
     maxHeight: SCREEN_HEIGHT * 0.4,
     overflow: 'hidden',
-    minHeight: 60,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
     shadowRadius: 10,
   },
   dropdownScroll: {
-    flexGrow: 0,
+    flex: 1,
+  },
+  dropdownScrollContent: {
+    flexGrow: 1,
   },
   dropdownItem: {
     padding: 15,
@@ -277,7 +294,6 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    flex: 1,
   },
   infoText: { color: '#666', fontSize: 13, textAlign: 'center' },
   closeDropdown: {
@@ -288,7 +304,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#eee',
   },
   closeText: {
-    color: '#d32f2f', // Red for close
+    color: '#d32f2f',
     fontWeight: 'bold',
     fontSize: 11,
     letterSpacing: 1,

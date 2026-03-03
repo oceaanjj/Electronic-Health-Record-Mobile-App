@@ -27,6 +27,7 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
     null,
   );
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -139,6 +140,7 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
         style={styles.container}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="always"
+        scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
           <View>
@@ -152,6 +154,7 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
 
         <PatientSearchBar
           onPatientSelect={(id) => setSelectedPatientId(id)}
+          onToggleDropdown={(isOpen) => setScrollEnabled(!isOpen)}
         />
 
         <View style={styles.stepHeader}>
