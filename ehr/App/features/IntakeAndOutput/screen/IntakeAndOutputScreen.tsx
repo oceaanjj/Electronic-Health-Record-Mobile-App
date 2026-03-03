@@ -18,7 +18,7 @@ import SweetAlert from '../../../components/SweetAlert';
 import PatientSearchBar from '../../../components/PatientSearchBar';
 import { useIntakeAndOutputLogic } from '../hook/useIntakeAndOutputLogic';
 import ADPIEScreen from '../../VitalSigns/screen/ADPIEScreen'; 
-import CDSSGuidanceModal from '../../../components/CDSSGuidanceModal';
+import CDSSModal from '../../../components/CDSSModal';
 
 const alertIcon = require('../../../../assets/icons/alert.png');
 
@@ -61,32 +61,9 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
 
   useEffect(() => {
     const now = new Date();
-    const days = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ];
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    setCurrentDate(
-      `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`,
-    );
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    setCurrentDate(`${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`);
   }, []);
 
   // REAL-TIME CDSS: Debounced polling
@@ -185,6 +162,19 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
       />
     );
   }
+
+  // Frontend-only cleaning of the alert string
+  const getCleanedAlertText = () => {
+    if (!assessmentAlert) return 'Continue documenting to receive real-time support.';
+    
+    // 1. Remove emojis
+    let cleaned = assessmentAlert.replace(/[🔴🟠✓⚠️❌]/g, '').trim();
+    
+    // 2. Remove square brackets from status prefixes (e.g., [CRITICAL] -> CRITICAL)
+    cleaned = cleaned.replace(/\[(CRITICAL|WARNING|INFO)\]/gi, '$1');
+    
+    return cleaned;
+  };
 
   const hasRealAlert = assessmentAlert && assessmentAlert.trim() !== '';
 
@@ -319,11 +309,11 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
         </View>
       </ScrollView>
 
-      <CDSSGuidanceModal
+      <CDSSModal
         visible={cdssModalVisible}
         onClose={() => setCdssModalVisible(false)}
         category="I&O Assessment"
-        alertText={assessmentAlert || 'Continue documenting to receive real-time support.'}
+        alertText={getCleanedAlertText()}
       />
 
       {/* Alert Component */}
@@ -423,6 +413,41 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     opacity: 0.6,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  menuContainer: {
+    width: '85%',
+    backgroundColor: '#FFF',
+    borderRadius: 25,
+    padding: 25,
+    maxHeight: '80%',
+  },
+  menuTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#035022',
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  menuItem: {
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F0F0F0',
+  },
+  menuItemText: { fontSize: 16, color: '#333', textAlign: 'center' },
+  activeMenuText: { color: '#29A539', fontWeight: 'bold' },
+  closeMenuBtn: {
+    marginTop: 20,
+    backgroundColor: '#E5FFE8',
+    paddingVertical: 12,
+    borderRadius: 20,
+    alignItems: 'center',
+  },
+  closeMenuText: { color: '#035022', fontWeight: 'bold' },
   bottomNav: {
     position: 'absolute',
     bottom: 0,

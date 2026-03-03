@@ -38,23 +38,21 @@ const CDSSModal: React.FC<CDSSModalProps> = ({
 
       // 1. Identify Severity and set Title Color
       if (
-        line.includes('🔴') || 
-        upperLine.includes('CRITICAL') || 
-        upperLine.includes('SEVERE') ||
-        upperLine.includes('HYPERTHERMIA')
+        line.includes('🔴') ||
+        upperLine.includes('CRITICAL') ||
+        upperLine.includes('SEVERE')
       ) {
         titleColor = '#C62828'; // Deep Red
       } else if (
-        line.includes('🟠') || 
-        upperLine.includes('WARNING') || 
-        upperLine.includes('LOW') || 
-        upperLine.includes('ELEVATED') ||
-        upperLine.includes('FEVER')
+        line.includes('🟠') ||
+        upperLine.includes('WARNING') ||
+        upperLine.includes('LOW')
       ) {
         titleColor = '#E65100'; // Deep Orange
       } else if (
-        line.includes('✓') || 
-        upperLine.includes('NORMAL') || 
+        line.includes('✓') ||
+        upperLine.includes('NORMAL') ||
+        upperLine.includes('INFO') ||
         upperLine.includes('SUCCESS')
       ) {
         titleColor = '#2E7D32'; // Deep Green
@@ -68,7 +66,10 @@ const CDSSModal: React.FC<CDSSModalProps> = ({
       } else {
         // Fallback: If no colon, try to color the first part if it has an emoji
         const words = line.split(' ');
-        if (words.length > 1 && (line.includes('🔴') || line.includes('🟠') || line.includes('✓'))) {
+        if (
+          words.length > 1 &&
+          (line.includes('🔴') || line.includes('🟠') || line.includes('✓'))
+        ) {
           alertTitle = words[0] + ' ' + (words[1] || '') + ' ';
           alertDesc = words.slice(2).join(' ');
         } else {
@@ -79,7 +80,9 @@ const CDSSModal: React.FC<CDSSModalProps> = ({
 
       return (
         <Text key={index} style={styles.alertContent}>
-          <Text style={{ color: titleColor, fontWeight: 'bold' }}>{alertTitle}</Text>
+          <Text style={{ color: titleColor, fontWeight: 'bold' }}>
+            {alertTitle}
+          </Text>
           <Text style={{ color: '#333' }}>{alertDesc}</Text>
           {index < lines.length - 1 ? '\n\n' : ''}
         </Text>
