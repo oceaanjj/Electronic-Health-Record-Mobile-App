@@ -111,13 +111,30 @@ export const useVitalSignsLogic = () => {
     }
   };
 
-  const getChartData = (vitalKey: keyof Vitals) => {
-    const historicalData = Object.entries(vitalsHistory).map(([time, vitalsRecord]) => ({
-      time,
-      value: parseFloat(vitalsRecord[vitalKey]) || 0,
-    }));
-    return historicalData;
-  };
+  const chartData = useMemo(() => {
+    const keys: (keyof Vitals)[] = ['temperature', 'hr', 'rr', 'bp', 'spo2'];
+    const result: Record<string, any[]> = {};
+
+    keys.forEach(key => {
+      result[key] = TIME_SLOTS.map(slot => {
+        let valueStr = '';
+        if (slot === currentTime) {
+          valueStr = currentVitals[key];
+        } else if (vitalsHistory[slot]) {
+          valueStr = vitalsHistory[slot][key];
+        }
+        
+        // Extract numeric part (e.g., "120/80" -> 120)
+        const numericValue = parseFloat(valueStr.split('/')[0]) || 0;
+        
+        return {
+          time: slot,
+          value: numericValue,
+        };
+      });
+    });
+    return result;
+  }, [currentVitals, vitalsHistory, currentTime]);
 
   const loadPatientData = async (patientId: string) => {
     try {
@@ -220,7 +237,7 @@ export const useVitalSignsLogic = () => {
     selectTime,
     reset,
     TIME_SLOTS,
-    getChartData,
+    chartData,
     currentAlert: backendAlert,
     vitalKeys: Object.keys(initialVitals) as (keyof Vitals)[],
     existingRecords,
