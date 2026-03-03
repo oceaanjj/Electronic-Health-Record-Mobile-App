@@ -10,7 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { usePhysicalExam } from '../hook/usePhysicalExam';
 import LinearGradient from 'react-native-linear-gradient';
-import CDSSGuidanceModal from '../../../components/CDSSGuidanceModal'; //
+import CDSSGuidanceModal from '../../../components/CDSSGuidanceModal';
 import SweetAlert from '../../../components/SweetAlert';
 
 const THEME_GREEN = '#035022';
@@ -26,7 +26,7 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
   const [currentIdx, setCurrentIdx] = useState(0);
   const [text, setText] = useState('');
   const [alert, setAlert] = useState<string | null>(null);
-  const [modalVisible, setModalVisible] = useState(false); //
+  const [modalVisible, setModalVisible] = useState(false);
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -64,7 +64,7 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [text, currentIdx, examId]);
+  }, [text, currentIdx, examId, updateStep]);
 
   const handleNext = async () => {
     try {
@@ -80,7 +80,7 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
         });
       }
     } catch (e: any) {
-      showAlert('Error', 'Workflow update failed: NOT FOUND');
+      showAlert('Error', 'Workflow update failed.');
     }
   };
 
@@ -105,7 +105,7 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
         <View
           style={[
             styles.progressLineActive,
-            { width: `${(currentIdx / (STEPS.length - 1)) * 100 - 10}%` },
+            { width: `${(currentIdx / (STEPS.length - 1)) * 100}%` },
           ]}
         />
         <View style={styles.stepperRow}>
@@ -207,7 +207,8 @@ const ADPIEScreen = ({ onBack, examId, patientName }: any) => {
       <CDSSGuidanceModal
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        alertText={alert}
+        category={STEPS[currentIdx].label}
+        alertText={alert || "Continue documenting to receive real-time support."}
       />
 
       <SweetAlert
@@ -309,7 +310,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
-    // Add shadow for that slight depth seen in image_cb60bf.png
     elevation: 4,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -322,7 +322,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   iconCircle: {
-    // Adds the subtle outer ring effect seen in mockup
     width: 38,
     height: 38,
     borderRadius: 19,
@@ -335,7 +334,7 @@ const styles = StyleSheet.create({
   },
   bannerTitle: {
     color: '#fff',
-    fontSize: 15, // Increased for readability as per mockup
+    fontSize: 15,
     fontWeight: '700',
   },
   bannerSubText: {
@@ -344,15 +343,15 @@ const styles = StyleSheet.create({
     opacity: 0.95,
   },
   viewBtn: {
-    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Slightly translucent white
-    borderRadius: 12, // Pill shape
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 6,
     flexDirection: 'row',
     alignItems: 'center',
   },
   viewBtnText: {
-    color: '#059669', // Darker green for contrast
+    color: '#059669',
     fontSize: 11,
     fontWeight: '800',
     marginRight: 4,
