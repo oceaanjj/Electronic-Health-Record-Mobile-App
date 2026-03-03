@@ -15,6 +15,7 @@ import MedAdministrationInputCard from '../components/MedAdministrationInputCard
 import { useMedAdministration } from '../hook/useMedAdministration';
 import apiClient from '../../../api/apiClient';
 import SweetAlert from '../../../components/SweetAlert';
+import PatientSearchBar from '../../../components/PatientSearchBar';
 
 const THEME_GREEN = '#035022';
 const LIGHT_GREEN_BG = '#DCFCE7';
@@ -31,10 +32,7 @@ const MedAdministrationScreen = ({ onBack }: any) => {
     fetchPatientData,
   } = useMedAdministration();
 
-  const [patients, setPatients] = useState<any[]>([]);
-  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [searchText, setSearchText] = useState('');
+  const [scrollEnabled, setScrollEnabled] = useState(true);
   const lastFetched = useRef<{ id: number | null, date: string }>({ id: null, date: '' });
 
   // SweetAlert State
@@ -58,16 +56,6 @@ const MedAdministrationScreen = ({ onBack }: any) => {
     setAlertConfig({ visible: true, title, message, type });
   };
 
-  useEffect(() => {
-    apiClient.get('/patients/').then(res => {
-      const normalized = (res.data || []).map((p: any) => ({
-        id: (p.patient_id ?? p.id).toString(),
-        fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
-      }));
-      setPatients(normalized);
-    });
-  }, []);
-
   // Fetch patient data when patient or date changes
   useEffect(() => {
     if (formData.patient_id && (formData.patient_id !== lastFetched.current.id || formData.date !== lastFetched.current.date)) {
@@ -76,35 +64,29 @@ const MedAdministrationScreen = ({ onBack }: any) => {
     }
   }, [formData.patient_id, formData.date, fetchPatientData]);
 
-  const handleSearch = (text: string) => {
-    setSearchText(text);
-    if (text.length > 0) {
-      const filtered = patients.filter(p =>
-        p.fullName.toLowerCase().includes(text.toLowerCase()),
-      );
-      setFilteredPatients(filtered);
-      setShowDropdown(true);
+  const handlePatientSelect = (id: number | null, name: string) => {
+    if (id) {
+      setFormData(prev => ({
+        ...prev,
+        patient_id: id,
+        patientName: name,
+      }));
     } else {
-      setShowDropdown(false);
-      setFormData({ ...formData, patient_id: null, patientName: '', medications: [
-        { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
-        { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
-        { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
-      ] });
+      setFormData(prev => ({
+        ...prev,
+        patient_id: null,
+        patientName: '',
+        medications: [
+          { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
+          { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
+          { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
+        ]
+      }));
     }
   };
 
-  const onSelectPatient = (patient: any) => {
-    setSearchText(patient.fullName);
-    setFormData(prev => ({
-      ...prev,
-      patient_id: parseInt(patient.id, 10),
-      patientName: patient.fullName,
-    }));
-    setShowDropdown(false);
-  };
-
   const currentMed = formData.medications[step];
+  const isFormValid = formData.patient_id && currentMed.medication && currentMed.medication.trim() !== '';
 
   const handleAction = async () => {
     if (!formData.patient_id) {
@@ -164,6 +146,7 @@ const MedAdministrationScreen = ({ onBack }: any) => {
         contentContainerStyle={{ paddingBottom: 100 }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={scrollEnabled}
       >
         {/* Header */}
         <View style={styles.header}>
@@ -176,52 +159,11 @@ const MedAdministrationScreen = ({ onBack }: any) => {
           </TouchableOpacity>
         </View>
 
-        {/* Patient Selection & Date */}
-        <View style={[styles.section, showDropdown && { zIndex: 9999 }]}>
-          <Text style={styles.sectionLabel}>PATIENT NAME :</Text>
-          <View style={styles.searchWrap}>
-            <View style={styles.searchBar}>
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Select Patient name"
-                placeholderTextColor="#BDBDBD"
-                value={searchText}
-                onChangeText={handleSearch}
-                onFocus={() => {
-                  if (patients.length > 0) {
-                    setFilteredPatients(
-                      searchText.length > 0
-                        ? patients.filter(p =>
-                            p.fullName
-                              .toLowerCase()
-                              .includes(searchText.toLowerCase()),
-                          )
-                        : patients,
-                    );
-                    setShowDropdown(true);
-                  }
-                }}
-              />
-            </View>
-
-            {showDropdown && filteredPatients.length > 0 && (
-              <View style={styles.dropdown}>
-                {filteredPatients.map((item, index) => (
-                  <Pressable
-                    key={item.id ? item.id.toString() : `p-${index}`}
-                    style={({ pressed }) => [
-                      styles.dropdownItem,
-                      pressed && { opacity: 0.6 },
-                    ]}
-                    onPress={() => onSelectPatient(item)}
-                  >
-                    <Text style={styles.dropdownText}>{item.fullName}</Text>
-                  </Pressable>
-                ))}
-              </View>
-            )}
-          </View>
-        </View>
+        <PatientSearchBar
+          initialPatientName={formData.patientName}
+          onPatientSelect={handlePatientSelect}
+          onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
+        />
 
         <View style={[styles.section, { zIndex: 1 }]}>
           <Text style={styles.sectionLabel}>DATE :</Text>
@@ -276,12 +218,28 @@ const MedAdministrationScreen = ({ onBack }: any) => {
         />
 
         {/* Footer Navigation Button */}
-        <TouchableOpacity style={styles.actionBtn} onPress={handleAction}>
-          <Text style={styles.actionBtnText}>
+        <TouchableOpacity
+          style={[
+            styles.actionBtn,
+            !isFormValid && styles.disabledButton,
+          ]}
+          onPress={handleAction}
+          disabled={!isFormValid && !!formData.patient_id && currentMed.medication !== ''} // Allow press if patient not selected to show alert
+        >
+          <Text
+            style={[
+              styles.actionBtnText,
+              !isFormValid && { color: '#9E9E9E' },
+            ]}
+          >
             {step === 2 ? 'SUBMIT' : 'NEXT'}
           </Text>
           {step < 2 && (
-            <Icon name="chevron-right" size={24} color={THEME_GREEN} />
+            <Icon
+              name="chevron-right"
+              size={24}
+              color={isFormValid ? THEME_GREEN : '#9E9E9E'}
+            />
           )}
         </TouchableOpacity>
       </ScrollView>
@@ -325,43 +283,12 @@ const styles = StyleSheet.create({
   },
   dateText: { fontSize: 14, color: '#999', marginTop: 5 },
   section: { marginBottom: 15, zIndex: 10 },
-  searchWrap: { position: 'relative', zIndex: 999 },
   sectionLabel: {
     fontSize: 12,
     fontWeight: 'bold',
     color: THEME_GREEN,
     marginBottom: 8,
   },
-  searchBar: {
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#F2F2F2',
-    justifyContent: 'center',
-    backgroundColor: '#fff',
-  },
-  searchInput: { fontSize: 14, color: '#333' },
-  dropdown: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 56,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    marginTop: 5,
-    borderWidth: 1,
-    borderColor: '#eee',
-    elevation: 8,
-    zIndex: 9999,
-    maxHeight: 220,
-  },
-  dropdownItem: {
-    padding: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f9f9f9',
-  },
-  dropdownText: { fontSize: 14, color: '#333' },
   inputField: {
     borderRadius: 25,
     paddingHorizontal: 20,
@@ -392,6 +319,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: THEME_GREEN,
     marginTop: 10,
+  },
+  disabledButton: {
+    backgroundColor: '#F0F0F0',
+    borderColor: '#E0E0E0',
+    opacity: 0.6,
   },
   actionBtnText: {
     color: THEME_GREEN,
