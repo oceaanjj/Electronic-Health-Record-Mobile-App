@@ -53,28 +53,38 @@ export default function HomeScreen() {
 
       case 'Register':
         return <RegisterPatient onBack={() => setActiveTab('Home')} />;
+
       case 'MedicalHistory':
         return <MedicalHistoryScreen onBack={() => setActiveTab('Grid')} />;
+
       case 'PhysicalExam':
         return <PhysicalExamScreen onBack={() => setActiveTab('Grid')} />;
+
       case 'Activities':
         return <ADLMainScreen onBack={() => setActiveTab('Grid')} />;
+
       case 'LabValues':
         return <LabValuesScreen onBack={() => setActiveTab('Grid')} />;
+
       case 'Diagnostics':
         return <DiagnosticsScreen onBack={() => setActiveTab('Grid')} />;
+
       case 'Medication Administration':
         return <MedAdministrationScreen onBack={() => setActiveTab('Grid')} />;
+
       case 'Medication Reconciliation':
         return (
           <MedicalReconciliationScreen onBack={() => setActiveTab('Grid')} />
         );
+
       case 'IvsAndLines':
         return <IvsAndLinesScreen onBack={() => setActiveTab('Grid')} />;
+
       case 'Medical Reconciliation':
         return (
           <MedicalReconciliationScreen onBack={() => setActiveTab('Grid')} />
         );
+
       case 'Intake and Output':
         return <IntakeAndOutputScreen onBack={() => setActiveTab('Grid')} />;
 

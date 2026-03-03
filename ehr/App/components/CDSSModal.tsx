@@ -25,6 +25,7 @@ const CDSSModal: React.FC<CDSSModalProps> = ({
   alertText,
 }) => {
   const renderFormattedText = (text: string) => {
+    if (!text || typeof text !== 'string') return null;
     // Split by " | " or newlines in case there are multiple concatenated alerts
     const lines = text.split(/ \| |\n/);
 
