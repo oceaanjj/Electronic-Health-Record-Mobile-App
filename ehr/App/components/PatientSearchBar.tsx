@@ -147,15 +147,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
 
   const handleFocus = () => {
     setShowDropdown(true);
-
-    if (searchText.length > 0) {
-      const filtered = patients.filter(p =>
-        p.fullName.toLowerCase().includes(searchText.toLowerCase()),
-      );
-      setFilteredPatients(filtered);
-    } else {
-      setFilteredPatients(patients);
-    }
+    setFilteredPatients(patients);
   };
 
   return (

@@ -15,6 +15,7 @@ import ADPIEScreen from './ADPIEScreen'; // Integrated Stepper
 import apiClient from '../../../api/apiClient';
 import { usePhysicalExam } from '../hook/usePhysicalExam';
 import SweetAlert from '../../../components/SweetAlert';
+import PatientSearchBar from '../../../components/PatientSearchBar';
 
 const THEME_GREEN = '#035022';
 
@@ -25,12 +26,10 @@ interface PhysicalExamProps {
 const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
   const { saveAssessment, checkAssessmentAlerts } = usePhysicalExam();
   const [searchText, setSearchText] = useState('');
-  const [patients, setPatients] = useState<any[]>([]);
-  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
     null,
   );
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -45,7 +44,11 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     type: 'error',
   });
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' = 'error') => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' = 'error',
+  ) => {
     setAlertConfig({ visible: true, title, message, type });
   };
 
@@ -88,27 +91,13 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     return () => clearTimeout(timer);
   }, [formData, selectedPatientId]);
 
-  // Load patient list on mount
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const response = await apiClient.get('/patients/');
-        const normalized = (response.data || []).map((p: any) => ({
-          id: (p.patient_id ?? p.id).toString(),
-          fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
-        }));
-        setPatients(normalized);
-      } catch (e) {
-        console.error('Failed to load patients');
-      }
-    };
-    fetchPatients();
-  }, []);
-
   // NEW: CDSS Button Handler to trigger ADPIE Workflow
   const handleCDSSPress = async () => {
     if (!selectedPatientId) {
-      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+      return showAlert(
+        'Patient Required',
+        'Please select a patient first in the search bar.',
+      );
     }
 
     try {
@@ -131,7 +120,10 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   const handleSave = async () => {
     if (!selectedPatientId) {
-      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+      return showAlert(
+        'Patient Required',
+        'Please select a patient first in the search bar.',
+      );
     }
     try {
       const result = await saveAssessment({
@@ -173,6 +165,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
         keyboardShouldPersistTaps="handled"
         style={styles.container}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
           <View>
@@ -184,40 +177,14 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
           </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>PATIENT NAME :</Text>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Select or type Patient name"
-            value={searchText}
-            onChangeText={(text: string) => {
-              setSearchText(text);
-              setFilteredPatients(
-                patients.filter(p =>
-                  p.fullName.toLowerCase().includes(text.toLowerCase()),
-                ),
-              );
-              setShowDropdown(true);
-            }}
-          />
-          {showDropdown && filteredPatients.length > 0 && (
-            <View style={styles.dropdown}>
-              {filteredPatients.map(p => (
-                <Pressable
-                  key={p.id}
-                  onPress={() => {
-                    setSearchText(p.fullName);
-                    setSelectedPatientId(p.id);
-                    setShowDropdown(false);
-                  }}
-                  style={styles.dropItem}
-                >
-                  <Text>{p.fullName}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
-        </View>
+        <PatientSearchBar
+          onPatientSelect={(id, name) => {
+            setSelectedPatientId(id ? id.toString() : null);
+            setSearchText(name);
+          }}
+          initialPatientName={searchText}
+          onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
+        />
 
         <View style={styles.banner}>
           <Text style={styles.bannerText}>PHYSICAL EXAMINATION</Text>
@@ -323,33 +290,6 @@ const styles = StyleSheet.create({
     fontFamily: 'MinionPro-SemiboldItalic',
   },
   dateText: { fontSize: 13, color: '#999' },
-  section: { marginBottom: 15, zIndex: 10 },
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: THEME_GREEN,
-    marginBottom: 8,
-  },
-  searchBar: {
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#F2F2F2',
-  },
-  dropdown: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
-    elevation: 3,
-    position: 'absolute',
-    top: 70,
-    left: 0,
-    right: 0,
-    zIndex: 99,
-  },
-  dropItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
   banner: {
     backgroundColor: '#DCFCE7',
     paddingVertical: 10,
