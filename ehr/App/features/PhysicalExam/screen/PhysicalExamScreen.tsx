@@ -290,6 +290,12 @@ const styles = StyleSheet.create({
     fontFamily: 'MinionPro-SemiboldItalic',
   },
   dateText: { fontSize: 13, color: '#999' },
+  sectionLabel: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: THEME_GREEN,
+    marginBottom: 8,
+  },
   banner: {
     backgroundColor: '#DCFCE7',
     paddingVertical: 10,

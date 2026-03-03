@@ -30,7 +30,7 @@ interface Patient {
 }
 
 interface PatientSearchBarProps {
-  onPatientSelect: (patientId: number | null, patientName: string) => void;
+  onPatientSelect: (patientId: number | null, patientName: string, patientObj?: Patient) => void;
   onToggleDropdown?: (isOpen: boolean) => void;
   containerStyle?: ViewStyle;
   labelStyle?: TextStyle;
@@ -141,7 +141,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   const onSelectPatient = (patient: Patient) => {
     setSearchText(patient.fullName);
     setShowDropdown(false);
-    onPatientSelect(patient.id, patient.fullName);
+    onPatientSelect(patient.id, patient.fullName, patient);
     Keyboard.dismiss();
   };
 

@@ -15,6 +15,7 @@ import ADLCDSSStepper from './ADPIEScreen';
 import apiClient from '../../../api/apiClient';
 import { useADL } from '../hook/useADL';
 import SweetAlert from '../../../components/SweetAlert';
+import PatientSearchBar from '../../../components/PatientSearchBar';
 
 const THEME_GREEN = '#035022';
 
@@ -22,9 +23,7 @@ const ADLScreen = ({ onBack }: any) => {
   const { alerts, checkADLAlerts, saveADLAssessment } = useADL();
 
   const [searchText, setSearchText] = useState('');
-  const [patients, setPatients] = useState<any[]>([]);
-  const [filteredPatients, setFilteredPatients] = useState<any[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [scrollEnabled, setScrollEnabled] = useState(true);
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -39,7 +38,11 @@ const ADLScreen = ({ onBack }: any) => {
     type: 'error',
   });
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' = 'error') => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' = 'error',
+  ) => {
     setAlertConfig({ visible: true, title, message, type });
   };
 
@@ -59,29 +62,9 @@ const ADLScreen = ({ onBack }: any) => {
     pain_level: '',
   });
 
-  // Load patient list on mount
-  useEffect(() => {
-    const fetchPatients = async () => {
-      try {
-        const response = await apiClient.get('/patients/');
-        const normalized = (response.data || []).map((p: any) => ({
-          id: (p.patient_id ?? p.id).toString(),
-          fullName: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
-          admissionDate: p.admission_date, // Backend must provide this
-        }));
-        setPatients(normalized);
-      } catch (e) {
-        console.error('Failed to load patients');
-      }
-    };
-    fetchPatients();
-  }, []);
-
   // CALCULATIONS: Admission Date & Day Number
-  const getFormattedAdmissionDate = () => {
-    if (!selectedPatient?.admissionDate) return '';
-    const date = new Date(selectedPatient.admissionDate);
-    return date.toLocaleDateString('en-US', {
+  const getCurrentDateFormatted = () => {
+    return new Date().toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric',
@@ -89,12 +72,15 @@ const ADLScreen = ({ onBack }: any) => {
   };
 
   const calculateDayNumber = () => {
-    if (!selectedPatient?.admissionDate) return '';
-    const admission = new Date(selectedPatient.admissionDate);
+    if (!selectedPatient?.admission_date) return '';
+    const admission = new Date(selectedPatient.admission_date);
     const today = new Date();
-    const diffTime = Math.abs(today.getTime() - admission.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // MS to Days
-    return diffDays.toString();
+    // Reset time components to compare only dates
+    admission.setHours(0, 0, 0, 0);
+    today.setHours(0, 0, 0, 0);
+    const diffTime = today.getTime() - admission.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to start from Day 1
+    return diffDays > 0 ? diffDays.toString() : '1';
   };
 
   // REAL-TIME CDSS
@@ -115,7 +101,10 @@ const ADLScreen = ({ onBack }: any) => {
 
   const handleCDSSPress = async () => {
     if (!selectedPatient) {
-      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+      return showAlert(
+        'Patient Required',
+        'Please select a patient first in the search bar.',
+      );
     }
     try {
       const result = await saveADLAssessment({
@@ -134,7 +123,10 @@ const ADLScreen = ({ onBack }: any) => {
 
   const handleSave = async () => {
     if (!selectedPatient) {
-      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+      return showAlert(
+        'Patient Required',
+        'Please select a patient first in the search bar.',
+      );
     }
     try {
       const result = await saveADLAssessment({
@@ -165,6 +157,7 @@ const ADLScreen = ({ onBack }: any) => {
         keyboardShouldPersistTaps="handled"
         style={styles.container}
         showsVerticalScrollIndicator={false}
+        scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
           <View>
@@ -179,47 +172,23 @@ const ADLScreen = ({ onBack }: any) => {
           </View>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionLabel}>PATIENT NAME :</Text>
-          <TextInput
-            style={styles.searchBar}
-            placeholder="Select or type Patient name"
-            value={searchText}
-            onChangeText={(text: string) => {
-              setSearchText(text);
-              setFilteredPatients(
-                patients.filter(p =>
-                  p.fullName.toLowerCase().includes(text.toLowerCase()),
-                ),
-              );
-              setShowDropdown(true);
-            }}
-          />
-          {showDropdown && filteredPatients.length > 0 && (
-            <View style={styles.dropdown}>
-              {filteredPatients.map(p => (
-                <Pressable
-                  key={p.id}
-                  onPress={() => {
-                    setSearchText(p.fullName);
-                    setSelectedPatient(p); // Capture full object
-                    setShowDropdown(false);
-                  }}
-                  style={styles.dropItem}
-                >
-                  <Text>{p.fullName}</Text>
-                </Pressable>
-              ))}
-            </View>
-          )}
+        <PatientSearchBar
+          onPatientSelect={(id, name, patientObj) => {
+            setSearchText(name);
+            setSelectedPatient(patientObj);
+          }}
+          onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
+          initialPatientName={searchText}
+        />
 
+        <View style={styles.section}>
           {/* DYNAMIC ADMISSION ROW */}
           <View style={styles.row}>
             <View style={{ flex: 1, marginRight: 10 }}>
               <Text style={styles.sectionLabel}>DATE :</Text>
               <View style={styles.inputBox}>
                 <Text style={styles.inputText}>
-                  {getFormattedAdmissionDate()}
+                  {getCurrentDateFormatted()}
                 </Text>
               </View>
             </View>
@@ -348,27 +317,6 @@ const styles = StyleSheet.create({
     color: THEME_GREEN,
     marginBottom: 8,
   },
-  searchBar: {
-    borderRadius: 25,
-    paddingHorizontal: 20,
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#F2F2F2',
-    marginBottom: 15,
-  },
-  dropdown: {
-    backgroundColor: '#fff',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#eee',
-    elevation: 3,
-    position: 'absolute',
-    top: 75,
-    left: 0,
-    right: 0,
-    zIndex: 99,
-  },
-  dropItem: { padding: 15, borderBottomWidth: 1, borderBottomColor: '#f9f9f9' },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
