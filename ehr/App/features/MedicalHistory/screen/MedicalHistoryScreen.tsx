@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
   View,
@@ -21,13 +21,112 @@ interface MedicalHistoryProps {
   onBack: () => void;
 }
 
+const initialFormData = {
+  present: {
+    condition_name: '',
+    description: '',
+    medication: '',
+    dosage: '',
+    side_effect: '',
+    comment: '',
+  },
+  past: {
+    condition_name: '',
+    description: '',
+    medication: '',
+    dosage: '',
+    side_effect: '',
+    comment: '',
+  },
+  allergies: {
+    condition_name: '',
+    description: '',
+    medication: '',
+    dosage: '',
+    side_effect: '',
+    comment: '',
+  },
+  vaccination: {
+    condition_name: '',
+    description: '',
+    medication: '',
+    dosage: '',
+    side_effect: '',
+    comment: '',
+  },
+  developmental: {
+    gross_motor: '',
+    fine_motor: '',
+    language: '',
+    cognitive: '',
+    social: '',
+  },
+};
+
+const STEP_FIELDS: Record<string, string[]> = {
+  present: [
+    'condition_name',
+    'description',
+    'medication',
+    'dosage',
+    'side_effect',
+    'comment',
+  ],
+  past: [
+    'condition_name',
+    'description',
+    'medication',
+    'dosage',
+    'side_effect',
+    'comment',
+  ],
+  allergies: [
+    'condition_name',
+    'description',
+    'medication',
+    'dosage',
+    'side_effect',
+    'comment',
+  ],
+  vaccination: [
+    'condition_name',
+    'description',
+    'medication',
+    'dosage',
+    'side_effect',
+    'comment',
+  ],
+  developmental: [
+    'gross_motor',
+    'fine_motor',
+    'language',
+    'cognitive',
+    'social',
+  ],
+};
+
+const FIELD_LABELS: Record<string, string> = {
+  condition_name: 'CONDITION NAME',
+  description: 'DESCRIPTION',
+  medication: 'MEDICATION',
+  dosage: 'DOSAGE',
+  side_effect: 'SIDE EFFECT',
+  comment: 'COMMENT',
+  gross_motor: 'GROS MOTOR',
+  fine_motor: 'FINE MOTOR',
+  language: 'LANGUAGE',
+  cognitive: 'COGNITIVE',
+  social: 'SOCIAL',
+};
+
 const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
-  const { saveMedicalHistory } = useMedicalHistory();
+  const { saveMedicalHistory, fetchMedicalHistory } = useMedicalHistory();
   const [step, setStep] = useState(0);
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
     null,
   );
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const prevPatientIdRef = useRef<number | null>(null);
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -50,47 +149,43 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
     setAlertConfig({ visible: true, title, message, type });
   };
 
-  const [formData, setFormData] = useState({
-    present: {
-      condition_name: '',
-      description: '',
-      medication: '',
-      dosage: '',
-      side_effect: '',
-      comment: '',
+  const [formData, setFormData] = useState(initialFormData);
+
+  const loadPatientData = useCallback(
+    async (patientId: number) => {
+      const data = await fetchMedicalHistory(patientId);
+      if (data) {
+        // Helper to handle both object and single-element array responses
+        const getFirst = (val: any) => (Array.isArray(val) ? val[0] : val);
+
+        setFormData({
+          present: getFirst(data.present_illness) || initialFormData.present,
+          past: getFirst(data.past_medical_surgical) || initialFormData.past,
+          allergies: getFirst(data.allergies) || initialFormData.allergies,
+          vaccination:
+            getFirst(data.vaccination) || initialFormData.vaccination,
+          developmental:
+            getFirst(data.developmental_history) ||
+            initialFormData.developmental,
+        });
+      } else {
+        setFormData(initialFormData);
+      }
     },
-    past: {
-      condition_name: '',
-      description: '',
-      medication: '',
-      dosage: '',
-      side_effect: '',
-      comment: '',
-    },
-    allergies: {
-      condition_name: '',
-      description: '',
-      medication: '',
-      dosage: '',
-      side_effect: '',
-      comment: '',
-    },
-    vaccination: {
-      condition_name: '',
-      description: '',
-      medication: '',
-      dosage: '',
-      side_effect: '',
-      comment: '',
-    },
-    developmental: {
-      gross_motor: '',
-      fine_motor: '',
-      language: '',
-      cognitive: '',
-      social: '',
-    },
-  });
+    [fetchMedicalHistory],
+  );
+
+  useEffect(() => {
+    // Only fetch when the patient ID actually changes to avoid overwriting typing
+    if (selectedPatientId !== prevPatientIdRef.current) {
+      prevPatientIdRef.current = selectedPatientId;
+      if (selectedPatientId) {
+        loadPatientData(selectedPatientId);
+      } else {
+        setFormData(initialFormData);
+      }
+    }
+  }, [selectedPatientId, loadPatientData]);
 
   const steps = [
     { title: 'PRESENT ILLNESS', key: 'present' },
@@ -108,26 +203,36 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
       );
     }
 
-    if (step < steps.length - 1) {
-      setStep(step + 1);
-    } else {
-      try {
-        // Submit all 5 components to the backend router endpoints
-        await saveMedicalHistory(selectedPatientId, formData);
+    try {
+      // Save progress silently (Backend handles upsert)
+      await saveMedicalHistory(selectedPatientId, formData);
+
+      if (step < steps.length - 1) {
+        setStep(step + 1);
+      } else {
+        const isUpdate = !!(
+          formData.present.medical_id ||
+          formData.past.medical_id ||
+          formData.allergies.medical_id ||
+          formData.vaccination.medical_id ||
+          formData.developmental.development_id
+        );
 
         showAlert(
-          'Success',
-          'Medical History components saved successfully.',
+          isUpdate ? 'Successully Updated' : 'Successfully Submitted',
+          `Medical History has been ${
+            isUpdate ? 'updated' : 'submitted'
+          } successfully.`,
           'success',
         );
-        setTimeout(() => {
-          onBack();
-        }, 1500);
-      } catch (error: any) {
-        showAlert('Error', error.message || 'Failed to save history.');
+
+        loadPatientData(selectedPatientId);
       }
+    } catch (error: any) {
+      showAlert('Error', error.message || 'Failed to save history.');
     }
   };
+
   const formatDate = () => {
     const date = new Date();
     return date.toLocaleDateString('en-US', {
@@ -139,11 +244,14 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
 
   const updateField = (field: string, val: string) => {
     const currentKey = steps[step].key as keyof typeof formData;
-    setFormData({
-      ...formData,
-      [currentKey]: { ...formData[currentKey], [field]: val },
-    });
+    setFormData(prev => ({
+      ...prev,
+      [currentKey]: { ...prev[currentKey], [field]: val },
+    }));
   };
+
+  const currentStepKey = steps[step].key;
+  const currentFields = STEP_FIELDS[currentStepKey];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -172,30 +280,25 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
           <Text style={styles.stepHeaderText}>{steps[step].title}</Text>
         </View>
 
-        {Object.keys(formData[steps[step].key as keyof typeof formData]).map(
-          field => (
-            <HistoryInputCard
-              key={`${steps[step].key}-${field}`}
-              label={
-                field.replace('_', ' ').charAt(0).toUpperCase() +
-                field.replace('_', ' ').slice(1)
-              }
-              value={
-                (formData[steps[step].key as keyof typeof formData] as any)[
-                  field
-                ]
-              }
-              onChangeText={(val: string) => updateField(field, val)}
-              disabled={!selectedPatientId}
-              onDisabledPress={() =>
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                )
-              }
-            />
-          ),
-        )}
+        {currentFields.map(field => (
+          <HistoryInputCard
+            key={`${currentStepKey}-${field}`}
+            label={FIELD_LABELS[field] || field.replace('_', ' ').toUpperCase()}
+            value={
+              (formData[currentStepKey as keyof typeof formData] as any)[
+                field
+              ] || ''
+            }
+            onChangeText={(val: string) => updateField(field, val)}
+            disabled={!selectedPatientId}
+            onDisabledPress={() =>
+              showAlert(
+                'Patient Required',
+                'Please select a patient first in the search bar.',
+              )
+            }
+          />
+        ))}
 
         <View style={styles.btnContainer}>
           <Button
