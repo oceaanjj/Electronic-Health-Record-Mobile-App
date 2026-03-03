@@ -49,10 +49,7 @@ export const useVitalSignsLogic = () => {
   const [currentTimeIndex, setCurrentTimeIndex] = useState(0);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   
-  // Storage for alerts returned by the backend
   const [backendAlert, setBackendAlert] = useState<{ title: string, message: string, type: 'success' | 'error' } | null>(null);
-  
-  // Storage for existing records
   const [existingRecords, setExistingRecords] = useState<any[]>([]);
 
   const currentTime = useMemo(() => TIME_SLOTS[currentTimeIndex], [currentTimeIndex]);
@@ -61,15 +58,18 @@ export const useVitalSignsLogic = () => {
     return Object.values(currentVitals).some(value => value.trim() !== '');
   }, [currentVitals]);
 
-  // Submit to Backend
+  const isDataComplete = useMemo(() => {
+    return Object.values(currentVitals).every(value => value.trim() !== '');
+  }, [currentVitals]);
+
   const saveAssessment = async () => {
     if (!selectedPatientId) return null;
 
     const payload = {
       patient_id: parseInt(selectedPatientId, 10),
-      date: new Date().toISOString().split('T')[0], // YYYY-MM-DD
+      date: new Date().toISOString().split('T')[0],
       time: convertTo24h(currentTime),
-      day_no: 1, // Optional: logic could be added to calculate day_no
+      day_no: 1,
       ...currentVitals
     };
 
@@ -95,7 +95,6 @@ export const useVitalSignsLogic = () => {
 
   const handleUpdateVital = (key: keyof Vitals, value: string) => {
     setCurrentVitals(prev => ({ ...prev, [key]: value }));
-    // Reset alert when user starts typing again
     if (backendAlert) setBackendAlert(null);
   };
 
@@ -124,7 +123,6 @@ export const useVitalSignsLogic = () => {
           valueStr = vitalsHistory[slot][key];
         }
         
-        // Extract numeric part (e.g., "120/80" -> 120)
         const numericValue = parseFloat(valueStr.split('/')[0]) || 0;
         
         return {
@@ -227,6 +225,7 @@ export const useVitalSignsLogic = () => {
     vitals: currentVitals,
     handleUpdateVital,
     isDataEntered,
+    isDataComplete,
     currentTime,
     currentTimeIndex,
     handleNextTime,

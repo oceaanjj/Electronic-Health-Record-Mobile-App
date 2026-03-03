@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +13,8 @@ import {
   StatusBar,
   Pressable,
   Modal as RNModal,
+  Animated,
+  Easing,
 } from 'react-native';
 import VitalCard from '../component/VitalCard';
 import PreciseVitalChart from '../component/VitalSignsChart';
@@ -50,6 +52,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     selectTime,
     TIME_SLOTS,
     isDataEntered,
+    isDataComplete,
     currentAlert,
     saveAssessment,
     isMenuVisible,
@@ -66,6 +69,23 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
 
   const [isAdpieActive, setIsAdpieActive] = useState(false);
   const [recordId, setRecordId] = useState<number | null>(null);
+
+  const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (isDataComplete) {
+      triggerShake();
+    }
+  }, [isDataComplete]);
+
+  const triggerShake = () => {
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+    ]).start();
+  };
 
   const calculateDayNumber = () => {
     if (!selectedPatient?.admission_date) return '';
@@ -223,6 +243,12 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
             extraData={vitals}
             keyExtractor={item => item}
             contentContainerStyle={{ paddingRight: 60 }}
+            onMomentumScrollEnd={ev => {
+              const newIndex = Math.round(
+                ev.nativeEvent.contentOffset.x / SNAP_INTERVAL,
+              );
+              setChartIndex(newIndex);
+            }}
             renderItem={({ item }) => (
               <View style={{ width: ITEM_WIDTH, marginRight: ITEM_SPACING }}>
                 <PreciseVitalChart
@@ -285,32 +311,34 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
 
         {/* Footer Action Area */}
         <View style={styles.footerAction}>
-          <TouchableOpacity
-            style={[
-              styles.alertIcon,
-              {
-                backgroundColor: currentAlert
-                  ? '#FFECBD'
-                  : isDataEntered
-                  ? '#E5FFE8'
-                  : '#EBEBEB',
-              },
-            ]}
-            disabled={!isDataEntered}
-            onPress={handleAlertPress}
-          >
-            <Image
-              source={alertIcon}
+          <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+            <TouchableOpacity
               style={[
-                styles.fullImg,
-                currentAlert
-                  ? { tintColor: '#EDB62C', opacity: 1 }
-                  : isDataEntered
-                  ? { tintColor: '#29A539', opacity: 0.8 }
-                  : { tintColor: '#999696', opacity: 0.5 },
+                styles.alertIcon,
+                {
+                  backgroundColor: (currentAlert || isDataComplete)
+                    ? '#FFECBD'
+                    : isDataEntered
+                    ? '#E5FFE8'
+                    : '#EBEBEB',
+                },
               ]}
-            />
-          </TouchableOpacity>
+              disabled={!isDataEntered}
+              onPress={handleAlertPress}
+            >
+              <Image
+                source={alertIcon}
+                style={[
+                  styles.fullImg,
+                  (currentAlert || isDataComplete)
+                    ? { tintColor: '#EDB62C', opacity: 1 }
+                    : isDataEntered
+                    ? { tintColor: '#29A539', opacity: 0.8 }
+                    : { tintColor: '#999696', opacity: 0.5 },
+                ]}
+              />
+            </TouchableOpacity>
+          </Animated.View>
 
           {isLastTimeSlot ? (
             <View style={styles.buttonGroup}>
@@ -339,12 +367,19 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
             <TouchableOpacity
               style={[
                 styles.nextButton,
-                !selectedPatientId && styles.nextButtonDisabled,
+                !selectedPatientId && styles.disabledButton,
               ]}
               onPress={handleNextPress}
               disabled={!selectedPatientId}
             >
-              <Text style={styles.nextBtnText}>NEXT ›</Text>
+              <Text
+                style={[
+                  styles.nextBtnText,
+                  !selectedPatientId && { color: '#666' },
+                ]}
+              >
+                NEXT ›
+              </Text>
             </TouchableOpacity>
           )}
         </View>
