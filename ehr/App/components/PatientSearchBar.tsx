@@ -58,6 +58,9 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   const [showDropdown, setShowDropdown] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // NEW: State to track the dynamic height of the dropdown
+  const [dropdownHeight, setDropdownHeight] = useState(0);
   const inputRef = useRef<TextInput>(null);
 
   useEffect(() => {
@@ -95,7 +98,6 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
           }))
           .filter((p: any) => {
             const hasId = p.id !== null;
-            // Robust check for is_active: covers '1', 1, true
             const isActive =
               String(p.is_active) === '1' ||
               p.is_active === true ||
@@ -149,7 +151,15 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   };
 
   return (
-    <View style={[styles.section, containerStyle]}>
+    <View
+      style={[
+        styles.section,
+        containerStyle,
+        // CRITICAL FIX: Dynamically apply negative margin when open.
+        // This pulls the rest of your screen layout up underneath the dropdown!
+        showDropdown && { marginBottom: -dropdownHeight + 15 },
+      ]}
+    >
       {label ? (
         <Text style={[styles.sectionLabel, labelStyle]}>{label}</Text>
       ) : null}
@@ -182,13 +192,17 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
         </Pressable>
 
         {showDropdown && (
-          <View style={styles.dropdown}>
+          <View
+            style={styles.dropdown}
+            // CRITICAL FIX: Measure the dropdown's true height so we know how much to pull the screen up
+            onLayout={event =>
+              setDropdownHeight(event.nativeEvent.layout.height)
+            }
+          >
             <ScrollView
               style={styles.dropdownScroll}
-              contentContainerStyle={styles.dropdownScrollContent}
               nestedScrollEnabled={true}
-              keyboardShouldPersistTaps="always"
-              persistentScrollbar={true}
+              keyboardShouldPersistTaps="handled"
             >
               {loading && patients.length === 0 ? (
                 <View style={styles.infoContainer}>
@@ -232,13 +246,12 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
 const styles = StyleSheet.create({
   section: {
     marginBottom: 15,
-    zIndex: 1000,
-    elevation: Platform.OS === 'android' ? 10 : undefined,
+    zIndex: 9999,
+    elevation: Platform.OS === 'android' ? 50 : 0,
   },
   searchWrap: {
     position: 'relative',
-    zIndex: 1001,
-    elevation: Platform.OS === 'android' ? 11 : undefined,
+    zIndex: 9999,
   },
   sectionLabel: {
     fontSize: 14,
@@ -260,29 +273,18 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 14, color: '#333', height: '100%' },
   loader: { marginLeft: 10 },
   dropdown: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 52,
     backgroundColor: '#fff',
     borderRadius: 12,
     marginTop: 5,
     borderWidth: 1,
     borderColor: '#ddd',
-    elevation: 100,
-    zIndex: 9999,
     maxHeight: SCREEN_HEIGHT * 0.4,
+    zIndex: 10000,
+    elevation: 1000,
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
   },
   dropdownScroll: {
-    flex: 1,
-  },
-  dropdownScrollContent: {
-    flexGrow: 1,
+    width: '100%',
   },
   dropdownItem: {
     padding: 15,

@@ -42,7 +42,11 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
     type: 'error',
   });
 
-  const showAlert = (title: string, message: string, type: 'success' | 'error' = 'error') => {
+  const showAlert = (
+    title: string,
+    message: string,
+    type: 'success' | 'error' = 'error',
+  ) => {
     setAlertConfig({ visible: true, title, message, type });
   };
 
@@ -98,7 +102,10 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
 
   const handleNext = async () => {
     if (!selectedPatientId) {
-      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
+      return showAlert(
+        'Patient Required',
+        'Please select a patient first in the search bar.',
+      );
     }
 
     if (step < steps.length - 1) {
@@ -108,7 +115,11 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
         // Submit all 5 components to the backend router endpoints
         await saveMedicalHistory(selectedPatientId, formData);
 
-        showAlert('Success', 'Medical History components saved successfully.', 'success');
+        showAlert(
+          'Success',
+          'Medical History components saved successfully.',
+          'success',
+        );
         setTimeout(() => {
           onBack();
         }, 1500);
@@ -139,7 +150,7 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
       <ScrollView
         style={styles.container}
         showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="always"
+        keyboardShouldPersistTaps="handled"
         scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
@@ -153,8 +164,8 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
         </View>
 
         <PatientSearchBar
-          onPatientSelect={(id) => setSelectedPatientId(id)}
-          onToggleDropdown={(isOpen) => setScrollEnabled(!isOpen)}
+          onPatientSelect={id => setSelectedPatientId(id)}
+          onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
         />
 
         <View style={styles.stepHeader}>
@@ -176,7 +187,12 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
               }
               onChangeText={(val: string) => updateField(field, val)}
               disabled={!selectedPatientId}
-              onDisabledPress={() => showAlert('Patient Required', 'Please select a patient first in the search bar.')}
+              onDisabledPress={() =>
+                showAlert(
+                  'Patient Required',
+                  'Please select a patient first in the search bar.',
+                )
+              }
             />
           ),
         )}
