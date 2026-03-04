@@ -18,7 +18,7 @@ import SweetAlert from '../../../components/SweetAlert';
 import PatientSearchBar from '../../../components/PatientSearchBar';
 
 const THEME_GREEN = '#035022';
-const LIGHT_GREEN_BG = '#DCFCE7';
+const LIGHT_GREEN_BG = '#E5FFE8';
 
 const MedAdministrationScreen = ({ onBack }: any) => {
   const {
@@ -33,7 +33,10 @@ const MedAdministrationScreen = ({ onBack }: any) => {
   } = useMedAdministration();
 
   const [scrollEnabled, setScrollEnabled] = useState(true);
-  const lastFetched = useRef<{ id: number | null, date: string }>({ id: null, date: '' });
+  const lastFetched = useRef<{ id: number | null; date: string }>({
+    id: null,
+    date: '',
+  });
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -58,7 +61,11 @@ const MedAdministrationScreen = ({ onBack }: any) => {
 
   // Fetch patient data when patient or date changes
   useEffect(() => {
-    if (formData.patient_id && (formData.patient_id !== lastFetched.current.id || formData.date !== lastFetched.current.date)) {
+    if (
+      formData.patient_id &&
+      (formData.patient_id !== lastFetched.current.id ||
+        formData.date !== lastFetched.current.date)
+    ) {
       lastFetched.current = { id: formData.patient_id, date: formData.date };
       fetchPatientData(formData.patient_id, formData.date);
     }
@@ -77,16 +84,40 @@ const MedAdministrationScreen = ({ onBack }: any) => {
         patient_id: null,
         patientName: '',
         medications: [
-          { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
-          { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
-          { id: null, medication: '', dose: '', route: '', frequency: '', comments: '' },
-        ]
+          {
+            id: null,
+            medication: '',
+            dose: '',
+            route: '',
+            frequency: '',
+            comments: '',
+          },
+          {
+            id: null,
+            medication: '',
+            dose: '',
+            route: '',
+            frequency: '',
+            comments: '',
+          },
+          {
+            id: null,
+            medication: '',
+            dose: '',
+            route: '',
+            frequency: '',
+            comments: '',
+          },
+        ],
       }));
     }
   };
 
   const currentMed = formData.medications[step];
-  const isFormValid = formData.patient_id && currentMed.medication && currentMed.medication.trim() !== '';
+  const isFormValid =
+    formData.patient_id &&
+    currentMed.medication &&
+    currentMed.medication.trim() !== '';
 
   const handleAction = async () => {
     if (!formData.patient_id) {
@@ -112,9 +143,6 @@ const MedAdministrationScreen = ({ onBack }: any) => {
           'Medication Administration records saved successfully.',
           'success',
         );
-        setTimeout(() => {
-          onBack();
-        }, 1500);
       } catch (error: any) {
         showAlert(
           'Error',
@@ -136,7 +164,10 @@ const MedAdministrationScreen = ({ onBack }: any) => {
   };
 
   const onDisabledPress = () => {
-    showAlert('Patient Required', 'Please select a patient first in the search bar.');
+    showAlert(
+      'Patient Required',
+      'Please select a patient first in the search bar.',
+    );
   };
 
   return (
@@ -165,13 +196,11 @@ const MedAdministrationScreen = ({ onBack }: any) => {
           onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
         />
 
-        <View style={[styles.section, { zIndex: 1 }]}>
+        <View style={styles.section}>
           <Text style={styles.sectionLabel}>DATE :</Text>
-          <TextInput
-            style={styles.inputField}
-            value={formData.date}
-            onChangeText={t => setFormData({ ...formData, date: t })}
-          />
+          <View style={styles.pillInput}>
+            <Text style={styles.dateVal}>{formData.date}</Text>
+          </View>
         </View>
 
         {/* Time Progress Banner */}
@@ -219,18 +248,16 @@ const MedAdministrationScreen = ({ onBack }: any) => {
 
         {/* Footer Navigation Button */}
         <TouchableOpacity
-          style={[
-            styles.actionBtn,
-            !isFormValid && styles.disabledButton,
-          ]}
+          style={[styles.actionBtn, !isFormValid && styles.disabledButton]}
           onPress={handleAction}
-          disabled={!isFormValid && !!formData.patient_id && currentMed.medication !== ''} // Allow press if patient not selected to show alert
+          disabled={
+            !isFormValid &&
+            !!formData.patient_id &&
+            currentMed.medication !== ''
+          } // Allow press if patient not selected to show alert
         >
           <Text
-            style={[
-              styles.actionBtnText,
-              !isFormValid && { color: '#9E9E9E' },
-            ]}
+            style={[styles.actionBtnText, !isFormValid && { color: '#9E9E9E' }]}
           >
             {step === 2 ? 'SUBMIT' : 'NEXT'}
           </Text>
@@ -284,9 +311,9 @@ const styles = StyleSheet.create({
   dateText: { fontSize: 14, color: '#999', marginTop: 5 },
   section: { marginBottom: 15, zIndex: 10 },
   sectionLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: THEME_GREEN,
+    color: '#0A8219',
     marginBottom: 8,
   },
   inputField: {
@@ -297,6 +324,18 @@ const styles = StyleSheet.create({
     borderColor: '#F2F2F2',
     fontSize: 14,
   },
+  pillInput: {
+    borderWidth: 1,
+    borderColor: '#F2F2F2',
+    borderRadius: 25,
+    height: 45,
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+  },
+  dateVal: {
+    color: '#333',
+    fontSize: 14,
+  },
   timeBanner: {
     backgroundColor: LIGHT_GREEN_BG,
     paddingVertical: 10,
@@ -305,7 +344,7 @@ const styles = StyleSheet.create({
     marginVertical: 15,
   },
   timeText: {
-    color: THEME_GREEN,
+    color: '#29A539',
     fontWeight: 'bold',
     fontSize: 14,
   },
@@ -317,7 +356,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: THEME_GREEN,
+    borderColor: '#29A539',
     marginTop: 10,
   },
   disabledButton: {
