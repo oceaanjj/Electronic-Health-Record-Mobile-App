@@ -1,5 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity, Pressable } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  StyleSheet,
+  TouchableOpacity,
+  Pressable,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import CDSSModal from '../../../components/CDSSModal';
 import SweetAlert from '../../../components/SweetAlert';
@@ -12,10 +19,16 @@ interface ExamInputProps {
   onChangeText: (text: string) => void;
 }
 
-const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamInputProps) => {
+const ADLInputCard = ({
+  label,
+  value,
+  disabled,
+  alertText,
+  onChangeText,
+}: ExamInputProps) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
-  
+
   // LOGIC: The bell is only active if the input is not empty
   const isBellActive = value.trim().length > 0;
   // Keyword match: Backend found a specific clinical risk
@@ -23,11 +36,15 @@ const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamI
 
   return (
     <View style={[styles.card, disabled && {}]}>
-      <View style={styles.cardHeader}><Text style={styles.headerText}>{label}</Text></View>
+      <View style={styles.cardHeader}>
+        <Text style={styles.headerText}>{label}</Text>
+      </View>
       <View style={styles.content}>
-        <View style={styles.badge}><Text style={styles.badgeText}>Findings</Text></View>
-        <Pressable 
-          style={styles.inputArea} 
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>Findings</Text>
+        </View>
+        <Pressable
+          style={styles.inputArea}
           onPress={() => {
             if (disabled) {
               setShowAlert(true);
@@ -35,7 +52,9 @@ const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamI
           }}
         >
           <View style={styles.linesContainer}>
-            {[...Array(3)].map((_, i) => <View key={i} style={styles.line} />)}
+            {[...Array(3)].map((_, i) => (
+              <View key={i} style={styles.line} />
+            ))}
           </View>
           <TextInput
             style={styles.input}
@@ -47,30 +66,32 @@ const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamI
             pointerEvents={disabled ? 'none' : 'auto'}
           />
         </Pressable>
-        
+
         {/* The Bell: Faded/Disabled by default, Gold/Active only when typing */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[
-            styles.bellBtn, 
+            styles.bellBtn,
             !isBellActive && { opacity: 0.3 }, // Visual feedback for inactive state
-            hasBackendAlert && styles.activeBell // Gold state for matched risks
-          ]} 
+            hasBackendAlert && styles.activeBell, // Gold state for matched risks
+          ]}
           onPress={() => isBellActive && setModalVisible(true)}
           disabled={!isBellActive} // Strictly prevents interaction when empty
         >
-          <Icon 
-            name={isBellActive ? "notifications-active" : "notifications"} 
-            size={22} 
-            color={hasBackendAlert ? "#B45309" : (isBellActive ? "#B45309" : "#E5E7EB")} 
+          <Icon
+            name={isBellActive ? 'notifications-active' : 'notifications'}
+            size={22}
+            color={
+              hasBackendAlert ? '#B45309' : isBellActive ? '#B45309' : '#E5E7EB'
+            }
           />
         </TouchableOpacity>
       </View>
 
-      <CDSSModal 
-        visible={modalVisible} 
-        onClose={() => setModalVisible(false)} 
-        category={label} 
-        alertText={alertText || "Analyzing findings for potential risks..."} 
+      <CDSSModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        category={label}
+        alertText={alertText || 'Analyzing findings for potential risks...'}
       />
 
       <SweetAlert
@@ -86,18 +107,57 @@ const ADLInputCard = ({ label, value, disabled, alertText, onChangeText }: ExamI
 };
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#FFFBEB', borderRadius: 25, marginBottom: 20, overflow: 'hidden', elevation: 2, borderWidth: 1, borderColor: '#FEF3C7' },
-  cardHeader: { backgroundColor: '#FEF3C7', paddingVertical: 6, alignItems: 'center' },
-  headerText: { color: '#D97706', fontWeight: 'bold', fontSize: 11 },
+  card: {
+    backgroundColor: '#FFFAED',
+    borderRadius: 25,
+    marginBottom: 20,
+    overflow: 'hidden',
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#FEF3C7',
+  },
+  cardHeader: {
+    backgroundColor: '#FFEDC1',
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  headerText: { color: '#EDB62C', fontWeight: 'bold', fontSize: 11 },
   content: { padding: 15, flexDirection: 'row' },
-  badge: { backgroundColor: '#FEF3C7', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 15, marginRight: 10, alignSelf: 'flex-start' },
-  badgeText: { color: '#D97706', fontSize: 10, fontWeight: 'bold' },
+  badge: {
+    backgroundColor: '#FFEEC2',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 15,
+    marginRight: 10,
+    alignSelf: 'flex-start',
+  },
+  badgeText: { color: '#EDB62C', fontSize: 10, fontWeight: 'bold' },
   inputArea: { flex: 1, minHeight: 100, position: 'relative' },
-  input: { fontSize: 14, color: '#333', textAlignVertical: 'top', flex: 1, zIndex: 2 },
+  input: {
+    fontSize: 14,
+    color: '#333',
+    textAlignVertical: 'top',
+    flex: 1,
+    zIndex: 2,
+  },
   linesContainer: { ...StyleSheet.absoluteFillObject, paddingTop: 28 },
-  line: { height: 1, backgroundColor: '#FEF3C7', marginBottom: 28, marginRight: 10 },
-  bellBtn: { alignSelf: 'flex-end', backgroundColor: '#FEF3C7', borderRadius: 20, padding: 8 },
-  activeBell: { backgroundColor: '#FDE68A', borderWidth: 1, borderColor: '#B45309' } 
+  line: {
+    height: 1,
+    backgroundColor: '#D9D9D9',
+    marginBottom: 28,
+    marginRight: 10,
+  },
+  bellBtn: {
+    alignSelf: 'flex-end',
+    backgroundColor: '#FEF3C7',
+    borderRadius: 20,
+    padding: 8,
+  },
+  activeBell: {
+    backgroundColor: '#FDE68A',
+    borderWidth: 1,
+    borderColor: '#B45309',
+  },
 });
 
 export default ADLInputCard;
