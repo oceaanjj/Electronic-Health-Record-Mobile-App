@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import apiClient from '../../../api/apiClient';
+import { useRegistration } from '../hook/useRegistration';
 
 const THEME_GREEN = '#035022';
 const BANNER_GREEN = '#E5FFE8';
@@ -76,87 +76,38 @@ interface Props {
 }
 
 const RegisterPatient: React.FC<Props> = ({ onBack }) => {
-  const [step, setStep] = useState(1);
+  const {
+    step,
+    setStep,
+    form,
+    setForm,
+    contacts,
+    setContacts,
+    contactErrors,
+    formatNameOnBlur,
+    handleNumberChange,
+    validateNumberOnBlur,
+    registerPatient,
+    capitalize,
+  } = useRegistration();
+
   const [birthParts, setBirthParts] = useState({
     month: '',
     day: '',
     year: '',
   });
-  const [form, setForm] = useState({
-    first_name: '',
-    middle_name: '',
-    last_name: '',
-    birthdate: '',
-    age: '',
-    sex: '',
-    address: '',
-    birth_place: '',
-    religion: '',
-    ethnicity: '',
-    other_religion: '',
-    other_ethnicity: '',
-    chief_complaints: '',
-    room_no: '',
-    bed_no: '',
-    user_id: 1,
-  });
-
-  const [contacts, setContacts] = useState([
-    { name: '', relationship: '', number: '' },
-  ]);
-  const [contactErrors, setContactErrors] = useState<string[]>([]);
 
   // Refs for Keyboard Navigation
   const middleNameRef = useRef<TextInput>(null);
   const lastNameRef = useRef<TextInput>(null);
-  const birthPlaceRef = useRef<TextInput>(null);
+  const birthplaceRef = useRef<TextInput>(null);
   const contactRelRef = useRef<TextInput>(null);
   const contactNumRef = useRef<TextInput>(null);
-
-  const capitalize = (str: string) =>
-    str ? str.charAt(0).toUpperCase() + str.slice(1) : '';
-
-  const formatNameOnBlur = (field: keyof typeof form) => {
-    setForm(prev => ({ ...prev, [field]: capitalize(prev[field] as string) }));
-  };
 
   const formatContactNameOnBlur = (index: number) => {
     const updated = [...contacts];
     updated[index].name = capitalize(updated[index].name);
     setContacts(updated);
-  };
-
-  // CONTACT NUMBER LOGIC
-  const handleNumberChange = (index: number, val: string) => {
-    const numericValue = val.replace(/[^0-9]/g, ''); // Only allow numbers
-    const updated = [...contacts];
-    updated[index].number = numericValue;
-    setContacts(updated);
-
-    // Clear error while typing
-    const errors = [...contactErrors];
-    errors[index] = '';
-    setContactErrors(errors);
-  };
-
-  const validateNumberOnBlur = (index: number) => {
-    const updated = [...contacts];
-    let num = updated[index].number;
-
-    // Logic: If user typed 10 digits starting with 9, add the 0
-    if (num.length === 10 && num.startsWith('9')) {
-      num = '0' + num;
-      updated[index].number = num;
-      setContacts(updated);
-    }
-
-    const errors = [...contactErrors];
-    if (num.length !== 11) {
-      errors[index] = 'Number must be exactly 11 digits (e.g. 0919...)';
-    } else {
-      errors[index] = '';
-    }
-    setContactErrors(errors);
   };
 
   useEffect(() => {
@@ -178,31 +129,22 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
         birthdate: `${birthParts.year}-${birthParts.month}-${birthParts.day}`,
       }));
     }
-  }, [birthParts]);
+  }, [birthParts, setForm]);
 
   const handleFinalRegister = async () => {
-    if (contactErrors.some(e => e !== '')) {
-      Alert.alert('Invalid Input', 'Please correct the contact number errors.');
-      return;
-    }
     try {
-      const payload = {
-        ...form,
-        religion:
-          form.religion === 'Other' ? form.other_religion : form.religion,
-        ethnicity:
-          form.ethnicity === 'Other' ? form.other_ethnicity : form.ethnicity,
-        contact_name: contacts[0].name,
-        contact_relationship: contacts[0].relationship,
-        contact_number: contacts[0].number,
-      };
-      const response = await apiClient.post('/patients/', payload);
+      const response = await registerPatient();
       if (response.status === 200 || response.status === 201) {
         Alert.alert('Success', 'Patient registered successfully!');
         onBack();
       }
-    } catch (error) {
-      Alert.alert('Error', 'Registration failed.');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail 
+        ? (Array.isArray(error.response.data.detail) 
+            ? error.response.data.detail.map((d: any) => `${d.loc.join('.')}: ${d.msg}`).join('\n') 
+            : JSON.stringify(error.response.data.detail))
+        : (error.message || 'Registration failed.');
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -372,7 +314,7 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
                   value={form.address}
                   onChangeText={v => setForm({ ...form, address: v })}
                   returnKeyType="next"
-                  onSubmitEditing={() => birthPlaceRef.current?.focus()}
+                  onSubmitEditing={() => birthplaceRef.current?.focus()}
                 />
               </View>
               <View style={styles.inputGroup}>
@@ -380,12 +322,12 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
                   Birth Place <Text style={styles.required}>*</Text>
                 </Text>
                 <TextInput
-                  ref={birthPlaceRef}
+                  ref={birthplaceRef}
                   style={styles.input}
                   placeholder="Enter Birth Place"
                   placeholderTextColor={PLACEHOLDER_COLOR}
-                  value={form.birth_place}
-                  onChangeText={v => setForm({ ...form, birth_place: v })}
+                  value={form.birthplace}
+                  onChangeText={v => setForm({ ...form, birthplace: v })}
                   returnKeyType="done"
                 />
               </View>
