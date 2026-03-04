@@ -23,7 +23,7 @@ const alertIcon = require('../../../../assets/icons/alert.png');
 
 const THEME_GREEN = '#035022';
 const LAB_TESTS = [
-// ... (rest of the tests)
+  // ... (rest of the tests)
   'WBC (×10⁹/L)',
   'RBC (×10¹²/L)',
   'Hgb (g/dL)',
@@ -41,7 +41,7 @@ const LAB_TESTS = [
 ];
 
 const LabValuesScreen = ({ onBack }: any) => {
-// ... (rest of the component state and effects)
+  // ... (rest of the component state and effects)
   const { alerts, checkLabAlerts, saveLabAssessment } = useLabValues();
   const [labId, setLabId] = useState<number | null>(null);
   const [selectedTest, setSelectedTest] = useState(LAB_TESTS[0]);
@@ -298,7 +298,7 @@ const LabValuesScreen = ({ onBack }: any) => {
           </TouchableOpacity>
 
           {selectedTest === 'Basophils (%)' ? (
-// ... (rest of the TSX)
+            // ... (rest of the TSX)
             <View style={styles.buttonGroup}>
               <TouchableOpacity
                 style={[
@@ -342,18 +342,12 @@ const LabValuesScreen = ({ onBack }: any) => {
             </View>
           ) : (
             <TouchableOpacity
-              style={[
-                styles.nextBtn,
-                !isFormValid && styles.disabledButton,
-              ]}
+              style={[styles.nextBtn, !isFormValid && styles.disabledButton]}
               onPress={handleNextOrSave}
               disabled={!isFormValid}
             >
               <Text
-                style={[
-                  styles.nextText,
-                  !isFormValid && { color: '#9E9E9E' },
-                ]}
+                style={[styles.nextText, !isFormValid && { color: '#9E9E9E' }]}
               >
                 NEXT
               </Text>
@@ -386,7 +380,7 @@ const LabValuesScreen = ({ onBack }: any) => {
 };
 
 const styles = StyleSheet.create({
-// ... (rest of the styles)
+  // ... (rest of the styles)
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: { flex: 1, paddingHorizontal: 25 },
   scrollContent: { paddingBottom: 40 },
@@ -401,7 +395,7 @@ const styles = StyleSheet.create({
     color: THEME_GREEN,
     fontFamily: 'MinionPro-SemiboldItalic',
   },
-  dateText: { fontSize: 13, color: '#999' },
+  dateText: { fontSize: 13, fontFamily: 'AlteHaasGroteskBold', color: '#999' },
   dropdownOverlay: {
     position: 'absolute',
     top: 90,
