@@ -32,7 +32,8 @@ const initialFormData = {
 };
 
 const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
-  const { saveAssessment, checkAssessmentAlerts, fetchLatestPhysicalExam } = usePhysicalExam();
+  const { saveAssessment, checkAssessmentAlerts, fetchLatestPhysicalExam } =
+    usePhysicalExam();
   const [searchText, setSearchText] = useState('');
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
     null,
@@ -69,37 +70,40 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   const [formData, setFormData] = useState(initialFormData);
 
-  const loadPatientData = useCallback(async (patientId: number) => {
-    const data = await fetchLatestPhysicalExam(patientId);
-    if (data) {
-      setExamId(data.id);
-      setFormData({
-        general_appearance: data.general_appearance || '',
-        skin_condition: data.skin_condition || '',
-        eye_condition: data.eye_condition || '',
-        oral_condition: data.oral_condition || '',
-        cardiovascular: data.cardiovascular || '',
-        abdomen_condition: data.abdomen_condition || '',
-        extremities: data.extremities || '',
-        neurological: data.neurological || '',
-      });
-      // Also update alerts if they exist in the loaded data
-      setBackendAlerts({
-        general_appearance_alert: data.general_appearance_alert,
-        skin_alert: data.skin_alert,
-        eye_alert: data.eye_alert,
-        oral_alert: data.oral_alert,
-        cardiovascular_alert: data.cardiovascular_alert,
-        abdomen_alert: data.abdomen_alert,
-        extremities_alert: data.extremities_alert,
-        neurological_alert: data.neurological_alert,
-      });
-    } else {
-      setExamId(null);
-      setFormData(initialFormData);
-      setBackendAlerts({});
-    }
-  }, [fetchLatestPhysicalExam]);
+  const loadPatientData = useCallback(
+    async (patientId: number) => {
+      const data = await fetchLatestPhysicalExam(patientId);
+      if (data) {
+        setExamId(data.id);
+        setFormData({
+          general_appearance: data.general_appearance || '',
+          skin_condition: data.skin_condition || '',
+          eye_condition: data.eye_condition || '',
+          oral_condition: data.oral_condition || '',
+          cardiovascular: data.cardiovascular || '',
+          abdomen_condition: data.abdomen_condition || '',
+          extremities: data.extremities || '',
+          neurological: data.neurological || '',
+        });
+        // Also update alerts if they exist in the loaded data
+        setBackendAlerts({
+          general_appearance_alert: data.general_appearance_alert,
+          skin_alert: data.skin_alert,
+          eye_alert: data.eye_alert,
+          oral_alert: data.oral_alert,
+          cardiovascular_alert: data.cardiovascular_alert,
+          abdomen_alert: data.abdomen_alert,
+          extremities_alert: data.extremities_alert,
+          neurological_alert: data.neurological_alert,
+        });
+      } else {
+        setExamId(null);
+        setFormData(initialFormData);
+        setBackendAlerts({});
+      }
+    },
+    [fetchLatestPhysicalExam],
+  );
 
   useEffect(() => {
     if (selectedPatientId !== prevPatientIdRef.current) {
@@ -119,7 +123,9 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     if (!selectedPatientId) return;
 
     const timer = setTimeout(async () => {
-      const hasContent = Object.values(formData).some(v => v && v.trim().length > 0);
+      const hasContent = Object.values(formData).some(
+        v => v && v.trim().length > 0,
+      );
       if (hasContent) {
         try {
           const result = await checkAssessmentAlerts({
@@ -174,24 +180,25 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
         patient_id: selectedPatientId,
         ...formData,
       });
-      
+
       const newId = result.id || result.physical_exam_id;
       // Check if it was an update or a new submission
-      const isUpdate = !!examId || (result.updated_at !== result.created_at);
-      
+      const isUpdate = !!examId || result.updated_at !== result.created_at;
+
       if (newId) {
         setExamId(newId);
       }
 
       showAlert(
         isUpdate ? 'SUCCESSFULLY UPDATED' : 'SUCCESSFULLY SUBMITTED',
-        `Physical Exam has been ${isUpdate ? 'updated' : 'submitted'} successfully.`,
-        'success'
+        `Physical Exam has been ${
+          isUpdate ? 'updated' : 'submitted'
+        } successfully.`,
+        'success',
       );
-      
+
       // Refresh to get latest state
       loadPatientData(parseInt(selectedPatientId, 10));
-
     } catch (e) {
       showAlert('Error', 'Submission failed. Please check your connection.');
     }
@@ -209,7 +216,9 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     setFormData(prev => ({ ...prev, [field]: val }));
   };
 
-  const isDataEntered = Object.values(formData).some(v => v && v.trim().length > 0);
+  const isDataEntered = Object.values(formData).some(
+    v => v && v.trim().length > 0,
+  );
 
   // Switch to ADPIE Screen if active
   if (isAdpieActive && examId && selectedPatientId) {
@@ -315,11 +324,21 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
         <View style={styles.footerRow}>
           {/* CDSS Button: Triggers Nursing Process Stepper */}
-          <TouchableOpacity 
-            style={[styles.cdssBtn, isDataEntered && { backgroundColor: '#DCFCE7', borderColor: THEME_GREEN }]} 
+          <TouchableOpacity
+            style={[
+              styles.cdssBtn,
+              isDataEntered && {
+                backgroundColor: '#DCFCE7',
+                borderColor: THEME_GREEN,
+              },
+            ]}
             onPress={handleCDSSPress}
           >
-            <Text style={[styles.cdssText, isDataEntered && { color: THEME_GREEN }]}>CDSS</Text>
+            <Text
+              style={[styles.cdssText, isDataEntered && { color: THEME_GREEN }]}
+            >
+              CDSS
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.submitBtn} onPress={handleSave}>
             <Text style={styles.submitText}>SUBMIT</Text>
@@ -363,13 +382,13 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   banner: {
-    backgroundColor: '#DCFCE7',
+    backgroundColor: '#E5FFE8',
     paddingVertical: 10,
     borderRadius: 25,
     alignItems: 'center',
     marginBottom: 20,
   },
-  bannerText: { color: THEME_GREEN, fontWeight: 'bold', fontSize: 12 },
+  bannerText: { color: '#29A539', fontWeight: 'bold', fontSize: 12 },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
