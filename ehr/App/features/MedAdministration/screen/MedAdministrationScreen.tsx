@@ -308,11 +308,15 @@ const styles = StyleSheet.create({
     color: '#035022',
     fontFamily: 'MinionPro-SemiboldItalic',
   },
-  dateText: { fontSize: 14, color: '#999', marginTop: 5 },
+  dateText: {
+    fontSize: 13,
+    fontFamily: 'AlteHaasGroteskBold',
+    color: '#999',
+  },
   section: { marginBottom: 15, zIndex: 10 },
   sectionLabel: {
     fontSize: 14,
-    fontWeight: 'bold',
+    fontFamily: 'AlteHaasGroteskBold',
     color: '#0A8219',
     marginBottom: 8,
   },
@@ -334,6 +338,7 @@ const styles = StyleSheet.create({
   },
   dateVal: {
     color: '#333',
+    fontFamily: 'AlteHaasGrotesk',
     fontSize: 14,
   },
   timeBanner: {
@@ -345,7 +350,8 @@ const styles = StyleSheet.create({
   },
   timeText: {
     color: '#29A539',
-    fontWeight: 'bold',
+    fontFamily: 'AlteHaasGroteskBold',
+
     fontSize: 14,
   },
   actionBtn: {

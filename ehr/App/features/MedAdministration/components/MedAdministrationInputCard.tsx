@@ -64,8 +64,8 @@ const styles = StyleSheet.create({
   },
   labelText: {
     color: '#EDB62C',
-    fontWeight: 'bold',
-    fontSize: 13,
+    fontFamily: 'AlteHaasGroteskBold',
+    fontSize: 14,
   },
   inputBody: {
     minHeight: 50,
