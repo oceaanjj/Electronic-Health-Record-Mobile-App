@@ -388,7 +388,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  bannerText: { color: '#29A539', fontWeight: 'bold', fontSize: 12 },
+  bannerText: {
+    color: '#29A539',
+    fontFamily: 'AlteHaasGroteskBold',
+    fontSize: 14,
+  },
   footerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

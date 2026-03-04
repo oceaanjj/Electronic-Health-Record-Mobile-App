@@ -59,8 +59,9 @@ const ExamInputCard = ({
             styles.line,
             {
               top: topPosition,
-              left: 0, // All lines now span the full width from the left
-              right: isNearAlert ? 55 : 0,
+              left: 10,
+              // Add the 20px padding to the right side (55 + 20 = 75 for the alert cut)
+              right: isNearAlert ? 75 : 10,
             },
           ]}
         />,
@@ -153,7 +154,11 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     alignItems: 'center',
   },
-  headerText: { color: '#EDB62C', fontWeight: 'bold', fontSize: 12 },
+  headerText: {
+    color: '#EDB62C',
+    fontFamily: 'AlteHaasGroteskBold',
+    fontSize: 14,
+  },
   content: {
     padding: 15,
     position: 'relative', // Removed flexDirection: 'row' so elements stack vertically
@@ -164,11 +169,15 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
     borderRadius: 15,
     alignSelf: 'flex-start',
-    width: 80,
+    width: '100%',
     alignItems: 'center',
     marginBottom: 8, // Adds breathing room before the lines start
   },
-  badgeText: { color: '#EDB62C', fontSize: 12, fontWeight: 'bold' },
+  badgeText: {
+    color: '#EDB62C',
+    fontSize: 13,
+    fontFamily: 'AlteHaasGroteskBold',
+  },
   inputArea: {
     minHeight: 112,
     position: 'relative',
@@ -178,7 +187,7 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlignVertical: 'top',
     zIndex: 2,
-    padding: 0,
+    padding: 10,
     paddingTop: 0,
     paddingBottom: INPUT_PADDING_BOTTOM,
     lineHeight: LINE_HEIGHT,
