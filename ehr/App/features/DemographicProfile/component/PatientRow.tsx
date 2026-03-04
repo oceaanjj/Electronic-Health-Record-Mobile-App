@@ -20,6 +20,7 @@ interface PatientRowProps {
   isSelectionMode: boolean;
   onPress: () => void;
   onLongPress: () => void;
+  onEdit?: (id: number) => void;
 }
 
 // Asset Paths
@@ -35,6 +36,7 @@ const PatientRow: React.FC<PatientRowProps> = ({
   isSelectionMode,
   onPress,
   onLongPress,
+  onEdit,
 }) => {
   return (
     <Pressable
@@ -66,7 +68,11 @@ const PatientRow: React.FC<PatientRowProps> = ({
       </View>
 
       <View style={[styles.actionsCol, isSelectionMode && { opacity: 0.5 }]}>
-        <TouchableOpacity style={styles.actionBtn} disabled={isSelectionMode}>
+        <TouchableOpacity
+          style={styles.actionBtn}
+          disabled={isSelectionMode}
+          onPress={() => onEdit && onEdit(item.id)}
+        >
           <View style={[styles.iconCircle, { borderColor: '#FFD54F' }]}>
             <Image source={editIcon} style={styles.fullIcon} />
           </View>

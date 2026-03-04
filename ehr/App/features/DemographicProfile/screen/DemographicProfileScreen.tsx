@@ -76,21 +76,22 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
   };
 
   const handlePatientClick = (patientId: number) => {
-    if (onPatientClick) {
-      onPatientClick(patientId);
-    } else {
-      setSelectedPatientId(patientId);
-    }
+    setSelectedPatientId(patientId);
   };
 
   if (selectedPatientId) {
     return (
-      <PatientDetailsScreen
-        patientId={selectedPatientId}
-        onBack={() => setSelectedPatientId(null)}
+      <PatientDetailsScreen 
+        patientId={selectedPatientId} 
+        onBack={() => setSelectedPatientId(null)} 
+        onEdit={(id) => {
+          setSelectedPatientId(null);
+          onPatientClick && onPatientClick(id);
+        }}
       />
     );
   }
+
 
   return (
     <View style={styles.root}>
@@ -162,6 +163,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
                       : handlePatientClick(item.patient_id)
                   }
                   onLongPress={() => toggleSelection(item.patient_id)}
+                  onEdit={(id) => onPatientClick && onPatientClick(id)}
                 />
               )}
             />

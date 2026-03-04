@@ -8,6 +8,7 @@ import BottomNav from '../../../components/navigation/BottomNav';
 import RegisterPatient from '../../PatientRegistration/component/RegisterPatient';
 import DemographicProfileScreen from '../../DemographicProfile/screen/DemographicProfileScreen';
 import VitalSignsScreen from '../../VitalSigns/screen/VitalSignsScreen';
+import EditPatientScreen from '../../EditPatientDetails/screen/EditPatientScreen';
 
 import MedicalHistoryScreen from '../../MedicalHistory/screen/MedicalHistoryScreen';
 import PhysicalExamScreen from '../../PhysicalExam/screen/PhysicalExamScreen';
@@ -23,6 +24,7 @@ import IntakeAndOutputScreen from '../../IntakeAndOutput/screen/IntakeAndOutputS
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
   const [isSelecting, setIsSelecting] = useState(false);
+  const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
 
   const handleNavigation = (route: string) => {
     setActiveTab(route);
@@ -45,6 +47,18 @@ export default function HomeScreen() {
           <DemographicProfileScreen
             onBack={() => setActiveTab('Grid')}
             onSelectionChange={selecting => setIsSelecting(selecting)}
+            onPatientClick={id => {
+              setEditingPatientId(id);
+              setActiveTab('EditPatient');
+            }}
+          />
+        );
+
+      case 'EditPatient':
+        return (
+          <EditPatientScreen
+            patientId={editingPatientId || 0}
+            onBack={() => setActiveTab('Demographic Profile')}
           />
         );
 
