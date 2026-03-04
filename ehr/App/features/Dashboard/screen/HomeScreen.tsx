@@ -97,9 +97,9 @@ export default function HomeScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.flex1}>{renderPage()}</View>
 
-      {!(activeTab === 'Demographic Profile' && isSelecting) && (
+      {activeTab !== 'Demographic Profile' && (
         <BottomNav
-          activeRoute={activeTab === 'Demographic Profile' ? 'Grid' : activeTab}
+          activeRoute={activeTab}
           onNavigate={handleNavigation}
           onAddPatient={() => setActiveTab('Register')}
         />

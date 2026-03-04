@@ -39,7 +39,6 @@ const selectImage = require('../../../../assets/icons/select_icon.png');
 const backArrow = require('../../../../assets/icons/back_arrow.png');
 
 const DemographicProfileScreen: React.FC<ProfileProps> = ({
-  onBack,
   onSelectionChange,
   onPatientClick,
 }) => {
@@ -86,7 +85,10 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
 
   if (selectedPatientId) {
     return (
-      <PatientDetailsScreen patientId={selectedPatientId} onBack={onBack} />
+      <PatientDetailsScreen
+        patientId={selectedPatientId}
+        onBack={() => setSelectedPatientId(null)}
+      />
     );
   }
 
@@ -165,34 +167,36 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
             />
           )}
 
-          {/* Action Footer */}
-          {isSelectionMode && (
-            <View style={styles.actionFooter}>
-              <TouchableOpacity
-                style={styles.footerItem}
-                onPress={() => updateStatus(true)}
+          {/* Persistent Action Footer */}
+          <View
+            style={[styles.actionFooter, !isSelectionMode && { opacity: 0.5 }]}
+          >
+            <TouchableOpacity
+              style={styles.footerItem}
+              onPress={() => isSelectionMode && updateStatus(true)}
+              disabled={!isSelectionMode}
+            >
+              <View
+                style={[styles.statusCircle, { backgroundColor: '#E8F5E9' }]}
               >
-                <View
-                  style={[styles.statusCircle, { backgroundColor: '#E8F5E9' }]}
-                >
-                  <Image source={activeIcon} style={styles.footerIcon} />
-                </View>
-                <Text style={styles.footerText}>Active</Text>
-              </TouchableOpacity>
+                <Image source={activeIcon} style={styles.footerIcon} />
+              </View>
+              <Text style={styles.footerText}>Active</Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={styles.footerItem}
-                onPress={() => updateStatus(false)}
+            <TouchableOpacity
+              style={styles.footerItem}
+              onPress={() => isSelectionMode && updateStatus(false)}
+              disabled={!isSelectionMode}
+            >
+              <View
+                style={[styles.statusCircle, { backgroundColor: '#FFEBEE' }]}
               >
-                <View
-                  style={[styles.statusCircle, { backgroundColor: '#FFEBEE' }]}
-                >
-                  <Image source={inactiveIcon} style={styles.footerIcon} />
-                </View>
-                <Text style={styles.footerText}>Inactive</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+                <Image source={inactiveIcon} style={styles.footerIcon} />
+              </View>
+              <Text style={styles.footerText}>Inactive</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </SafeAreaView>
 
@@ -251,6 +255,22 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 50,
     paddingHorizontal: 20,
+  },
+
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+
+  backBtn: {
+    marginTop: 12,
+    marginRight: 10,
+  },
+
+  backIcon: {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
   },
 
   headerActions: {
