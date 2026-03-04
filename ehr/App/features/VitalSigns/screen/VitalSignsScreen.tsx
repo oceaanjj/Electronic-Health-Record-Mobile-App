@@ -552,8 +552,8 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   pillInput: {
-    borderWidth: 1,
-    borderColor: '#F0F0F0',
+    borderWidth: 1.5,
+    borderColor: '#EBEBEB',
     borderRadius: 25,
     height: 45,
     paddingHorizontal: 20,

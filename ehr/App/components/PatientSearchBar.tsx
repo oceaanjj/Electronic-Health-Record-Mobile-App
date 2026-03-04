@@ -30,7 +30,11 @@ interface Patient {
 }
 
 interface PatientSearchBarProps {
-  onPatientSelect: (patientId: number | null, patientName: string, patientObj?: Patient) => void;
+  onPatientSelect: (
+    patientId: number | null,
+    patientName: string,
+    patientObj?: Patient,
+  ) => void;
   onToggleDropdown?: (isOpen: boolean) => void;
   containerStyle?: ViewStyle;
   labelStyle?: TextStyle;
@@ -262,12 +266,11 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     paddingHorizontal: 20,
     height: 48,
-    borderWidth: 1,
-    borderColor: '#F2F2F2',
+    borderWidth: 1.5,
+    borderColor: '#EBEBEB',
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    elevation: 2,
   },
   searchInput: { flex: 1, fontSize: 14, color: '#333', height: '100%' },
   loader: { marginLeft: 10 },
