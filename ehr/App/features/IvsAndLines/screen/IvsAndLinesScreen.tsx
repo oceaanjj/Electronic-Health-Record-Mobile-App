@@ -216,7 +216,8 @@ const styles = StyleSheet.create({
   },
   dateText: {
     color: '#9B9B9B',
-    fontSize: 16,
+    fontSize: 13,
+    fontFamily: 'AlteHaasGroteskBold',
     marginTop: 5,
   },
   submitButton: {
