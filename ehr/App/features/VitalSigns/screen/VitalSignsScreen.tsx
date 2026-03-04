@@ -617,7 +617,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  timeText: { color: '#29A539', fontWeight: 'bold', fontSize: 16 },
+  timeText: { color: '#29A539', fontWeight: 'bold', fontSize: 14 },
   footerAction: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
   alertIcon: {
     width: 45,
