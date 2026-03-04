@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   TextInput,
   Pressable,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MedAdministrationInputCard from '../components/MedAdministrationInputCard';
@@ -51,6 +52,20 @@ const MedAdministrationScreen = ({ onBack }: any) => {
     type: 'error',
   });
 
+  useEffect(() => {
+    const backAction = () => {
+      onBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onBack]);
+
   const showAlert = (
     title: string,
     message: string,
@@ -60,6 +75,7 @@ const MedAdministrationScreen = ({ onBack }: any) => {
   };
 
   // Fetch patient data when patient or date changes
+// ... (rest of the file)
   useEffect(() => {
     if (
       formData.patient_id &&
@@ -181,13 +197,10 @@ const MedAdministrationScreen = ({ onBack }: any) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.title}>Medication {'\n'}Administration</Text>
             <Text style={styles.dateText}>{formatDate()}</Text>
           </View>
-          <TouchableOpacity onPress={onBack}>
-            <Icon name="more-vert" size={35} color={THEME_GREEN} />
-          </TouchableOpacity>
         </View>
 
         <PatientSearchBar

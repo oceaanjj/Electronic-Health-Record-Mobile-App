@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import ExamInputCard from '../components/PhysicalInputCard';
@@ -15,6 +16,7 @@ import SweetAlert from '../../../components/SweetAlert';
 import PatientSearchBar from '../../../components/PatientSearchBar';
 
 const THEME_GREEN = '#035022';
+// ... (rest of the component)
 
 interface PhysicalExamProps {
   onBack: () => void;
@@ -70,7 +72,23 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   const [formData, setFormData] = useState(initialFormData);
 
+  useEffect(() => {
+    const backAction = () => {
+      onBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onBack]);
+
   const loadPatientData = useCallback(
+// ... (rest of methods)
+
     async (patientId: number) => {
       const data = await fetchLatestPhysicalExam(patientId);
       if (data) {
@@ -242,13 +260,10 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
         scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.title}>Physical Exam</Text>
             <Text style={styles.dateText}>{formatDate()}</Text>
           </View>
-          <TouchableOpacity onPress={onBack}>
-            <Icon name="more-vert" size={35} color={THEME_GREEN} />
-          </TouchableOpacity>
         </View>
 
         <PatientSearchBar

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
+  BackHandler,
 } from 'react-native';
 
 import PatientRow from '../component/PatientRow';
@@ -39,6 +40,7 @@ const selectImage = require('../../../../assets/icons/select_icon.png');
 const backArrow = require('../../../../assets/icons/back_arrow.png');
 
 const DemographicProfileScreen: React.FC<ProfileProps> = ({
+  onBack,
   onSelectionChange,
   onPatientClick,
 }) => {
@@ -67,6 +69,31 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
   useEffect(() => {
     loadPatients();
   }, [loadPatients]);
+
+  const handleBackPress = useCallback(() => {
+    if (selectedPatientId) {
+      setSelectedPatientId(null);
+      return true;
+    }
+    if (isSelectionMode) {
+      clearSelection();
+      return true;
+    }
+    if (showSelectMenu) {
+      setShowSelectMenu(false);
+      return true;
+    }
+    onBack();
+    return true;
+  }, [selectedPatientId, isSelectionMode, showSelectMenu, clearSelection, onBack]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => backHandler.remove();
+  }, [handleBackPress]);
 
   const enterSelectionMode = () => {
     setShowSelectMenu(false);

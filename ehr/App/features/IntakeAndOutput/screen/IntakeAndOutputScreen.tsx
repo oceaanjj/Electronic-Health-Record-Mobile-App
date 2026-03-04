@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,10 @@ import {
   Modal,
   FlatList,
   Image,
+  BackHandler,
 } from 'react-native';
+
+const backArrow = require('../../../../assets/icons/back_arrow.png');
 import IntakeOutputCard from '../component/IntakeOutputCard';
 import SweetAlert from '../../../components/SweetAlert';
 import PatientSearchBar from '../../../components/PatientSearchBar';
@@ -58,6 +61,27 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
   const [isAdpieActive, setIsAdpieActive] = useState(false);
   const [currentDate, setCurrentDate] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const handleBackPress = useCallback(() => {
+    if (isAdpieActive) {
+      setIsAdpieActive(false);
+      return true;
+    }
+    if (cdssModalVisible) {
+      setCdssModalVisible(false);
+      return true;
+    }
+    onBack();
+    return true;
+  }, [isAdpieActive, cdssModalVisible, onBack]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => backHandler.remove();
+  }, [handleBackPress]);
 
   useEffect(() => {
     const now = new Date();
@@ -390,6 +414,20 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 40,
     marginBottom: 25,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  backBtn: {
+    marginTop: 12,
+    marginRight: 10,
+  },
+  backIcon: {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 35,

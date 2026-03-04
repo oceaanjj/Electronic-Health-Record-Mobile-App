@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import ADLInputCard from '../components/ADLInputCard';
@@ -65,7 +66,23 @@ const ADLScreen = ({ onBack }: any) => {
   const [isAdpieActive, setIsAdpieActive] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
 
+  useEffect(() => {
+    const backAction = () => {
+      onBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onBack]);
+
   const loadPatientData = useCallback(
+// ... (rest of methods)
+
     async (patientId: number) => {
       const data = await fetchLatestADL(patientId);
       if (data) {
@@ -226,7 +243,7 @@ const ADLScreen = ({ onBack }: any) => {
         scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.title}>Activities of Daily Living</Text>
             <Text style={styles.dateText}>
               {new Date().toLocaleDateString('en-US', {

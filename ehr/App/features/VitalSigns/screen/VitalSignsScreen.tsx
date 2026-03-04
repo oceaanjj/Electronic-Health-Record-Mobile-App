@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,7 @@ import {
   Modal as RNModal,
   Animated,
   Easing,
+  BackHandler,
 } from 'react-native';
 import VitalCard from '../component/VitalCard';
 import PreciseVitalChart from '../component/VitalSignsChart';
@@ -189,6 +190,27 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
       setIsAdpieActive(true);
     }
   };
+
+  const handleBackPress = useCallback(() => {
+    if (isAdpieActive) {
+      setIsAdpieActive(false);
+      return true;
+    }
+    if (isMenuVisible) {
+      setIsMenuVisible(false);
+      return true;
+    }
+    onBack();
+    return true;
+  }, [isAdpieActive, isMenuVisible, onBack]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => backHandler.remove();
+  }, [handleBackPress]);
 
   const isLastTimeSlot = currentTimeIndex === TIME_SLOTS.length - 1;
 
@@ -536,6 +558,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 40,
     marginBottom: 25,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  backBtn: {
+    marginTop: 12,
+    marginRight: 10,
+  },
+  backIcon: {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 35,

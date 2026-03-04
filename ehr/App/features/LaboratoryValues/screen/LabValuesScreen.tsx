@@ -9,6 +9,7 @@ import {
   TextInput,
   Pressable,
   Image,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LabResultCard from '../components/LabResultCard';
@@ -22,6 +23,8 @@ import PatientSearchBar from '../../../components/PatientSearchBar';
 const alertIcon = require('../../../../assets/icons/alert.png');
 
 const THEME_GREEN = '#035022';
+// ... (rest of tests and component)
+
 const LAB_TESTS = [
   // ... (rest of the tests)
   'WBC (×10⁹/L)',
@@ -71,6 +74,20 @@ const LabValuesScreen = ({ onBack }: any) => {
     type: 'error',
   });
 
+  useEffect(() => {
+    const backAction = () => {
+      onBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onBack]);
+
   const showAlert = (
     title: string,
     message: string,
@@ -83,6 +100,7 @@ const LabValuesScreen = ({ onBack }: any) => {
 
   /**
    * INTEGRATED FIX: REAL-TIME CDSS
+// ... (rest of the file)
    * This effect now triggers the bell as you type, provided a patient is selected.
    * We removed the requirement for labId to exist first.
    */
@@ -214,7 +232,7 @@ const LabValuesScreen = ({ onBack }: any) => {
         scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.title}>Laboratory Values</Text>
             <Text style={styles.dateText}>
               {new Date().toLocaleDateString('en-US', {

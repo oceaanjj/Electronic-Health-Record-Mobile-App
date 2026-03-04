@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  BackHandler,
 } from 'react-native';
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -21,6 +22,7 @@ const REQUIRED_RED = '#FF0000';
 const PLACEHOLDER_COLOR = '#999';
 
 // Dropdown Data
+// ... (rest of the dropdown data)
 const religionData = [
   { label: 'Roman Catholic', value: 'Roman Catholic' },
   { label: 'Islam', value: 'Islam' },
@@ -123,6 +125,20 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
     updated[index].name = capitalize(updated[index].name);
     setContacts(updated);
   };
+
+  useEffect(() => {
+    const backAction = () => {
+      onBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onBack]);
 
   useEffect(() => {
     if (birthParts.month && birthParts.day && birthParts.year) {
@@ -233,6 +249,7 @@ const RegisterPatient: React.FC<Props> = ({ onBack }) => {
                 <Text style={styles.inputLabel}>
                   Name <Text style={styles.required}>*</Text>
                 </Text>
+
                 <TextInput
                   style={styles.input}
                   placeholder="Enter First Name"

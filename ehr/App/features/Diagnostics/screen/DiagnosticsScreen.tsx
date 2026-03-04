@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   useWindowDimensions,
   Alert,
+  BackHandler,
 } from 'react-native';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Ionicon from 'react-native-vector-icons/Ionicons';
@@ -38,7 +39,22 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
 
   const sidePadding = (windowWidth - CARD_WIDTH) / 4;
 
+  useEffect(() => {
+    const backAction = () => {
+      onBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onBack]);
+
   // Auto-switch viewMode when screen size changes
+// ... (rest of the file)
   useEffect(() => {
     if (windowWidth > 600) {
       setViewMode('grid');
@@ -331,7 +347,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 25,
   },
-  backButton: { marginRight: 10 },
   titleContainer: { flex: 1 },
   titleText: {
     fontSize: 35,

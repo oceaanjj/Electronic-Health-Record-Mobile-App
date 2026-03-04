@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, SafeAreaView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, SafeAreaView, BackHandler } from 'react-native';
 import DashboardSummary from '../components/DashboardSummary';
 import { DashboardGrid } from '../../../components/navigation/DashboardGrid';
 import SearchScreen from '../../Search/screen/SearchScreen';
@@ -23,13 +23,39 @@ import IntakeAndOutputScreen from '../../IntakeAndOutput/screen/IntakeAndOutputS
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
+  const [navigationHistory, setNavigationHistory] = useState<string[]>(['Home']);
   const [isSelecting, setIsSelecting] = useState(false);
   const [editingPatientId, setEditingPatientId] = useState<number | null>(null);
 
-  const handleNavigation = (route: string) => {
-    setActiveTab(route);
+  const handleNavigation = useCallback((route: string) => {
+    setActiveTab(prevTab => {
+      if (prevTab !== route) {
+        setNavigationHistory(prev => [...prev, route]);
+      }
+      return route;
+    });
     setIsSelecting(false);
-  };
+  }, []);
+
+  const handleBack = useCallback(() => {
+    if (navigationHistory.length > 1) {
+      const newHistory = [...navigationHistory];
+      newHistory.pop(); // remove current
+      const previousRoute = newHistory[newHistory.length - 1];
+      setNavigationHistory(newHistory);
+      setActiveTab(previousRoute);
+      return true; // handled
+    }
+    return false; // let default behavior happen (exit app)
+  }, [navigationHistory]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBack,
+    );
+    return () => backHandler.remove();
+  }, [handleBack]);
 
   const renderPage = () => {
     switch (activeTab) {
@@ -45,11 +71,11 @@ export default function HomeScreen() {
       case 'Demographic Profile':
         return (
           <DemographicProfileScreen
-            onBack={() => setActiveTab('Grid')}
+            onBack={handleBack}
             onSelectionChange={selecting => setIsSelecting(selecting)}
             onPatientClick={id => {
               setEditingPatientId(id);
-              setActiveTab('EditPatient');
+              handleNavigation('EditPatient');
             }}
           />
         );
@@ -58,49 +84,49 @@ export default function HomeScreen() {
         return (
           <EditPatientScreen
             patientId={editingPatientId || 0}
-            onBack={() => setActiveTab('Demographic Profile')}
+            onBack={handleBack}
           />
         );
 
       case 'Vital Signs':
-        return <VitalSignsScreen onBack={() => setActiveTab('Grid')} />;
+        return <VitalSignsScreen onBack={handleBack} />;
 
       case 'Register':
-        return <RegisterPatient onBack={() => setActiveTab('Home')} />;
+        return <RegisterPatient onBack={handleBack} />;
 
       case 'MedicalHistory':
-        return <MedicalHistoryScreen onBack={() => setActiveTab('Grid')} />;
+        return <MedicalHistoryScreen onBack={handleBack} />;
 
       case 'PhysicalExam':
-        return <PhysicalExamScreen onBack={() => setActiveTab('Grid')} />;
+        return <PhysicalExamScreen onBack={handleBack} />;
 
       case 'Activities':
-        return <ADLMainScreen onBack={() => setActiveTab('Grid')} />;
+        return <ADLMainScreen onBack={handleBack} />;
 
       case 'LabValues':
-        return <LabValuesScreen onBack={() => setActiveTab('Grid')} />;
+        return <LabValuesScreen onBack={handleBack} />;
 
       case 'Diagnostics':
-        return <DiagnosticsScreen onBack={() => setActiveTab('Grid')} />;
+        return <DiagnosticsScreen onBack={handleBack} />;
 
       case 'Medication Administration':
-        return <MedAdministrationScreen onBack={() => setActiveTab('Grid')} />;
+        return <MedAdministrationScreen onBack={handleBack} />;
 
       case 'Medication Reconciliation':
         return (
-          <MedicalReconciliationScreen onBack={() => setActiveTab('Grid')} />
+          <MedicalReconciliationScreen onBack={handleBack} />
         );
 
       case 'IvsAndLines':
-        return <IvsAndLinesScreen onBack={() => setActiveTab('Grid')} />;
+        return <IvsAndLinesScreen onBack={handleBack} />;
 
       case 'Medical Reconciliation':
         return (
-          <MedicalReconciliationScreen onBack={() => setActiveTab('Grid')} />
+          <MedicalReconciliationScreen onBack={handleBack} />
         );
 
       case 'Intake and Output':
-        return <IntakeAndOutputScreen onBack={() => setActiveTab('Grid')} />;
+        return <IntakeAndOutputScreen onBack={handleBack} />;
 
       default:
         return <DashboardSummary onNavigate={handleNavigation} />;
@@ -115,7 +141,7 @@ export default function HomeScreen() {
         <BottomNav
           activeRoute={activeTab}
           onNavigate={handleNavigation}
-          onAddPatient={() => setActiveTab('Register')}
+          onAddPatient={() => handleNavigation('Register')}
         />
       )}
     </SafeAreaView>

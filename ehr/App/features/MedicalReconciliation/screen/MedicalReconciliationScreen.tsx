@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -12,7 +12,11 @@ import {
   Modal,
   TextInput,
   Pressable,
+  BackHandler,
+  Image,
 } from 'react-native';
+
+const backArrow = require('../../../../assets/icons/back_arrow.png');
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MedicalReconCard from '../component/MedicalReconCard';
 import { useMedicalReconLogic } from '../hook/useMedicalReconLogic';
@@ -53,6 +57,23 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [currentDate, setCurrentDate] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const handleBackPress = useCallback(() => {
+    if (isMenuVisible) {
+      setIsMenuVisible(false);
+      return true;
+    }
+    onBack();
+    return true;
+  }, [isMenuVisible, onBack]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => backHandler.remove();
+  }, [handleBackPress]);
 
   useEffect(() => {
     // Simplified date formatting that's safer for React Native
@@ -297,6 +318,19 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 40,
     marginBottom: 25,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  backBtn: {
+    marginTop: 12,
+    marginRight: 10,
+  },
+  backIcon: {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
   },
   title: {
     fontSize: 35,

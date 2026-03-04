@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,7 +11,11 @@ import {
   Platform,
   SafeAreaView,
   ActivityIndicator,
+  BackHandler,
+  Image,
 } from 'react-native';
+
+const backArrow = require('../../../../assets/icons/back_arrow.png');
 import { Dropdown } from 'react-native-element-dropdown';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useEditPatient } from '../hook/useEditPatient';
@@ -198,6 +202,23 @@ const EditPatientScreen: React.FC<Props> = ({ patientId, onBack }) => {
       });
     }
   };
+
+  const handleBackPress = useCallback(() => {
+    if (step === 2) {
+      setStep(1);
+      return true;
+    }
+    onBack();
+    return true;
+  }, [step, onBack, setStep]);
+
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      handleBackPress,
+    );
+    return () => backHandler.remove();
+  }, [handleBackPress]);
 
   if (isLoading && step === 1 && !form.first_name) {
     return (
@@ -625,8 +646,15 @@ const styles = StyleSheet.create({
   header: { marginTop: Platform.OS === 'ios' ? 20 : 40, marginBottom: 35 },
   headerRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
+  },
+  backBtn: {
+    marginRight: 15,
+  },
+  backIcon: {
+    width: 25,
+    height: 25,
+    resizeMode: 'contain',
   },
   titleContainer: { flex: 1 },
   title: {

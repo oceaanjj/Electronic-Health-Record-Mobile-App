@@ -6,6 +6,7 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import HistoryInputCard from '../components/HistoryInputCard';
@@ -15,6 +16,7 @@ import SweetAlert from '../../../components/SweetAlert';
 import PatientSearchBar from '../../../components/PatientSearchBar';
 
 const THEME_GREEN = '#035022';
+// ... (rest of constants and initialFormData)
 const LIGHT_GREEN_BG = '#E5FFE8';
 
 interface MedicalHistoryProps {
@@ -151,7 +153,23 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
 
   const [formData, setFormData] = useState(initialFormData);
 
+  useEffect(() => {
+    const backAction = () => {
+      onBack();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      'hardwareBackPress',
+      backAction,
+    );
+
+    return () => backHandler.remove();
+  }, [onBack]);
+
   const loadPatientData = useCallback(
+// ... (rest of methods)
+
     async (patientId: number) => {
       const data = await fetchMedicalHistory(patientId);
       if (data) {
@@ -262,13 +280,10 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
         scrollEnabled={scrollEnabled}
       >
         <View style={styles.header}>
-          <View>
+          <View style={{ flex: 1 }}>
             <Text style={styles.title}>Medical History</Text>
             <Text style={styles.dateText}>{formatDate()}</Text>
           </View>
-          <TouchableOpacity onPress={onBack}>
-            <Icon name="more-vert" size={35} color={THEME_GREEN} />
-          </TouchableOpacity>
         </View>
 
         <PatientSearchBar
