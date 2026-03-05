@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#EFEFEF',
     marginBottom: 20,
-    height: '6%',
+    height: 50,
   },
   sortLabel: {
     marginHorizontal: 8,
