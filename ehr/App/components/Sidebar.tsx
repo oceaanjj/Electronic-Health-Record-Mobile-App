@@ -36,7 +36,7 @@ export const Sidebar = ({ activeRoute, onNavigate, onLogout }: SidebarProps) => 
         {/* LOGO SECTION - REMAINING AT TOP */}
         <View style={styles.logoContainer}>
           <Image 
-            source={require('../../assets/ehr-logo.png')} 
+            source={require('@assets/ehr-logo.png')} 
             style={styles.logo} 
             resizeMode="contain" 
           />
