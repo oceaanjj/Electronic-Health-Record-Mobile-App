@@ -66,7 +66,7 @@ export default function HomeScreen() {
         return <DashboardSummary onNavigate={handleNavigation} />;
       case 'Search':
         return <SearchScreen />;
-      case 'Grid':
+      case 'Dashboard':
         return <DashboardGrid onPressItem={handleNavigation} />;
       case 'Calendar':
         return <CalendarScreen />;
