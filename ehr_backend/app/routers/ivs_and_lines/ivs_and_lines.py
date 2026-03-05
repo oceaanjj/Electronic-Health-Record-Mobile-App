@@ -81,7 +81,7 @@ def create_ivs_and_lines(
     )
     
     db.add(db_ivs)
-    create_doctor_update(db, patient_id, "IVs and Lines Updated")
+    create_doctor_update(db, patient_id, "IVs and Lines")
     db.commit()
     db.refresh(db_ivs)
     

@@ -89,7 +89,7 @@ def create_present_illness(payload: PresentIllnessCreate, db: Session = Depends(
         )
         db.add(record)
     
-    create_doctor_update(db, payload.patient_id, "Present Illness Updated")
+    create_doctor_update(db, payload.patient_id, "Present Illness")
     db.commit()
     db.refresh(record)
     return record
@@ -208,7 +208,7 @@ def create_past_medical_surgical(payload: PastMedicalSurgicalCreate, db: Session
         )
         db.add(record)
     
-    create_doctor_update(db, payload.patient_id, "Past Medical/Surgical Updated")
+    create_doctor_update(db, payload.patient_id, "Past Medical/Surgical")
     db.commit()
     db.refresh(record)
     return record
@@ -327,7 +327,7 @@ def create_allergies(payload: AllergiesCreate, db: Session = Depends(get_db)):
         )
         db.add(record)
     
-    create_doctor_update(db, payload.patient_id, "Allergies Updated")
+    create_doctor_update(db, payload.patient_id, "Allergies")
     db.commit()
     db.refresh(record)
     return record
@@ -446,7 +446,7 @@ def create_vaccination(payload: VaccinationCreate, db: Session = Depends(get_db)
         )
         db.add(record)
     
-    create_doctor_update(db, payload.patient_id, "Vaccination Updated")
+    create_doctor_update(db, payload.patient_id, "Vaccination")
     db.commit()
     db.refresh(record)
     return record
@@ -562,7 +562,7 @@ def create_developmental_history(payload: DevelopmentalHistoryCreate, db: Sessio
         )
         db.add(record)
     
-    create_doctor_update(db, payload.patient_id, "Developmental History Updated")
+    create_doctor_update(db, payload.patient_id, "Developmental History")
     db.commit()
     db.refresh(record)
     return record

@@ -147,7 +147,7 @@ const NavItem = ({ label, icon, active, onPress }: any) => (
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFF' },
-  scrollContent: { paddingHorizontal: 25, paddingBottom: 120, paddingTop: 40 },
+  scrollContent: { paddingHorizontal: 25, paddingBottom: 150, paddingTop: 40 },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   welcome: { fontSize: 35, color: '#035022', fontFamily: 'MinionPro-SemiboldItalic' },
   date: { fontSize: 14, color: '#B2B2B2', marginTop: 4, fontWeight: 'bold' },

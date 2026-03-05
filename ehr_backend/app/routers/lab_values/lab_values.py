@@ -334,7 +334,7 @@ def create_lab_values(payload: AssessmentCreate, db: Session = Depends(get_db)):
 
     db.add(record)
     # Create an update for the doctor
-    create_doctor_update(db, payload.patient_id, "Lab Results Updated")
+    create_doctor_update(db, payload.patient_id, "Lab Results")
     
     db.commit()
     db.refresh(record)

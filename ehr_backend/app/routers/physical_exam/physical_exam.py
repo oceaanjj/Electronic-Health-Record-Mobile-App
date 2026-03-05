@@ -179,7 +179,7 @@ def create_physical_exam(payload: AssessmentCreate, db: Session = Depends(get_db
         )
         db.add(record)
         # Create an update for the doctor
-        create_doctor_update(db, payload.patient_id, "Physical Exam Updated")
+        create_doctor_update(db, payload.patient_id, "Physical Exam")
 
     db.commit()
     db.refresh(record)

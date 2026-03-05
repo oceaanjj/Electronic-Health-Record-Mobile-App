@@ -83,7 +83,7 @@ def create_medication_administration(
     )
     db.add(new_record)
     # Create an update for the doctor
-    create_doctor_update(db, med_admin.patient_id, "Medication Administered")
+    create_doctor_update(db, med_admin.patient_id, "Medication Administration")
     
     db.commit()
     db.refresh(new_record)

@@ -149,7 +149,7 @@ async def create_diagnostic(
     )
     
     db.add(db_diagnostic)
-    create_doctor_update(db, patient_id, "Diagnostics Added")
+    create_doctor_update(db, patient_id, "Diagnostics")
     db.commit()
     db.refresh(db_diagnostic)
     

@@ -171,7 +171,7 @@ export default function HomeScreen() {
       // DOCTOR SCREENS
       case 'Doctor':
       case 'Doctors': // Alias to support internal nav
-        return <DoctorHomeScreen onBack={handleBack} onNavigate={handleNavigation} />;
+        return <DoctorHomeScreen onBack={handleBack} onNavigate={handleNavigation} onViewAll={() => handleNavigation('DoctorUpdates')} />;
       case 'DoctorPatients':
         return <DoctorPatientsScreen onNavigate={handleNavigation} />;
       case 'DoctorReports':
@@ -188,7 +188,7 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={[styles.flex1, !isSelecting && { paddingBottom: 70 }]}>
+      <View style={[styles.flex1, (!isSelecting && !isDoctorRoute) && { paddingBottom: 70 }]}>
         {getScreenContent()}
       </View>
 
