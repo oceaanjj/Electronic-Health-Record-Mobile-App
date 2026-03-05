@@ -43,7 +43,13 @@ const dashboardItems = [
   },
 ];
 
-export default function SearchScreen() {
+export default function SearchScreen({
+  onNavigate,
+  onPatientSelect,
+}: {
+  onNavigate: (route: string) => void;
+  onPatientSelect: (id: number) => void;
+}) {
   const [query, setQuery] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [sortModalVisible, setSortModalVisible] = useState(false);
@@ -110,7 +116,9 @@ export default function SearchScreen() {
           type: 'Patient',
           icon: 'person',
           isPatient: true,
-          createdAt: p.admission_date ? new Date(p.admission_date).getTime() : 0,
+          createdAt: p.admission_date
+            ? new Date(p.admission_date).getTime()
+            : 0,
         }))
         .filter((p: any) => p.id !== null);
 
@@ -164,7 +172,9 @@ export default function SearchScreen() {
     } else if (sortBy === 'Name (Z-A)') {
       results = [...results].sort((a, b) => b.name.localeCompare(a.name));
     } else if (sortBy === 'Newest' || sortBy === 'Patients') {
-      results = [...results].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      results = [...results].sort(
+        (a, b) => (b.createdAt || 0) - (a.createdAt || 0),
+      );
     } else if (sortBy === 'Oldest') {
       results = [...results].sort((a, b) => {
         const timeA = a.createdAt || 0;
@@ -185,7 +195,14 @@ export default function SearchScreen() {
     ].slice(0, 5);
     setRecentSearches(updatedRecent);
     saveRecentSearches(updatedRecent);
-    console.log('Selected:', item.name);
+
+    if (item.type === 'Patient') {
+      const patientId = parseInt(item.id.replace('p-', ''), 10);
+      onPatientSelect(patientId);
+      onNavigate('PatientDetail');
+    } else if (item.type === 'Feature') {
+      onNavigate(item.id.replace('f-', ''));
+    }
   };
 
   const clearRecent = () => {
