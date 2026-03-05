@@ -628,8 +628,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: 'AlteHaasGroteskBold',
     color: THEME_GREEN,
-    fontWeight: 'bold',
-    marginTop: 2,
   },
   addIconCircle: {
     width: 36,
