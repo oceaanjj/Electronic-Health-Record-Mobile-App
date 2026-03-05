@@ -13,7 +13,6 @@ import {
   ActivityIndicator,
   BackHandler,
   Image,
-  useColorScheme,
 } from 'react-native';
 
 const backArrow = require('@assets/icons/back_arrow.png');
@@ -22,6 +21,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useEditPatient } from '../hook/useEditPatient';
 import SweetAlert from '@components/SweetAlert';
 import { useAppTheme } from '@App/theme/ThemeContext';
+import { LAYOUT } from '@App/theme/theme';
 
 // Dropdown Data
 const religionData = [
@@ -80,9 +80,7 @@ interface Props {
 }
 
 const EditPatientScreen: React.FC<Props> = ({ patientId, onBack }) => {
-  const isDarkMode = useColorScheme() === 'dark';
-  const theme = getTheme(isDarkMode);
-  const commonStyles = getCommonStyles(isDarkMode);
+  const { theme, commonStyles, isDarkMode } = useAppTheme();
   const styles = useMemo(() => createStyles(theme, commonStyles), [theme, commonStyles]);
 
   const {
@@ -254,7 +252,7 @@ const EditPatientScreen: React.FC<Props> = ({ patientId, onBack }) => {
           <View style={styles.header}>
             <View style={styles.headerRow}>
               <View style={styles.titleContainer}>
-                <Text style={styles.title}>Edit Patient</Text>
+                <Text style={styles.title}>Edit Patient Details</Text>
                 <Text style={styles.sectionTitle}>
                   {(step === 1
                     ? 'Patient Details'
@@ -661,22 +659,24 @@ const createStyles = (theme: any, commonStyles: any) => StyleSheet.create({
   loaderContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   safeArea: commonStyles.safeArea,
   container: commonStyles.container,
-  header: commonStyles.header,
+  header: { marginTop: LAYOUT.headerMarginTop, marginBottom: LAYOUT.headerMarginBottom },
   headerRow: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
   },
-  backBtn: {
-    marginRight: 15,
-  },
-  backIcon: {
-    width: 25,
-    height: 25,
-    resizeMode: 'contain',
-  },
   titleContainer: { flex: 1 },
-  title: commonStyles.title,
-  sectionTitle: commonStyles.sectionTitle,
+  title: {
+    fontSize: 35,
+    color: theme.primary,
+    fontFamily: 'MinionPro-SemiboldItalic',
+    marginBottom: 2,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'AlteHaasGroteskBold',
+    color: theme.primary,
+  },
   addIconCircle: {
     width: 36,
     height: 36,

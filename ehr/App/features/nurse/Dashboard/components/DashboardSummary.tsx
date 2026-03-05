@@ -331,7 +331,11 @@ const DashboardSummary = ({
                 onPress={() => handleFeaturePress(feature.id)}
               >
                 <Icon name={feature.icon} size={28} color={theme.primary} />
-                <Text style={styles.cardText} numberOfLines={1} ellipsizeMode="tail">
+                <Text
+                  style={styles.cardText}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
                   {feature.title}
                 </Text>
               </TouchableOpacity>
@@ -497,13 +501,19 @@ const createStyles = (theme: any, commonStyles: any) =>
     recentCard: {
       width: 110,
       height: 110,
-      backgroundColor: theme.card,
+      backgroundColor: theme.card2,
       borderRadius: 15,
       borderWidth: 1.5,
-      borderColor: theme.border,
+      borderColor: theme.cardBorder,
       padding: 15,
       marginRight: 15,
       justifyContent: 'space-between',
+      elevation: 4,
+      shadowColor: '#000',
+      shadowOffset: { width: 1, height: 1 },
+      shadowOpacity: 0.3,
+      shadowRadius: 10,
+      marginBottom: 20,
     },
     cardText: {
       fontSize: 12,

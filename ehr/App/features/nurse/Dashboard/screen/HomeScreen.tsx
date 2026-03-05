@@ -130,6 +130,10 @@ export default function HomeScreen() {
               setSelectedPatientId(id);
               handleNavigation('PatientDetail');
             }}
+            onEdit={id => {
+              setEditingPatientId(id);
+              handleNavigation('EditPatient');
+            }}
           />
         );
       case 'PatientDetail':

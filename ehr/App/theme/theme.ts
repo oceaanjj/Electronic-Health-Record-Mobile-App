@@ -11,7 +11,11 @@ export const COLORS = {
     tableHeader: '#E5FFE8',
     textMuted: '#999696',
     border: '#E0E0E0',
-    card: '#FFFFFF',
+
+    card: '#FFFFFF', //nagamit na sa ibang components e nakakatamad irename
+    card2: '#F6FFF7', // features card bg color
+    cardBorder: '#7AF489',
+
     white: '#FFFFFF',
     inputBg: '#FFFFFF',
     icon: '#035022',
@@ -20,6 +24,7 @@ export const COLORS = {
     modalHandle: '#747474',
     buttonBg: '#E5FFE8',
     buttonBorder: '#035022',
+    avatarCard: 'rgba(144, 255, 158, 0.32)',
   },
   dark: {
     primary: '#4ADE80',
@@ -31,7 +36,11 @@ export const COLORS = {
     tableHeader: '#757575',
     textMuted: '#9CA3AF',
     border: '#3a5137',
+
     card: '#1E1E1E',
+    card2: '#F6FFF7', // features card bg color
+    cardBorder: '#7AF489',
+
     white: '#FFFFFF',
     inputBg: '#1E1E1E',
     iconBg: '#1E1E1E',
@@ -39,6 +48,7 @@ export const COLORS = {
     modalHandle: '#363535',
     buttonBg: '#E5FFE8',
     buttonBorder: '#4ADE80',
+    avatarCard: '#035022',
   },
 };
 

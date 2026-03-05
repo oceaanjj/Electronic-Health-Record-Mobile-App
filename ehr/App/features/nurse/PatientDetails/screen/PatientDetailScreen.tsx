@@ -35,7 +35,10 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
   onEdit,
 }) => {
   const { isDarkMode, theme, commonStyles } = useAppTheme();
-  const styles = useMemo(() => createStyles(theme, commonStyles, isDarkMode), [theme, commonStyles, isDarkMode]);
+  const styles = useMemo(
+    () => createStyles(theme, commonStyles, isDarkMode),
+    [theme, commonStyles, isDarkMode],
+  );
 
   const patientId = propPatientId || route?.params?.patientId || 1;
   const { getPatientById } = usePatients();
@@ -72,7 +75,9 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
 
   if (isLoading) {
     return (
-      <View style={[styles.loaderContainer, { backgroundColor: theme.background }]}>
+      <View
+        style={[styles.loaderContainer, { backgroundColor: theme.background }]}
+      >
         <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
@@ -105,7 +110,7 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
               onPress={() => (onBack ? onBack() : navigation?.goBack())}
               style={styles.backButton}
             >
-              <Image source={backArrow} style={[styles.backIcon, { tintColor: theme.icon }]} />
+              <Image source={backArrow} style={styles.backIcon} />
             </TouchableOpacity>
             <View>
               <Text style={styles.titleText}>Patient Details</Text>
@@ -206,156 +211,161 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
   );
 };
 
-const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) => StyleSheet.create({
-  mainContainer: {
-    flex: 1,
-    backgroundColor: theme.background,
-  },
-  loaderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  // Ensure the ScrollView is on top of absolute background elements
-  scrollViewLayer: {
-    zIndex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: 40,
-    paddingTop: 0,
-    paddingBottom: 20,
-  },
-  circle1: {
-    position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    backgroundColor: isDarkMode ? 'rgba(73, 214, 91, 0.2)' : 'rgba(73, 214, 91, 1)',
-    opacity: 0.5,
-    zIndex: 0,
-  },
-  circle2: {
-    position: 'absolute',
-    width: width * 0.7,
-    height: width * 0.7,
-    borderRadius: (width * 0.7) / 2,
-    backgroundColor: isDarkMode ? 'rgba(200, 255, 207, 0.1)' : 'rgba(200, 255, 207, 1)',
-    opacity: 0.5,
-    zIndex: 0,
-  },
-  topCircle1: {
-    top: -270,
-    right: -80,
-  },
-  topCircle2: {
-    top: -150,
-    right: -200,
-  },
-  bottomCircle1: {
-    bottom: -170,
-    left: -180,
-  },
-  bottomCircle2: {
-    bottom: -220,
-    left: -50,
-  },
-  header: {
-    ...commonStyles.header,
-    alignItems: 'center',
-    zIndex: 10,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  backButton: {
-    marginRight: 15,
-    marginTop: 10,
-    zIndex: 20,
-  },
-  backIcon: {
-    width: 24,
-    height: 24,
-    resizeMode: 'contain',
-    marginTop: 5,
-  },
-  titleText: commonStyles.title,
-  admittedDate: {
-    fontSize: 14,
-    color: theme.textMuted,
-    fontWeight: '600',
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 35,
-    zIndex: 10,
-  },
-  avatar: {
-    width: 85,
-    height: 85,
-    borderRadius: 28,
-    backgroundColor: theme.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarLetter: {
-    fontSize: 36,
-    fontWeight: 'bold',
-    color: theme.textMuted,
-  },
-  nameContainer: {
-    marginLeft: 20,
-    flex: 1,
-  },
-  nameEditRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  editButton: {
-    padding: 5,
-    zIndex: 50,
-  },
-  editIconStyle: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  iconCircleWrapperSmall: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    borderWidth: 1,
-    borderColor: '#FFD54F',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: theme.card,
-    overflow: 'hidden',
-  },
-  fullName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: theme.primary,
-  },
-  ageText: {
-    fontSize: 14,
-    color: theme.textMuted,
-    marginTop: 2,
-  },
-  gridContainer: {
-    marginTop: 5,
-  },
-  row: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  sectionTitle: {
-    ...commonStyles.sectionTitle,
-    marginTop: 15,
-    marginBottom: 20,
-    letterSpacing: 0.5,
-  },
-});
+const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
+  StyleSheet.create({
+    mainContainer: {
+      flex: 1,
+      backgroundColor: theme.background,
+    },
+    loaderContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    // Ensure the ScrollView is on top of absolute background elements
+    scrollViewLayer: {
+      zIndex: 1,
+    },
+    scrollContent: {
+      paddingHorizontal: 40,
+      paddingTop: 0,
+      paddingBottom: 20,
+    },
+    circle1: {
+      position: 'absolute',
+      width: width * 0.7,
+      height: width * 0.7,
+      borderRadius: (width * 0.7) / 2,
+      backgroundColor: isDarkMode
+        ? 'rgba(73, 214, 91, 0.2)'
+        : 'rgba(73, 214, 91, 1)',
+      opacity: 0.5,
+      zIndex: 0,
+    },
+    circle2: {
+      position: 'absolute',
+      width: width * 0.7,
+      height: width * 0.7,
+      borderRadius: (width * 0.7) / 2,
+      backgroundColor: isDarkMode
+        ? 'rgba(200, 255, 207, 0.1)'
+        : 'rgba(200, 255, 207, 1)',
+      opacity: 0.5,
+      zIndex: 0,
+    },
+    topCircle1: {
+      top: -270,
+      right: -80,
+    },
+    topCircle2: {
+      top: -150,
+      right: -200,
+    },
+    bottomCircle1: {
+      bottom: -240,
+      left: -180,
+    },
+    bottomCircle2: {
+      bottom: -280,
+      left: -50,
+    },
+    header: {
+      ...commonStyles.header,
+      alignItems: 'center',
+      zIndex: 10,
+    },
+    headerLeft: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    backButton: {
+      marginRight: 15,
+      marginTop: 10,
+      zIndex: 20,
+    },
+    backIcon: {
+      width: 24,
+      height: 24,
+      resizeMode: 'contain',
+      marginTop: 5,
+    },
+    titleText: commonStyles.title,
+    admittedDate: {
+      fontSize: 14,
+      color: theme.textMuted,
+      fontWeight: '600',
+    },
+    profileRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 35,
+      zIndex: 10,
+    },
+    avatar: {
+      width: 85,
+      height: 85,
+      borderRadius: 28,
+      backgroundColor: theme.avatarCard,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    avatarLetter: {
+      fontSize: 36,
+      fontWeight: 'bold',
+      color: theme.secondary,
+    },
+    nameContainer: {
+      marginLeft: 20,
+      flex: 1,
+    },
+    nameEditRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    editButton: {
+      padding: 5,
+      zIndex: 50,
+    },
+    editIconStyle: {
+      width: '100%',
+      height: '100%',
+      resizeMode: 'cover',
+    },
+    iconCircleWrapperSmall: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      borderWidth: 1,
+      borderColor: '#FFD54F',
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: theme.card,
+      overflow: 'hidden',
+    },
+    fullName: {
+      fontSize: 18,
+      fontWeight: 'bold',
+      color: theme.secondary,
+    },
+    ageText: {
+      fontSize: 14,
+      color: theme.textMuted,
+      marginTop: 2,
+    },
+    gridContainer: {
+      marginTop: 5,
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+    },
+    sectionTitle: {
+      ...commonStyles.sectionTitle,
+      marginTop: 15,
+      marginBottom: 20,
+      letterSpacing: 0.5,
+    },
+  });
 
 export default PatientDetailsScreen;

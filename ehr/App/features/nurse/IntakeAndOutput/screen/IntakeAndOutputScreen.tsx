@@ -318,7 +318,7 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
                 hasRealAlert
                   ? { tintColor: '#EDB62C', opacity: 1 }
                   : isDataEntered && selectedPatientId
-                  ? { tintColor: theme.secondary, opacity: 0.8 }
+                  ? { tintColor: '#EDB62C', opacity: 0.8 }
                   : { tintColor: theme.textMuted, opacity: 0.5 },
               ]}
             />

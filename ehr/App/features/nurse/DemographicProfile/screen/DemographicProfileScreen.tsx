@@ -32,6 +32,7 @@ interface ProfileProps {
   onBack: () => void;
   onSelectionChange: (isSelecting: boolean) => void;
   onPatientClick?: (patientId: number) => void;
+  onEdit?: (patientId: number) => void;
 }
 
 const activeIcon = require('@assets/icons/active_icon.png');
@@ -44,6 +45,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
   onBack,
   onSelectionChange,
   onPatientClick,
+  onEdit,
 }) => {
   const { isDarkMode, theme, commonStyles } = useAppTheme();
   const styles = useMemo(
@@ -149,7 +151,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
                 >
                   <Image
                     source={dotsIcon}
-                    style={[styles.dotsIcon, { tintColor: theme.icon }]}
+                    style={styles.dotsIcon}
                   />
                 </TouchableOpacity>
               )}
@@ -203,7 +205,7 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
                       : handlePatientClick(item.patient_id)
                   }
                   onLongPress={() => toggleSelection(item.patient_id)}
-                  onEdit={id => onPatientClick && onPatientClick(id)}
+                  onEdit={id => onEdit && onEdit(id)}
                 />
               )}
             />

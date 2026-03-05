@@ -65,7 +65,7 @@ export const DashboardGrid = ({ onPressItem }: DashboardGridProps) => {
   const numColumns = isLandscape ? 4 : 2;
 
   // Calculate dynamic card width based on current columns and 20px gaps
-  const horizontalPadding = 80; // listContainer horizontal padding (40 * 2)
+  const horizontalPadding = 80;
   const totalGapWidth = 20 * (numColumns - 1);
   const cardWidth = (width - horizontalPadding - totalGapWidth) / numColumns;
 
@@ -89,10 +89,16 @@ export const DashboardGrid = ({ onPressItem }: DashboardGridProps) => {
       ]}
       onPress={() => onPressItem(item.id)}
     >
-      <View style={styles.iconContainer}>
-        <Icon name={item.icon} size={32} color={theme.primary} />
+      <View style={styles.cardContent}>
+        <View style={styles.iconContainer}>
+          <Icon name={item.icon} size={32} color={theme.primary} />
+        </View>
+        <View style={styles.textContainer}>
+          <Text style={styles.cardTitle} numberOfLines={2}>
+            {item.title}
+          </Text>
+        </View>
       </View>
-      <Text style={styles.cardTitle}>{item.title}</Text>
 
       <View style={styles.footerRow}>
         <Text style={styles.proceedText}>Proceed</Text>
@@ -107,7 +113,7 @@ export const DashboardGrid = ({ onPressItem }: DashboardGridProps) => {
       keyExtractor={item => item.id}
       renderItem={renderItem}
       numColumns={numColumns}
-      key={numColumns} // Re-render when columns change
+      key={numColumns}
       ListHeaderComponent={renderHeader}
       contentContainerStyle={styles.listContainer}
       columnWrapperStyle={styles.columnWrapper}
@@ -150,26 +156,30 @@ const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
     subTitle: {
       fontSize: 14,
       color: theme.textMuted,
-      marginTop: 10,
+      fontFamily: 'AlteHaasGrotesk',
     },
     columnWrapper: {
-      justifyContent: 'flex-start', // Changed to flex-start for consistent spacing
-      gap: 20, // Modern gap property supported in newer RN versions
+      justifyContent: 'flex-start',
+      gap: 20,
     },
     card: {
-      backgroundColor: theme.card,
+      backgroundColor: theme.card2,
       borderRadius: 20,
       padding: 20,
       marginBottom: 20,
-      elevation: 4, // Android shadow
-      shadowColor: '#000', // iOS shadow
+      elevation: 4,
+      shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
       justifyContent: 'space-between',
-      height: 180,
-      borderWidth: isDarkMode ? 1 : 0,
-      borderColor: theme.border,
+      height: 220,
+      borderWidth: 1,
+      borderColor: theme.cardBorder,
+    },
+    cardContent: {
+      flex: 1,
+      justifyContent: 'flex-start',
     },
     iconContainer: {
       width: 50,
@@ -178,12 +188,19 @@ const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
       backgroundColor: theme.iconBg,
       justifyContent: 'center',
       alignItems: 'center',
+      marginBottom: 15,
+    },
+    textContainer: {
+      marginTop: -5,
+      marginLeft: 9,
+      marginRight: 9,
     },
     cardTitle: {
       fontSize: 16,
       fontFamily: 'AlteHaasGroteskBold',
       color: theme.primary,
       lineHeight: 20,
+      marginBottom: 4,
     },
     footerRow: {
       flexDirection: 'row',
@@ -194,5 +211,6 @@ const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
     proceedText: {
       fontSize: 12,
       color: theme.textMuted,
+      margin: 9,
     },
   });

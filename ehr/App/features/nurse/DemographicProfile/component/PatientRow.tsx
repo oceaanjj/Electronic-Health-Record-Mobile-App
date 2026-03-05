@@ -80,7 +80,7 @@ const PatientRow: React.FC<PatientRowProps> = ({
           <View style={[styles.iconCircle, { borderColor: isDarkMode ? '#FFD54F' : '#FFD54F', backgroundColor: isDarkMode ? 'transparent' : 'transparent' }]}>
             <Image 
               source={editIcon} 
-              style={[styles.fullIcon, isDarkMode && { tintColor: '#FFD54F' }]} 
+              style={styles.fullIcon} 
             />
           </View>
         </TouchableOpacity>
@@ -99,10 +99,7 @@ const PatientRow: React.FC<PatientRowProps> = ({
           >
             <Image
               source={item.isActive ? activeIcon : inactiveIcon}
-              style={[
-                styles.fullIcon,
-                isDarkMode && { tintColor: item.isActive ? theme.primary : theme.error }
-              ]}
+              style={styles.fullIcon}
             />
           </View>
         </TouchableOpacity>

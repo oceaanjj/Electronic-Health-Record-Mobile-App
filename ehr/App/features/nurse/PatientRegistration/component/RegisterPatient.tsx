@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useRegistration } from '../hook/useRegistration';
 import SweetAlert from '@components/SweetAlert';
 import { useAppTheme } from '@App/theme/ThemeContext';
+import { LAYOUT } from '@App/theme/theme';
 
 // Dropdown Data
 const religionData = [
@@ -625,7 +626,7 @@ const createStyles = (theme: any, commonStyles: any) => StyleSheet.create({
   mainContainer: { flex: 1, backgroundColor: theme.background },
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 40, paddingBottom: 20 },
-  header: { marginTop: Platform.OS === 'ios' ? 20 : 40, marginBottom: 35 },
+  header: { marginTop: LAYOUT.headerMarginTop, marginBottom: LAYOUT.headerMarginBottom },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
