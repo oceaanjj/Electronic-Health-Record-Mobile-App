@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Dimensions,
   Image,
+  Platform,
 } from 'react-native';
 import { usePatients } from '@nurse/DemographicProfile/hook/usePatients';
 import DetailItem from '../components/DetailItem';
@@ -203,7 +204,6 @@ const PatientDetailsScreen: React.FC<PatientDetailsScreenProps> = ({
 
 const styles = StyleSheet.create({
   mainContainer: {
-    marginTop: 40,
     flex: 1,
     backgroundColor: '#FFFFFF',
   },
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingHorizontal: 40,
     paddingTop: 0,
-    paddingBottom: 50,
+    paddingBottom: 20,
   },
   circle1: {
     position: 'absolute',
@@ -260,8 +260,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
     zIndex: 10,
   },
   headerLeft: {

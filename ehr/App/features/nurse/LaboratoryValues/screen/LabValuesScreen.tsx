@@ -10,6 +10,7 @@ import {
   Pressable,
   Image,
   BackHandler,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import LabResultCard from '../components/LabResultCard';
@@ -400,13 +401,13 @@ const LabValuesScreen = ({ onBack }: any) => {
 const styles = StyleSheet.create({
   // ... (rest of the styles)
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, paddingHorizontal: 25 },
+  container: { flex: 1, paddingHorizontal: 40 },
   scrollContent: { paddingBottom: 40 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40,
-    marginBottom: 25,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   title: {
     fontSize: 35,

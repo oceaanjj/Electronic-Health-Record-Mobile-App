@@ -19,14 +19,15 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 25,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingHorizontal: 40,
+    paddingTop: Platform.OS === 'ios' ? 20 : 40,
   },
   title: {
     fontSize: 32,
     fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
     color: THEME_GREEN,
     fontWeight: 'semibold',
+    marginBottom: 35,
   },
   emptyContent: {
     flex: 1,

@@ -272,17 +272,15 @@ const styles = StyleSheet.create({
 
   safeArea: {
     flex: 1,
-    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
 
-  container: { flex: 1, paddingHorizontal: 8, marginTop: -5 },
+  container: { flex: 1, paddingHorizontal: 40 },
 
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 10,
-    marginBottom: 50,
-    paddingHorizontal: 20,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
 
   titleRow: {
@@ -335,7 +333,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E5FFE8',
     paddingVertical: 12,
     borderRadius: 8,
-    marginHorizontal: 20,
   },
 
   headerText: {

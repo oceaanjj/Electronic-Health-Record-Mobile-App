@@ -10,6 +10,7 @@ import {
   TextInput,
   Pressable,
   BackHandler,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import MedAdministrationInputCard from '../components/MedAdministrationInputCard';
@@ -284,17 +285,6 @@ const MedAdministrationScreen = ({ onBack }: any) => {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Bottom Navigation Mockup */}
-      <View style={styles.bottomNav}>
-        <Icon name="home" size={28} color={THEME_GREEN} />
-        <Icon name="search" size={28} color={THEME_GREEN} />
-        <View style={styles.addBtnContainer}>
-          <Icon name="person-add" size={28} color={THEME_GREEN} />
-        </View>
-        <Icon name="grid-view" size={28} color={THEME_GREEN} />
-        <Icon name="calendar-today" size={28} color={THEME_GREEN} />
-      </View>
-
       <SweetAlert
         visible={alertConfig.visible}
         title={alertConfig.title}
@@ -309,12 +299,12 @@ const MedAdministrationScreen = ({ onBack }: any) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, paddingHorizontal: 25 },
+  container: { flex: 1, paddingHorizontal: 40 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40,
-    marginBottom: 20,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   title: {
     fontSize: 35,
@@ -388,31 +378,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 15,
     marginRight: 5,
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    height: 70,
-    backgroundColor: '#fff',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#eee',
-    paddingBottom: 10,
-  },
-  addBtnContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    top: -20,
-    borderWidth: 1,
-    borderColor: '#eee',
-    elevation: 4,
   },
 });
 

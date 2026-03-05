@@ -12,6 +12,7 @@ import {
   useWindowDimensions,
   Alert,
   BackHandler,
+  Platform,
 } from 'react-native';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 import Ionicon from 'react-native-vector-icons/Ionicons';
@@ -341,11 +342,12 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFFFFF' },
-  scrollContent: { padding: 30, paddingBottom: 100 },
+  scrollContent: { padding: 40, paddingBottom: 100 },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 25,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   titleContainer: { flex: 1 },
   titleText: {

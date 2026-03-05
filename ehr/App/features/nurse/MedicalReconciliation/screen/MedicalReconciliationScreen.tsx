@@ -14,6 +14,7 @@ import {
   Pressable,
   BackHandler,
   Image,
+  Platform,
 } from 'react-native';
 
 const backArrow = require('@assets/icons/back_arrow.png');
@@ -295,29 +296,18 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({
         type="success"
         onConfirm={() => setSuccessVisible(false)}
       />
-
-      {/* BOTTOM NAV */}
-      <View style={styles.bottomNav}>
-        <Text style={styles.navIcon}>🏠</Text>
-        <Text style={styles.navIcon}>🔍</Text>
-        <View style={styles.fab}>
-          <Text style={styles.plusSign}>+</Text>
-        </View>
-        <Text style={styles.navIcon}>📊</Text>
-        <Text style={styles.navIcon}>📅</Text>
-      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFF' },
-  scrollContent: { paddingHorizontal: 25, paddingBottom: 130 },
+  scrollContent: { paddingHorizontal: 40, paddingBottom: 20 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40,
-    marginBottom: 25,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   titleRow: {
     flexDirection: 'row',
@@ -370,32 +360,6 @@ const styles = StyleSheet.create({
   },
   btnText: { color: '#035022', fontWeight: 'bold', fontSize: 16 },
   chevron: { color: '#035022', fontSize: 20, marginLeft: 10 },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    height: 70,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderColor: '#EEE',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-  },
-  navIcon: { fontSize: 22, color: '#035022' },
-  fab: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#FFF',
-    elevation: 5,
-    marginTop: -35,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#EEE',
-  },
-  plusSign: { fontSize: 24, color: '#29A539', fontWeight: 'bold' },
 
   // Menu Modal Styles
   modalOverlay: {

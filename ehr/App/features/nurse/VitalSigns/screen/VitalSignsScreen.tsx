@@ -16,6 +16,7 @@ import {
   Animated,
   Easing,
   BackHandler,
+  Platform,
 } from 'react-native';
 import VitalCard from '@nurse/VitalSigns/component/VitalCard';
 import PreciseVitalChart from '@nurse/VitalSigns/component/VitalSignsChart';
@@ -535,29 +536,18 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
           </View>
         </View>
       </RNModal>
-
-      {/* Navigation Bar */}
-      <View style={styles.bottomNav}>
-        <Text style={styles.navIcon}>🏠</Text>
-        <Text style={styles.navIcon}>🔍</Text>
-        <View style={styles.fab}>
-          <Text style={styles.plusSign}>+</Text>
-        </View>
-        <Text style={styles.navIcon}>📊</Text>
-        <Text style={styles.navIcon}>📅</Text>
-      </View>
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: '#FFF' },
-  scrollContent: { paddingHorizontal: 25, paddingBottom: 160 },
+  scrollContent: { paddingHorizontal: 40, paddingBottom: 20 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40,
-    marginBottom: 25,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   titleRow: {
     flexDirection: 'row',
@@ -746,34 +736,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   closeMenuText: { color: '#035022', fontWeight: 'bold' },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 70,
-    backgroundColor: '#FFF',
-    borderTopWidth: 1,
-    borderColor: '#EEE',
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    paddingBottom: 10,
-  },
-  navIcon: { fontSize: 22, color: '#035022' },
-  fab: {
-    width: 65,
-    height: 65,
-    borderRadius: 32.5,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#EEE',
-    marginTop: -45,
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 5,
-  },
-  plusSign: { fontSize: 28, color: '#29A539', fontWeight: 'bold' },
 });
 
 export default VitalSignsScreen;

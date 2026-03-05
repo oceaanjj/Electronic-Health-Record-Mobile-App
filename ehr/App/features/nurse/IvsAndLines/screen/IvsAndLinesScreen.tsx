@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   BackHandler,
   Image,
+  Platform,
 } from 'react-native';
 
 const backArrow = require('@assets/icons/back_arrow.png');
@@ -217,13 +218,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   contentContainer: {
-    paddingHorizontal: 25,
-    paddingTop: 20,
-    paddingBottom: 100,
+    paddingHorizontal: 40,
+    paddingTop: 0,
+    paddingBottom: 20,
   },
   headerContainer: {
-    marginTop: 20,
-    marginBottom: 40,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   titleRow: {
     flexDirection: 'row',

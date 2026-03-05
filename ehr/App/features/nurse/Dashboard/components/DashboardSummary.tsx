@@ -90,7 +90,10 @@ const DashboardSummary = ({
             <Text style={styles.greeting}>Hello, Jovilyn</Text>
             <Text style={styles.dateText}>{formatDate()}</Text>
           </View>
-          <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <TouchableOpacity
+            onPress={() => setModalVisible(true)}
+            style={{ marginTop: 10 }}
+          >
             <Icon name="keyboard-arrow-down" size={24} color="#000000" />
           </TouchableOpacity>
         </View>
@@ -263,13 +266,13 @@ const DashboardSummary = ({
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 25 },
+  container: { flex: 1, backgroundColor: '#fff', paddingHorizontal: 40 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 25,
-    marginTop: 40,
+    alignItems: 'flex-start',
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   greeting: {
     fontSize: 35,

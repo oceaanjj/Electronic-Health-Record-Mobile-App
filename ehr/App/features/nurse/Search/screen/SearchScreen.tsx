@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import { SearchBar } from '@nurse/Search/component/SearchBar';
 import { SearchResults } from '@nurse/Search/component/SearchResults';
@@ -265,7 +266,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#fff',
     paddingHorizontal: 40,
-    paddingVertical: 15,
+    paddingTop: Platform.OS === 'ios' ? 20 : 40,
   },
   content: { flex: 1 },
   resultsHeader: {

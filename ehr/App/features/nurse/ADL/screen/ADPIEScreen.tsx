@@ -268,13 +268,16 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
   container: {
     flex: 1,
-    paddingHorizontal: 25,
+    paddingHorizontal: 40,
   },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 20,
   },
-  header: { marginTop: 40, marginBottom: 25 },
+  header: {
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
+  },
   title: {
     fontSize: 35,
     color: THEME_GREEN,

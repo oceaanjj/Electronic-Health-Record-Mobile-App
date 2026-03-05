@@ -34,7 +34,8 @@ const dashboardItems = [
     title: 'Medication Administration',
     icon: 'medical-services',
   },
-  { id: 'Medical Reconciliation',
+  {
+    id: 'Medical Reconciliation',
     title: 'Medical Reconciliation',
     icon: 'fact-check',
   },
@@ -55,7 +56,7 @@ export const DashboardGrid = ({ onPressItem }: DashboardGridProps) => {
   const numColumns = isLandscape ? 4 : 2;
 
   // Calculate dynamic card width based on current columns and 20px gaps
-  const horizontalPadding = 40; // listContainer horizontal padding (20 * 2)
+  const horizontalPadding = 80; // listContainer horizontal padding (40 * 2)
   const totalGapWidth = 20 * (numColumns - 1);
   const cardWidth = (width - horizontalPadding - totalGapWidth) / numColumns;
 
@@ -110,13 +111,13 @@ export const DashboardGrid = ({ onPressItem }: DashboardGridProps) => {
 
 const styles = StyleSheet.create({
   listContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 40,
     paddingBottom: 120,
     backgroundColor: '#FFFFFF',
   },
   headerContainer: {
-    paddingVertical: 45,
-    marginRight: 10,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   headerRow: {
     flexDirection: 'row',
@@ -127,7 +128,7 @@ const styles = StyleSheet.create({
     fontSize: 35,
     color: '#035022',
     fontFamily: 'MinionPro-SemiboldItalic',
-    lineHeight: 34,
+    marginBottom: 2,
   },
   text: {},
 
@@ -142,7 +143,7 @@ const styles = StyleSheet.create({
   subTitle: {
     fontSize: 14,
     color: TEXT_MUTED,
-    marginTop: 10,
+    marginTop: 4,
   },
   columnWrapper: {
     justifyContent: 'flex-start', // Changed to flex-start for consistent spacing

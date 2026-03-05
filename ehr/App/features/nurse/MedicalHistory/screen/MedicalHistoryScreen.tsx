@@ -7,6 +7,7 @@ import {
   ScrollView,
   SafeAreaView,
   BackHandler,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import HistoryInputCard from '../components/HistoryInputCard';
@@ -338,12 +339,12 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#fff' },
-  container: { flex: 1, paddingHorizontal: 25 },
+  container: { flex: 1, paddingHorizontal: 40 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40,
-    marginBottom: 25,
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
   },
   title: {
     fontSize: 35,

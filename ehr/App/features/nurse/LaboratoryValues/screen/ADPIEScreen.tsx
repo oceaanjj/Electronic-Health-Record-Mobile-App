@@ -8,6 +8,7 @@ import {
   ScrollView,
   SafeAreaView,
   Alert,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useLabValues } from '../hook/useLabValues';
@@ -224,10 +225,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingHorizontal: 25,
+    paddingHorizontal: 40,
     marginBottom: 20,
   },
-  header: { marginTop: 40, marginBottom: 25 },
+  header: {
+    marginTop: Platform.OS === 'ios' ? 20 : 40,
+    marginBottom: 35,
+  },
   title: {
     fontSize: 35,
     color: THEME_GREEN,
