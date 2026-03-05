@@ -20,7 +20,7 @@ def get_doctor_updates(db: Session = Depends(get_db)):
             "patient_name": f"{update.patient.first_name} {update.patient.last_name}",
             "update_type": update.update_type,
             "status": update.status,
-            "created_at": update.created_at.isoformat()
+            "created_at": update.created_at.isoformat() + "Z"
         })
     return result
 

@@ -37,7 +37,9 @@ export const useDoctorDashboardLogic = () => {
 
   const formatTime = (dateString: string) => {
     const now = new Date();
-    const updateDate = new Date(dateString);
+    // Ensure dateString is treated as UTC
+    const normalizedDate = dateString.endsWith('Z') ? dateString : `${dateString}Z`;
+    const updateDate = new Date(normalizedDate);
     const diffInMs = now.getTime() - updateDate.getTime();
     const diffInMins = Math.floor(diffInMs / (1000 * 60));
     const diffInHours = Math.floor(diffInMins / 60);
