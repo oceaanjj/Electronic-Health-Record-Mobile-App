@@ -84,7 +84,11 @@ const DashboardSummary = ({
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <ScrollView
+        style={styles.container}
+        showsVerticalScrollIndicator={false}
+        scrollEnabled={searchQuery.length === 0}
+      >
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Hello, Jovilyn</Text>
