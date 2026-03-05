@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, View, Text, Platform } from 'react-native';
 
-const THEME_GREEN = '#1B5E20';
+const THEME_GREEN = '#035022';
 
 export default function CalendarScreen() {
   return (
@@ -9,7 +9,9 @@ export default function CalendarScreen() {
       <Text style={styles.title}>Calendar</Text>
       {/* You can integrate react-native-calendars here later */}
       <View style={styles.emptyContent}>
-        <Text style={styles.placeholderText}>No scheduled appointments for today.</Text>
+        <Text style={styles.placeholderText}>
+          No scheduled appointments for today.
+        </Text>
       </View>
     </View>
   );
@@ -23,10 +25,9 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 20 : 40,
   },
   title: {
-    fontSize: 32,
-    fontFamily: Platform.OS === 'ios' ? 'Georgia' : 'serif',
+    fontSize: 35,
+    fontFamily: 'MinionPro-SemiboldItalic',
     color: THEME_GREEN,
-    fontWeight: 'semibold',
     marginBottom: 35,
   },
   emptyContent: {
@@ -37,5 +38,5 @@ const styles = StyleSheet.create({
   placeholderText: {
     color: '#999',
     fontSize: 16,
-  }
+  },
 });
