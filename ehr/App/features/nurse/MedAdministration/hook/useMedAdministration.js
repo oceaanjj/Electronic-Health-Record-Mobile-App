@@ -1,20 +1,21 @@
 // MedAdministration/hook/useMedAdministration.js
 import { useState, useCallback } from 'react';
-import apiClient from '../../../api/apiClient';
+import apiClient from '@api/apiClient';
 
-const getTodayFormatted = () => new Date().toLocaleDateString('en-US', {
-  month: 'long',
-  day: 'numeric',
-  year: 'numeric',
-});
+const getTodayFormatted = () =>
+  new Date().toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
-const toRawDate = (displayDate) => {
+const toRawDate = displayDate => {
   const d = new Date(displayDate);
   if (isNaN(d.getTime())) {
     // Fallback to today in raw format if invalid
     return new Date().toISOString().split('T')[0];
   }
-  // toISOString gives UTC, which might shift the date. 
+  // toISOString gives UTC, which might shift the date.
   // For local YYYY-MM-DD:
   const year = d.getFullYear();
   const month = String(d.getMonth() + 1).padStart(2, '0');
@@ -167,8 +168,15 @@ export const useMedAdministration = () => {
           await apiClient.post('/medication-administration/', payload);
         }
       } catch (err) {
-        console.error(`Error saving ${rawTimeSlots[item.index]}:`, err?.response?.data || err.message);
-        errors.push(`${displayTimeSlots[item.index]}: ${err?.response?.data?.detail || err.message}`);
+        console.error(
+          `Error saving ${rawTimeSlots[item.index]}:`,
+          err?.response?.data || err.message,
+        );
+        errors.push(
+          `${displayTimeSlots[item.index]}: ${
+            err?.response?.data?.detail || err.message
+          }`,
+        );
       }
     }
 
