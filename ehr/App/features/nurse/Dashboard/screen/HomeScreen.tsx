@@ -1,56 +1,25 @@
-import React, { useState, useEffect, useCallback, Suspense, lazy } from 'react';
-import {
-  View,
-  StyleSheet,
-  SafeAreaView,
-  BackHandler,
-  ActivityIndicator,
-} from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, StyleSheet, SafeAreaView, BackHandler } from 'react-native';
 
 import DashboardSummary from '../components/DashboardSummary';
 import { DashboardGrid } from '@components/navigation/DashboardGrid';
+import SearchScreen from '@nurse/Search/screen/SearchScreen';
+import CalendarScreen from '@nurse/Calendar/screen/CalendarScreen';
 import BottomNav from '@components/navigation/BottomNav';
+import RegisterPatient from '@nurse/PatientRegistration/component/RegisterPatient';
+import DemographicProfileScreen from '@nurse/DemographicProfile/screen/DemographicProfileScreen';
+import VitalSignsScreen from '@nurse/VitalSigns/screen/VitalSignsScreen';
+import EditPatientScreen from '@nurse/EditPatientDetails/screen/EditPatientScreen';
 
-/**
- * instructions: to add a new screen that follows the standard folder structure,
- * just add the folder name to this array.
- * pattern: @nurse/[Name]/screen/[Name]Screen
- */
-const nurseScreenList = [
-  'Search',
-  'Calendar',
-  'VitalSigns',
-  'MedicalHistory',
-  'PhysicalExam',
-  'LabValues',
-  'Diagnostics',
-  'MedAdministration',
-  'MedicalReconciliation',
-  'IvsAndLines',
-  'IntakeAndOutput',
-];
-
-const autoRegistry = nurseScreenList.reduce((acc, name) => {
-  acc[name] = lazy(() => import(`@nurse/${name}/screen/${name}Screen`));
-  return acc;
-}, {} as any);
-
-/**
- * instructions: if a new file doesn't follow the standard naming pattern
- * or folder structure, add its import path manually here.
- */
-const customScreens = {
-  Register: lazy(
-    () => import('@nurse/PatientRegistration/component/RegisterPatient'),
-  ),
-  'Demographic Profile': lazy(
-    () => import('@nurse/DemographicProfile/screen/DemographicProfileScreen'),
-  ),
-  Activities: lazy(() => import('@nurse/ADL/screen/ADLMainScreen')),
-  EditPatient: lazy(
-    () => import('@nurse/EditPatientDetails/screen/EditPatientScreen'),
-  ),
-};
+import MedicalHistoryScreen from '@nurse/MedicalHistory/screen/MedicalHistoryScreen';
+import PhysicalExamScreen from '@nurse/PhysicalExam/screen/PhysicalExamScreen';
+import ADLMainScreen from '@nurse/ADL/screen/ADLMainScreen';
+import LabValuesScreen from '@nurse/LaboratoryValues/screen/LabValuesScreen';
+import DiagnosticsScreen from '@nurse/Diagnostics/screen/DiagnosticsScreen';
+import MedAdministrationScreen from '@nurse/MedAdministration/screen/MedAdministrationScreen';
+import MedicalReconciliationScreen from '@nurse/MedicalReconciliation/screen/MedicalReconciliationScreen';
+import IvsAndLinesScreen from '@nurse/IvsAndLines/screen/IvsAndLinesScreen';
+import IntakeAndOutputScreen from '@nurse/IntakeAndOutput/screen/IntakeAndOutputScreen';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('Home');
@@ -62,7 +31,9 @@ export default function HomeScreen() {
 
   const handleNavigation = useCallback((route: string) => {
     setActiveTab(prevTab => {
-      if (prevTab !== route) setNavigationHistory(prev => [...prev, route]);
+      if (prevTab !== route) {
+        setNavigationHistory(prev => [...prev, route]);
+      }
       return route;
     });
     setIsSelecting(false);
@@ -71,13 +42,13 @@ export default function HomeScreen() {
   const handleBack = useCallback(() => {
     if (navigationHistory.length > 1) {
       const newHistory = [...navigationHistory];
-      newHistory.pop();
+      newHistory.pop(); // remove current
       const previousRoute = newHistory[newHistory.length - 1];
       setNavigationHistory(newHistory);
       setActiveTab(previousRoute);
-      return true;
+      return true; // handled
     }
-    return false;
+    return false; // let default behavior happen (exit app)
   }, [navigationHistory]);
 
   useEffect(() => {
@@ -88,48 +59,66 @@ export default function HomeScreen() {
     return () => backHandler.remove();
   }, [handleBack]);
 
-  const renderContent = () => {
-    if (activeTab === 'Home')
-      return <DashboardSummary onNavigate={handleNavigation} />;
-    if (activeTab === 'Grid')
-      return <DashboardGrid onPressItem={handleNavigation} />;
-
-    const cleanName = activeTab.replace(/\s+/g, '');
-    const Screen =
-      autoRegistry[cleanName] ||
-      customScreens[activeTab as keyof typeof customScreens];
-
-    if (!Screen) return <DashboardSummary onNavigate={handleNavigation} />;
-
-    const screenProps: any = { onBack: handleBack };
-
-    /**
-     * instructions: add specific prop logic here for screens
-     * that require more than just the default onBack prop.
-     */
-    if (activeTab === 'Demographic Profile') {
-      screenProps.onSelectionChange = setIsSelecting;
-      screenProps.onPatientClick = (id: number) => {
-        setEditingPatientId(id);
-        handleNavigation('EditPatient');
-      };
+  // SCREEN CONFIGURATION - ADD NEW SCREENS HERE
+  const getScreenContent = () => {
+    switch (activeTab) {
+      case 'Home':
+        return <DashboardSummary onNavigate={handleNavigation} />;
+      case 'Search':
+        return <SearchScreen />;
+      case 'Grid':
+        return <DashboardGrid onPressItem={handleNavigation} />;
+      case 'Calendar':
+        return <CalendarScreen />;
+      case 'Demographic Profile':
+        return (
+          <DemographicProfileScreen
+            onBack={handleBack}
+            onSelectionChange={setIsSelecting}
+            onPatientClick={id => {
+              setEditingPatientId(id);
+              handleNavigation('EditPatient');
+            }}
+          />
+        );
+      case 'EditPatient':
+        return (
+          <EditPatientScreen
+            patientId={editingPatientId || 0}
+            onBack={handleBack}
+          />
+        );
+      case 'Vital Signs':
+        return <VitalSignsScreen onBack={handleBack} />;
+      case 'Register':
+        return <RegisterPatient onBack={handleBack} />;
+      case 'MedicalHistory':
+        return <MedicalHistoryScreen onBack={handleBack} />;
+      case 'PhysicalExam':
+        return <PhysicalExamScreen onBack={handleBack} />;
+      case 'Activities':
+        return <ADLMainScreen onBack={handleBack} />;
+      case 'LabValues':
+        return <LabValuesScreen onBack={handleBack} />;
+      case 'Diagnostics':
+        return <DiagnosticsScreen onBack={handleBack} />;
+      case 'Medication Administration':
+        return <MedAdministrationScreen onBack={handleBack} />;
+      case 'Medication Reconciliation':
+      case 'Medical Reconciliation': // Alias for Medical Reconciliation
+        return <MedicalReconciliationScreen onBack={handleBack} />;
+      case 'IvsAndLines':
+        return <IvsAndLinesScreen onBack={handleBack} />;
+      case 'Intake and Output':
+        return <IntakeAndOutputScreen onBack={handleBack} />;
+      default:
+        return <DashboardSummary onNavigate={handleNavigation} />;
     }
-    if (activeTab === 'EditPatient') {
-      screenProps.patientId = editingPatientId || 0;
-    }
-
-    return (
-      <Suspense
-        fallback={<ActivityIndicator size="small" style={{ marginTop: 20 }} />}
-      >
-        <Screen {...screenProps} />
-      </Suspense>
-    );
   };
 
   return (
     <SafeAreaView style={styles.container}>
-      <View style={styles.flex1}>{renderContent()}</View>
+      <View style={styles.flex1}>{getScreenContent()}</View>
 
       {activeTab !== 'Demographic Profile' && (
         <BottomNav
@@ -143,6 +132,11 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  flex1: { flex: 1 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  flex1: {
+    flex: 1,
+  },
 });
