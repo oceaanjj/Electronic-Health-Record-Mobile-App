@@ -1,5 +1,11 @@
 import React from 'react';
-import { StyleSheet, View, Text, FlatList, TouchableOpacity } from 'react-native';
+import {
+  StyleSheet,
+  View,
+  Text,
+  FlatList,
+  TouchableOpacity,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import MaterialIcon from 'react-native-vector-icons/MaterialIcons';
 
@@ -26,7 +32,7 @@ export const SearchResults = ({ data }: { data: any[] }) => {
     <FlatList
       data={data}
       renderItem={renderItem}
-      keyExtractor={(item) => item.id}
+      keyExtractor={item => item.id}
       contentContainerStyle={styles.list}
       showsVerticalScrollIndicator={false}
     />
@@ -35,11 +41,11 @@ export const SearchResults = ({ data }: { data: any[] }) => {
 
 const styles = StyleSheet.create({
   list: { paddingBottom: 100 },
-  resultItem: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingVertical: 12, 
-    marginBottom: 10 
+  resultItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 12,
+    marginBottom: 10,
   },
   iconContainer: {
     width: 45,
@@ -50,7 +56,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#F0F0F0',
-    elevation: 1,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 2, height: 2 },
   },
   textContainer: { marginLeft: 15 },
   resultName: { fontSize: 16, fontWeight: 'bold', color: THEME_GREEN },
