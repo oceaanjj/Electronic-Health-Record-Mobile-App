@@ -91,13 +91,11 @@ const DashboardSummary = ({
             <Text style={styles.dateText}>{formatDate()}</Text>
           </View>
           <TouchableOpacity onPress={() => setModalVisible(true)}>
-            <Icon name="keyboard-arrow-down" size={24} color="#333" />
+            <Icon name="keyboard-arrow-down" size={24} color="#000000" />
           </TouchableOpacity>
         </View>
 
-        {/* --- DYNAMIC REGISTERED PATIENTS SECTION --- */}
         <View style={styles.section}>
-          {/* Search Bar - Now on top of the title */}
           <View style={styles.searchBarContainer}>
             <Ionicons
               name="search-outline"
@@ -167,7 +165,7 @@ const DashboardSummary = ({
                   )}
                 </ScrollView>
 
-                {/* Fade effect at the bottom - only shown when content might be hidden */}
+                {/* Fade effect at the bottom */}
                 {filteredPatients.length > (showAll ? 7 : 3) && (
                   <LinearGradient
                     colors={[
@@ -193,7 +191,7 @@ const DashboardSummary = ({
                   <Icon
                     name={showAll ? 'keyboard-arrow-up' : 'keyboard-arrow-down'}
                     size={20}
-                    color="#999"
+                    color="#B2B2B2"
                   />
                 </TouchableOpacity>
               )}
@@ -327,16 +325,16 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   patientLeft: { flexDirection: 'row', alignItems: 'center' },
-  patientIcon: { marginRight: 15 },
+  patientIcon: { marginRight: 25 },
   patientName: {
     fontSize: 15,
-    color: '#333',
+    color: '#000000',
     fontFamily: 'AlteHaasGrotesk',
   },
   patientDate: {
     fontSize: 13,
-    color: '#999',
-    fontFamily: 'AlteHaasGrotesk',
+    color: '#B2B2B2',
+    fontFamily: 'AlteHaasGroteskBold',
   },
   fadeBottom: {
     position: 'absolute',
@@ -352,7 +350,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   showMoreText: {
-    color: '#999',
+    color: '#B2B2B2',
     fontSize: 13,
     marginRight: 5,
     fontFamily: 'AlteHaasGrotesk',
