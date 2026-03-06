@@ -14,11 +14,13 @@ import {
 import { useDoctorDashboardLogic } from '../hooks/useDoctorDashboardLogic';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AccountModal } from '../../../components/AccountModal';
+import { useAuth } from '@features/Auth/AuthContext';
 
 const { width } = Dimensions.get('window');
 
 const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack?: () => void, onViewAll?: () => void, onNavigate: (route: string, extraData?: any) => void }) => {
   const [modalVisible, setModalVisible] = useState(false);
+  const { user } = useAuth();
   const { 
     activeFilter, 
     setActiveFilter, 
@@ -54,7 +56,7 @@ const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack
       >
         <View style={styles.header}>
           <View>
-            <Text style={styles.welcome}>Hello, Dr. Rain</Text>
+            <Text style={styles.welcome}>Hello, {user?.full_name || 'Doctor'}</Text>
             <Text style={styles.date}>
               {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
             </Text>
