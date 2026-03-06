@@ -92,7 +92,7 @@ const DoctorPatientsScreen = ({ onNavigate }: { onNavigate: (route: string) => v
   const fetchPatients = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/patients/');
+      const response = await apiClient.get('/patient/');
       if (response.data && Array.isArray(response.data)) {
         setPatients(response.data);
       }

@@ -3,7 +3,7 @@ import apiClient from '@api/apiClient';
 
 export interface IntakeOutputData {
   oral_intake: string;
-  iv_fluids: string;
+  iv_fluids_volume: string;
   urine_output: string;
 }
 
@@ -12,7 +12,7 @@ export const useIntakeAndOutputLogic = () => {
   const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [intakeOutput, setIntakeOutput] = useState<IntakeOutputData>({
     oral_intake: '',
-    iv_fluids: '',
+    iv_fluids_volume: '',
     urine_output: '',
   });
   const [assessmentAlert, setAssessmentAlert] = useState<string | null>(null);
@@ -23,6 +23,7 @@ export const useIntakeAndOutputLogic = () => {
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [recordId, setRecordId] = useState<number | null>(null);
+  const [existingRecords, setExistingRecords] = useState<any[]>([]);
 
   const ADPIE_STAGES = ['Assessment', 'Diagnosis', 'Planning', 'Intervention', 'Evaluation'];
 
@@ -45,15 +46,11 @@ export const useIntakeAndOutputLogic = () => {
 
   const fetchLatestIntakeOutput = useCallback(async (patientId: number) => {
     try {
-      const response = await apiClient.get(`/intake-output/patient/${patientId}`);
+      const response = await apiClient.get(`/intake-and-output/patient/${patientId}?patient_id=${patientId}`);
       const records = response.data || [];
+      setExistingRecords(records);
       if (records.length > 0) {
-        const latest = records[0];
-        const recordDate = new Date(latest.created_at).toDateString();
-        const today = new Date().toDateString();
-        if (recordDate === today) {
-          return latest;
-        }
+        return records[0];
       }
       return null;
     } catch (err) {
@@ -62,9 +59,16 @@ export const useIntakeAndOutputLogic = () => {
     }
   }, []);
 
-  const checkRealTimeAlerts = useCallback(async (payload: any) => {
+  const checkRealTimeAlerts = useCallback(async (payload: any, existingId?: number | null) => {
     try {
-      const response = await apiClient.post('/intake-output/check-alerts', payload);
+      const targetId = existingId || recordId;
+      let response;
+      if (targetId) {
+        response = await apiClient.put(`/intake-and-output/${targetId}/assessment`, payload);
+      } else {
+        response = await apiClient.post('/intake-and-output/check-alerts', payload);
+      }
+      
       if (response.data && response.data.assessment_alert) {
         setAssessmentAlert(response.data.assessment_alert);
       }
@@ -72,7 +76,7 @@ export const useIntakeAndOutputLogic = () => {
     } catch (err) {
       return null;
     }
-  }, []);
+  }, [recordId]);
 
   const saveAssessment = useCallback(async () => {
     if (!selectedPatientId) return null;
@@ -80,18 +84,35 @@ export const useIntakeAndOutputLogic = () => {
     setLoading(true);
     try {
       const sanitize = (val: string) => (val.trim() === '' ? 'N/A' : val);
+      const today = new Date().toLocaleDateString('en-CA');
 
       const payload = {
         patient_id: parseInt(selectedPatientId, 10),
         oral_intake: sanitize(intakeOutput.oral_intake),
-        iv_fluids: sanitize(intakeOutput.iv_fluids),
+        iv_fluids_volume: sanitize(intakeOutput.iv_fluids_volume),
         urine_output: sanitize(intakeOutput.urine_output),
       };
 
-      const response = await apiClient.post('/intake-output/', payload);
+      // Check if we already have a record for TODAY
+      const existingToday = existingRecords.find(r => {
+          // Fallback to created_at if date column is missing
+          const recDate = (r.date || r.created_at).split('T')[0];
+          return recDate === today;
+      });
+
+      let response;
+      if (existingToday) {
+          response = await apiClient.put(`/intake-and-output/${existingToday.id}/assessment`, payload);
+      } else {
+          response = await apiClient.post('/intake-and-output', payload);
+      }
+
       const data = response.data;
       if (data.id) setRecordId(data.id);
       if (data.assessment_alert) setAssessmentAlert(data.assessment_alert);
+      
+      // Refresh history
+      fetchLatestIntakeOutput(parseInt(selectedPatientId, 10));
       
       return data;
     } catch (e) {
@@ -100,7 +121,7 @@ export const useIntakeAndOutputLogic = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedPatientId, intakeOutput]);
+  }, [selectedPatientId, intakeOutput, existingRecords, fetchLatestIntakeOutput]);
 
   const handleSelectPatient = useCallback(async (id: number | null, name: string) => {
     setSelectedPatientId(id ? id.toString() : null);
@@ -111,19 +132,19 @@ export const useIntakeAndOutputLogic = () => {
       if (data) {
         setRecordId(data.id);
         setIntakeOutput({
-          oral_intake: data.oral_intake?.toString() || '',
-          iv_fluids: data.iv_fluids?.toString() || '',
-          urine_output: data.urine_output?.toString() || '',
+          oral_intake: (data.oral_intake ?? '').toString(),
+          iv_fluids_volume: (data.iv_fluids_volume ?? data.iv_fluids ?? '').toString(),
+          urine_output: (data.urine_output ?? '').toString(),
         });
         setAssessmentAlert(data.assessment_alert);
       } else {
         setRecordId(null);
-        setIntakeOutput({ oral_intake: '', iv_fluids: '', urine_output: '' });
+        setIntakeOutput({ oral_intake: '', iv_fluids_volume: '', urine_output: '' });
         setAssessmentAlert(null);
       }
     } else {
       setRecordId(null);
-      setIntakeOutput({ oral_intake: '', iv_fluids: '', urine_output: '' });
+      setIntakeOutput({ oral_intake: '', iv_fluids_volume: '', urine_output: '' });
       setAssessmentAlert(null);
     }
   }, [fetchLatestIntakeOutput]);

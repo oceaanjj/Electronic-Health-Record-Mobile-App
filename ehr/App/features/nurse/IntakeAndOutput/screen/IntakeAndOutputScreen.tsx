@@ -88,13 +88,13 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
     if (newState) {
       setIntakeOutput({
         oral_intake: 'N/A',
-        iv_fluids: 'N/A',
+        iv_fluids_volume: 'N/A',
         urine_output: 'N/A',
       });
     } else {
       setIntakeOutput(prev => ({
         oral_intake: prev.oral_intake === 'N/A' ? '' : prev.oral_intake,
-        iv_fluids: prev.iv_fluids === 'N/A' ? '' : prev.iv_fluids,
+        iv_fluids_volume: prev.iv_fluids_volume === 'N/A' ? '' : prev.iv_fluids_volume,
         urine_output: prev.urine_output === 'N/A' ? '' : prev.urine_output,
       }));
     }
@@ -102,7 +102,7 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
 
   useEffect(() => {
     if (selectedPatientId) {
-      const fields = ['oral_intake', 'iv_fluids', 'urine_output'];
+      const fields = ['oral_intake', 'iv_fluids_volume', 'urine_output'];
       const allNA = fields.every(f => (intakeOutput as any)[f] === 'N/A');
       setIsNA(allNA);
     } else {
@@ -172,7 +172,7 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
           await checkRealTimeAlerts({
             patient_id: parseInt(selectedPatientId, 10),
             oral_intake: parseInt(intakeOutput.oral_intake, 10) || 0,
-            iv_fluids: parseInt(intakeOutput.iv_fluids, 10) || 0,
+            iv_fluids_volume: parseInt(intakeOutput.iv_fluids_volume, 10) || 0,
             urine_output: parseInt(intakeOutput.urine_output, 10) || 0,
           });
         } catch (e) {
@@ -381,8 +381,8 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
 
             <IntakeOutputCard
               label="IV FLUIDS"
-              value={intakeOutput.iv_fluids}
-              onChangeText={text => handleUpdateField('iv_fluids', text)}
+              value={intakeOutput.iv_fluids_volume}
+              onChangeText={text => handleUpdateField('iv_fluids_volume', text)}
               disabled={!selectedPatientId || isNA}
               onDisabledPress={() => {
                 if (!selectedPatientId) {

@@ -25,9 +25,10 @@ export const useDemographicLogic = (
   const loadPatients = useCallback(async (showLoading = true) => {
     if (showLoading) setIsLoading(true);
     try {
-      // Matches the pluralized path based on your registration code
-      const response = await apiClient.get('/patients/');
-      setPatients(response.data || []);
+      // Use ?all=true to ensure we get inactive patients as well
+      const response = await apiClient.get('/patient?all=true');
+      const rawData = response.data?.data || response.data || [];
+      setPatients(rawData);
     } catch (error) {
       console.error('Profile Fetch Error:', error);
     } finally {
@@ -43,11 +44,11 @@ export const useDemographicLogic = (
       
       // Filter only those who actually need an update
       const idsToUpdate = Array.from(selectedIds).filter(id => {
-        const p = (patients as any[]).find(ptr => ptr.patient_id === id);
+        const p = (patients as any[]).find(ptr => (ptr.patient_id || ptr.id) === id);
         if (!p) return false;
         const currentStatus = typeof p.is_active === 'number' 
           ? p.is_active 
-          : (p.is_active ? 1 : 0);
+          : (p.is_active === true || p.is_active === 'true' || p.is_active === '1' ? 1 : 0);
         return currentStatus !== targetValue;
       });
 
@@ -66,7 +67,7 @@ export const useDemographicLogic = (
       try {
         const updatePromises = idsToUpdate.map(id => {
           const existingPatient = (patients as any[]).find(
-            p => p.patient_id === id,
+            p => (p.patient_id || p.id) === id,
           );
 
           const updatedData = {
@@ -74,11 +75,13 @@ export const useDemographicLogic = (
             is_active: targetValue,
           };
 
+          // Clean up fields that might cause validation issues or are redundant
           delete updatedData.patient_id;
+          delete updatedData.id;
           delete updatedData.created_at;
           delete updatedData.updated_at;
 
-          return apiClient.put(`/patients/${id}`, updatedData);
+          return apiClient.put(`/patient/${id}`, updatedData);
         });
 
         await Promise.all(updatePromises);

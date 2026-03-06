@@ -50,7 +50,8 @@ export const useLogin = () => {
     setIsSubmitting(true);
     try {
       console.log('Attempting login with:', { email, password: '***' });
-      // Passing as query parameters to match the backend's expected state
+      // The apiClient now has /api as baseURL.
+      // SYNC_MOBILE_APP says login is POST /api/auth/login
       const response = await apiClient.post(
         `/auth/login?email=${encodeURIComponent(
           email,
@@ -58,6 +59,10 @@ export const useLogin = () => {
       );
 
       console.log('Login response:', response.data);
+      // Laravel response structure from SYNC_MOBILE_APP or standard:
+      // Typically { access_token, user: { id, full_name, role, ... } }
+      // But the guide says "returns an access_token, role, full_name, and user_id" 
+      // which matches what we had.
       const { access_token, role, full_name, user_id } = response.data;
 
       await login(

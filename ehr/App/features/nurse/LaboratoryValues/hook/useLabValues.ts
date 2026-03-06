@@ -14,11 +14,37 @@ export const useLabValues = () => {
     return sanitized;
   };
 
-  // STEP 1: Create initial record
-  const saveLabAssessment = async (payload: any) => {
+  // STEP 1: Create or Update record
+  const saveLabAssessment = async (payload: any, existingId?: number | null) => {
     const sanitized = sanitize(payload);
-    const response = await apiClient.post('/lab-values/', sanitized);
-    return response.data; // Returns record with ID
+    
+    if (existingId) {
+      // UPDATE
+      const response = await apiClient.put(`/lab-values/${existingId}/assessment`, sanitized);
+      return response.data;
+    } else {
+      // CREATE
+      const response = await apiClient.post('/lab-values', sanitized);
+      return response.data;
+    }
+  };
+
+  const fetchLatestLabValues = async (patientId: number) => {
+    try {
+      const response = await apiClient.get(`/lab-values/patient/${patientId}?patient_id=${patientId}`);
+      const data = response.data;
+      
+      if (Array.isArray(data)) {
+        return data.length > 0 ? data[0] : null;
+      } else if (data && typeof data === 'object') {
+        // If it's a single object (or has a data key from Laravel)
+        return data.data || data;
+      }
+      return null;
+    } catch (err) {
+      console.error('Error fetching lab values:', err);
+      return null;
+    }
   };
 
   // STEP 2: Update specific tests & fetch real-time CDSS comparison
@@ -45,5 +71,5 @@ const updateDPIE = async (examId: number, stepKey: string, text: string) => {
   };
   
 
-  return { alerts, checkLabAlerts, saveLabAssessment,updateDPIE };
+  return { alerts, setAlerts, checkLabAlerts, saveLabAssessment, updateDPIE, fetchLatestLabValues };
 };

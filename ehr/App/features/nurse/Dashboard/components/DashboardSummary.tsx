@@ -65,7 +65,7 @@ const DashboardSummary = ({
   onPatientSelect: (id: number) => void;
 }) => {
   const { isDarkMode, theme, commonStyles } = useAppTheme();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const styles = createStyles(theme, commonStyles);
 
   const [modalVisible, setModalVisible] = useState(false);
@@ -76,9 +76,11 @@ const DashboardSummary = ({
   const [recentFeatures, setRecentFeatures] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchLatestPatients();
+    if (token) {
+      fetchLatestPatients();
+    }
     loadRecentFeatures();
-  }, []);
+  }, [token]);
 
   const loadRecentFeatures = async () => {
     try {
@@ -138,18 +140,38 @@ const DashboardSummary = ({
   const fetchLatestPatients = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/patients/');
-      if (response.data && Array.isArray(response.data)) {
-        const activePatients = response.data.filter(
+      // SYNC_MOBILE_APP.md suggests testing with ?all=true if data is not showing
+      const response = await apiClient.get('/patient?all=true');
+      console.log('Fetched patients from Laravel:', response.data);
+      
+      let rawData = [];
+      if (Array.isArray(response.data)) {
+        rawData = response.data;
+      } else if (response.data && Array.isArray(response.data.data)) {
+        rawData = response.data.data;
+      }
+
+      if (rawData.length > 0) {
+        const activePatients = rawData.filter(
           (patient: any) =>
             patient.is_active === '1' ||
             patient.is_active === 1 ||
-            patient.is_active === true,
+            patient.is_active === true ||
+            patient.is_active === 'true'
         );
-        setPatients(activePatients.reverse());
+        // Map id if patient_id is missing, as per SYNC_MOBILE_APP.md point 4
+        const mappedPatients = activePatients.map((p: any) => ({
+          ...p,
+          id: p.id || p.patient_id,
+          patient_id: p.patient_id || p.id
+        }));
+        
+        setPatients(mappedPatients.reverse());
+      } else {
+        setPatients([]);
       }
     } catch (error) {
-      console.error('Connection Error:', error);
+      console.error('Connection Error fetching patients:', error);
     } finally {
       setLoading(false);
     }

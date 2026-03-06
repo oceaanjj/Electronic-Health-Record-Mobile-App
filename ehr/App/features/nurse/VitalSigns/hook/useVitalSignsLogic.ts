@@ -55,12 +55,62 @@ export const useVitalSignsLogic = () => {
   const currentTime = useMemo(() => TIME_SLOTS[currentTimeIndex], [currentTimeIndex]);
 
   const isDataEntered = useMemo(() => {
-    return true; // Enable empty inputs as per requirement
+    return true; 
   }, []);
 
   const isDataComplete = useMemo(() => {
-    return true; // Enable empty inputs as per requirement
+    return true; 
   }, []);
+
+  const loadPatientData = async (patientId: string) => {
+    try {
+      const response = await apiClient.get(`/vital-signs/patient/${patientId}?patient_id=${patientId}`);
+      const records = response.data || [];
+      setExistingRecords(records);
+      
+      const today = new Date().toLocaleDateString('en-CA');
+      const history: Record<string, Vitals> = {};
+      
+      records.forEach((rec: any) => {
+        const recDate = (rec.date || rec.created_at).split('T')[0];
+        if (recDate === today) {
+          const slotLabel = formatTo12h(rec.time);
+          if (TIME_SLOTS.includes(slotLabel)) {
+            history[slotLabel] = {
+              temperature: rec.temperature || '',
+              hr: rec.hr || '',
+              rr: rec.rr || '',
+              bp: rec.bp || '',
+              spo2: rec.spo2 || '',
+            };
+          }
+        }
+      });
+      
+      setVitalsHistory(history);
+      
+      if (history[currentTime]) {
+        setCurrentVitals(history[currentTime]);
+      } else if (records.length > 0) {
+        const latest = records[0];
+        setCurrentVitals({
+          temperature: latest.temperature || '',
+          hr: latest.hr || '',
+          rr: latest.rr || '',
+          bp: latest.bp || '',
+          spo2: latest.spo2 || '',
+        });
+      } else {
+        setCurrentVitals(initialVitals);
+      }
+      
+    } catch (e) {
+      console.error('Failed to load patient data:', e);
+      setExistingRecords([]);
+      setVitalsHistory({});
+      setCurrentVitals(initialVitals);
+    }
+  };
 
   const saveAssessment = async (dayNo?: number) => {
     if (!selectedPatientId) return null;
@@ -75,17 +125,37 @@ export const useVitalSignsLogic = () => {
       return sanitized;
     };
 
+    const today = new Date().toLocaleDateString('en-CA');
+    const time24 = convertTo24h(currentTime);
+
     const payload = sanitize({
       patient_id: parseInt(selectedPatientId, 10),
-      date: new Date().toLocaleDateString('en-CA'),
-      time: convertTo24h(currentTime),
+      date: today,
+      time: time24,
       day_no: dayNo || 1,
       ...currentVitals
     });
 
     try {
-      const response = await apiClient.post('/vital-signs/', payload);
+      // Check if we have an existing record for this patient, date, and time slot
+      const existingRecord = existingRecords.find(
+        r => {
+            const recDate = (r.date || r.created_at).split('T')[0];
+            return recDate === today && r.time === time24;
+        }
+      );
+
+      let response;
+      if (existingRecord) {
+        response = await apiClient.put(`/vital-signs/${existingRecord.id}/assessment`, payload);
+      } else {
+        response = await apiClient.post('/vital-signs', payload);
+      }
+      
       const data = response.data;
+      
+      // Refresh local records list after save
+      await loadPatientData(selectedPatientId);
       
       if (data.assessment_alert) {
         const isCritical = data.assessment_alert.includes('🔴') || data.assessment_alert.includes('CRITICAL');
@@ -97,8 +167,13 @@ export const useVitalSignsLogic = () => {
         setBackendAlert(alertObj);
       }
       return data;
-    } catch (e) {
-      console.error('API Error saving vital signs:', e);
+    } catch (e: any) {
+      console.error('API Error saving vital signs:', e?.response?.data || e.message);
+      setBackendAlert({
+          title: 'Connection Error',
+          message: e?.response?.data?.message || e?.response?.data?.detail || e.message || 'Failed to save vital signs.',
+          type: 'error'
+      });
       return null;
     }
   };
@@ -143,46 +218,6 @@ export const useVitalSignsLogic = () => {
     });
     return result;
   }, [currentVitals, vitalsHistory, currentTime]);
-
-  const loadPatientData = async (patientId: string) => {
-    try {
-      const response = await apiClient.get(`/vital-signs/patient/${patientId}`);
-      const records = response.data || [];
-      setExistingRecords(records);
-      
-      const today = new Date().toLocaleDateString('en-CA');
-      const history: Record<string, Vitals> = {};
-      
-      records.forEach((rec: any) => {
-        if (rec.date === today) {
-          const slotLabel = formatTo12h(rec.time);
-          if (TIME_SLOTS.includes(slotLabel)) {
-            history[slotLabel] = {
-              temperature: rec.temperature || '',
-              hr: rec.hr || '',
-              rr: rec.rr || '',
-              bp: rec.bp || '',
-              spo2: rec.spo2 || '',
-            };
-          }
-        }
-      });
-      
-      setVitalsHistory(history);
-      
-      if (history[currentTime]) {
-        setCurrentVitals(history[currentTime]);
-      } else {
-        setCurrentVitals(initialVitals);
-      }
-      
-    } catch (e) {
-      console.error('Failed to load patient data:', e);
-      setExistingRecords([]);
-      setVitalsHistory({});
-      setCurrentVitals(initialVitals);
-    }
-  };
 
   const setSelectedPatient = (id: string | null, name: string) => {
     setSelectedPatientId(id);

@@ -76,6 +76,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     isMenuVisible,
     setIsMenuVisible,
     reset,
+    existingRecords,
   } = useVitalSignsLogic();
 
   const [chartIndex, setChartIndex] = useState(0);
@@ -202,13 +203,21 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     }
 
     if (isDataEntered) {
-      const dayNo = parseInt(calculateDayNumber(), 10);
+      const dayNo = parseInt(calculateDayNumber(), 10) || 1;
       const res = await saveAssessment(dayNo);
-      if (res && res.id) {
-        setRecordId(res.id);
+      
+      // Laravel might wrap the response in a 'data' key or return it directly
+      const actualData = res?.data || res;
+      const id = actualData?.id || actualData?.vital_id;
+
+      if (id) {
+        setRecordId(id);
 
         if (currentTimeIndex === TIME_SLOTS.length - 1) {
-          const isUpdate = res.updated_at !== res.created_at;
+          // If it's the last slot, show success message
+          const isUpdate = (actualData.updated_at !== actualData.created_at) || 
+                           existingRecords.some(r => r.id === id);
+          
           setSuccessMessage({
             title: isUpdate ? 'Successully Updated' : 'Successfully Submitted',
             message: isUpdate

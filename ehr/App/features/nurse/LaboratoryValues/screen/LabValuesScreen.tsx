@@ -47,11 +47,12 @@ const LabValuesScreen = ({ onBack }: any) => {
   const { isDarkMode, theme, commonStyles } = useAppTheme();
   const styles = useMemo(() => createStyles(theme, commonStyles, isDarkMode), [theme, commonStyles, isDarkMode]);
 
-  const { alerts, checkLabAlerts, saveLabAssessment } = useLabValues();
+  const { alerts, checkLabAlerts, saveLabAssessment, fetchLatestLabValues, setAlerts } = useLabValues();
   const [labId, setLabId] = useState<number | null>(null);
   const [selectedTest, setSelectedTest] = useState(LAB_TESTS[0]);
   const [result, setResult] = useState('');
   const [normalRange, setNormalRange] = useState('');
+  const [allLabData, setAllLabData] = useState<any>({});
 
   const [isAdpieActive, setIsAdpieActive] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
@@ -146,7 +147,7 @@ const LabValuesScreen = ({ onBack }: any) => {
       [`${prefix}_normal_range`]: normalRange,
     };
     try {
-      const res = await saveLabAssessment(payload);
+      const res = await saveLabAssessment(payload, labId);
       if (res && res.id) {
         setLabId(res.id);
         setIsAdpieActive(true);
@@ -171,14 +172,21 @@ const LabValuesScreen = ({ onBack }: any) => {
       [`${prefix}_normal_range`]: normalRange,
     };
     try {
+      let finalRes;
       if (!labId) {
-        const res = await saveLabAssessment(payload);
-        if (res && res.id) setLabId(res.id);
+        finalRes = await saveLabAssessment(payload, labId);
+        if (finalRes && finalRes.id) setLabId(finalRes.id);
       } else {
+        finalRes = await saveLabAssessment(payload, labId);
         await checkLabAlerts(labId, {
           [`${prefix}_result`]: result,
           [`${prefix}_normal_range`]: normalRange,
         });
+      }
+
+      // Update local storage of all results
+      if (finalRes) {
+          setAllLabData(finalRes);
       }
 
       if (selectedTest === 'Basophils (%)') {
@@ -186,9 +194,14 @@ const LabValuesScreen = ({ onBack }: any) => {
         setTimeout(() => onBack(), 1500);
       } else {
         const idx = LAB_TESTS.indexOf(selectedTest);
-        setSelectedTest(LAB_TESTS[idx + 1]);
-        setResult(isNA ? 'N/A' : '');
-        setNormalRange(isNA ? 'N/A' : '');
+        const nextTest = LAB_TESTS[idx + 1];
+        setSelectedTest(nextTest);
+        
+        // Load data for NEXT test if it exists
+        const nextPrefix = getBackendPrefix(nextTest);
+        setResult(allLabData[`${nextPrefix}_result`] || (isNA ? 'N/A' : ''));
+        setNormalRange(allLabData[`${nextPrefix}_normal_range`] || (isNA ? 'N/A' : ''));
+        
         scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       }
     } catch (e) {
@@ -196,10 +209,40 @@ const LabValuesScreen = ({ onBack }: any) => {
     }
   };
 
-  const handlePatientSelect = (id: number | null, name: string) => {
+  const handlePatientSelect = async (id: number | null, name: string) => {
     setSelectedPatientId(id ? id.toString() : null);
     setSearchText(name);
+    if (id) {
+      const data = await fetchLatestLabValues(id);
+      if (data) {
+        setLabId(data.id);
+        setAllLabData(data);
+        const prefix = getBackendPrefix(selectedTest);
+        setResult(data[`${prefix}_result`] || '');
+        setNormalRange(data[`${prefix}_normal_range`] || '');
+        setAlerts(data);
+      } else {
+        setLabId(null);
+        setAllLabData({});
+        setResult('');
+        setNormalRange('');
+        setAlerts({});
+      }
+    } else {
+      setLabId(null);
+      setAllLabData({});
+      setResult('');
+      setNormalRange('');
+      setAlerts({});
+    }
   };
+
+  // Sync inputs when test changes
+  useEffect(() => {
+      const prefix = getBackendPrefix(selectedTest);
+      setResult(allLabData[`${prefix}_result`] || (isNA ? 'N/A' : ''));
+      setNormalRange(allLabData[`${prefix}_normal_range`] || (isNA ? 'N/A' : ''));
+  }, [selectedTest]);
 
   const fadeColors = isDarkMode
     ? ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.8)', 'rgba(18, 18, 18, 1)']
@@ -234,8 +277,6 @@ const LabValuesScreen = ({ onBack }: any) => {
     currentAlert !== 'Normal' &&
     !currentAlert.includes('No result') &&
     !currentAlert.includes('Unable to compare');
-
-  const isFormValid = !!selectedPatientId;
 
   return (
     <SafeAreaView style={styles.safeArea}>

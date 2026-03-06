@@ -186,24 +186,26 @@ const MedAdministrationScreen = ({ onBack }: any) => {
       );
     }
 
-    if (step === 2) {
-      try {
-        await saveMedAdministration();
+    try {
+      // Save current step data
+      await saveMedAdministration();
+
+      if (step === 2) {
         showAlert(
           'Success',
           'Medication Administration records saved successfully.',
           'success',
         );
         scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-      } catch (error: any) {
-        showAlert(
-          'Error',
-          error.message || 'Failed to save medication administration.',
-        );
+      } else {
+        nextStep();
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       }
-    } else {
-      nextStep();
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+    } catch (error: any) {
+      showAlert(
+        'Error',
+        error.message || 'Failed to save medication administration.',
+      );
     }
   };
 

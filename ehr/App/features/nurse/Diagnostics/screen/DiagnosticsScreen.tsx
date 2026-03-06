@@ -190,8 +190,8 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({ onBack }) => {
     return diagnostics
       .filter(d => d.image_type === type)
       .map(d => ({
-        id: d.diagnostic_id,
-        url: `${BASE_URL}/diagnostics/${d.diagnostic_id}/file`,
+        id: d.id,
+        url: `${BASE_URL}/diagnostics/${d.id}/file`,
       }));
   };
 

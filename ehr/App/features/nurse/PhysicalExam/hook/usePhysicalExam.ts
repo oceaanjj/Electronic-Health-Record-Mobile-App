@@ -12,26 +12,53 @@ export const usePhysicalExam = () => {
     return sanitized;
   };
 
-  // STEP 1: ASSESSMENT (POST)
-  const saveAssessment = useCallback(async (payload: any) => {
-    // Matches @router.post("/")
-    const sanitized = sanitize(payload);
-    const response = await apiClient.post('/physical-exam/', sanitized);
-    return response.data; // Returns PhysicalExamRead with ID
+  // STEP 1: ASSESSMENT (POST or PUT)
+  const saveAssessment = useCallback(async (payload: any, existingId?: number | null) => {
+    // Ensure patient_id is integer
+    const body = {
+      ...payload,
+      patient_id: parseInt(payload.patient_id, 10)
+    };
+    const sanitized = sanitize(body);
+    
+    const targetId = existingId || payload.id || payload.physical_exam_id;
+    
+    if (targetId) {
+      // UPDATE existing record
+      const response = await apiClient.put(`/physical-exam/${targetId}/assessment`, sanitized);
+      return response.data;
+    } else {
+      // CREATE new record
+      const response = await apiClient.post('/physical-exam', sanitized);
+      return response.data;
+    }
   }, []);
 
   // Real-time CDSS: Keyword matching for Assessment
-  const checkAssessmentAlerts = useCallback(async (payload: any) => {
+  const checkAssessmentAlerts = useCallback(async (payload: any, existingId?: number | null) => {
     try {
-      const sanitized = sanitize(payload);
-      const response = await apiClient.post('/physical-exam/', sanitized);
-      return response.data;
+      const body = {
+        ...payload,
+        patient_id: parseInt(payload.patient_id, 10)
+      };
+      const sanitized = sanitize(body);
+      
+      const targetId = existingId || payload.id || payload.physical_exam_id;
+
+      if (targetId) {
+        // UPDATE/Check on existing record
+        const response = await apiClient.put(`/physical-exam/${targetId}/assessment`, sanitized);
+        return response.data;
+      } else {
+        // CREATE/Check on new record
+        const response = await apiClient.post('/physical-exam', sanitized);
+        return response.data;
+      }
     } catch (err) { return null; }
   }, []);
 
   // STEPS 2-5: DPIE UPDATES (PUT)
   const updateDPIE = useCallback(async (examId: number, stepKey: string, text: string) => {
-    // Matches @router.put("/{exam_id}/diagnosis"), /planning, etc.
     const sanitizedText = text.trim() === '' ? 'N/A' : text;
     const response = await apiClient.put(`/physical-exam/${examId}/${stepKey}`, {
       [stepKey]: sanitizedText
@@ -41,17 +68,11 @@ export const usePhysicalExam = () => {
 
   const fetchLatestPhysicalExam = useCallback(async (patientId: number) => {
     try {
-      const response = await apiClient.get(`/physical-exam/patient/${patientId}`);
-      // records are sorted by created_at desc
+      // Adding patient_id as query param to satisfy strict backend requirements
+      const response = await apiClient.get(`/physical-exam/patient/${patientId}?patient_id=${patientId}`);
       const records = response.data || [];
       if (records.length > 0) {
-        // Check if the latest record is from today
-        const latest = records[0];
-        const recordDate = new Date(latest.created_at).toDateString();
-        const today = new Date().toDateString();
-        if (recordDate === today) {
-          return latest;
-        }
+        return records[0];
       }
       return null;
     } catch (err) {

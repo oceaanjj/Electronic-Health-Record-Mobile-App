@@ -14,16 +14,39 @@ export const useADL = () => {
     return sanitized;
   };
 
-  const saveADLAssessment = useCallback(async (payload: any) => {
-    const sanitized = sanitize(payload);
-    const response = await apiClient.post('/adl/', sanitized);
-    return response.data;
+  const saveADLAssessment = useCallback(async (payload: any, existingId?: number | null) => {
+    // Ensure patient_id is integer
+    const body = {
+      ...payload,
+      patient_id: parseInt(payload.patient_id, 10)
+    };
+    const sanitized = sanitize(body);
+    
+    // If we have an existing ID, UPDATE
+    if (existingId) {
+      const response = await apiClient.put(`/adl/${existingId}/assessment`, sanitized);
+      return response.data;
+    } else {
+      // CREATE
+      const response = await apiClient.post('/adl', sanitized);
+      return response.data;
+    }
   }, []);
 
-  const checkADLAlerts = useCallback(async (payload: any) => {
+  const checkADLAlerts = useCallback(async (payload: any, existingId?: number | null) => {
     try {
-      const sanitized = sanitize(payload);
-      const response = await apiClient.post('/adl/check-alerts', sanitized);
+      const body = {
+        ...payload,
+        patient_id: parseInt(payload.patient_id, 10)
+      };
+      const sanitized = sanitize(body);
+      let response;
+      if (existingId) {
+        response = await apiClient.put(`/adl/${existingId}/assessment`, sanitized);
+      } else {
+        response = await apiClient.post('/adl/check-alerts', sanitized);
+      }
+      
       if (response.data) {
         setAlerts(response.data);
       }
@@ -43,15 +66,15 @@ export const useADL = () => {
 
   const fetchLatestADL = useCallback(async (patientId: number) => {
     try {
-      const response = await apiClient.get(`/adl/patient/${patientId}`);
-      const records = response.data || [];
-      if (records.length > 0) {
-        const latest = records[0];
-        const recordDate = new Date(latest.created_at).toDateString();
-        const today = new Date().toDateString();
-        if (recordDate === today) {
-          return latest;
-        }
+      // Trying the standard pattern from the guide
+      const response = await apiClient.get(`/adl/patient/${patientId}?patient_id=${patientId}`);
+      const data = response.data;
+      
+      if (Array.isArray(data)) {
+        return data.length > 0 ? data[0] : null;
+      } else if (data && typeof data === 'object') {
+        // If it's a single object, return it
+        return data;
       }
       return null;
     } catch (err) {

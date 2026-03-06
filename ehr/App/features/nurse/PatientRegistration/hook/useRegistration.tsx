@@ -91,11 +91,11 @@ export const useRegistration = () => {
       contact_relationship: contacts[0].relationship,
       contact_number: contacts[0].number,
       user_id: form.user_id,
-      is_active: true,
+      is_active: 1,
     };
 
     try {
-      const response = await apiClient.post('/patients/', payload);
+      const response = await apiClient.post('/patient', payload);
       return response;
     } catch (error: any) {
       console.error('Registration error details:', error.response?.data);

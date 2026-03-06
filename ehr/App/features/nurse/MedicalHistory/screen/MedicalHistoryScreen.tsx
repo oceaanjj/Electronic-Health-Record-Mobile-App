@@ -134,7 +134,7 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
     [theme, commonStyles, isDarkMode],
   );
 
-  const { saveMedicalHistory, fetchMedicalHistory } = useMedicalHistory();
+  const { saveMedicalHistoryStep, fetchMedicalHistory } = useMedicalHistory();
   const [step, setStep] = useState(0);
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(
     null,
@@ -227,12 +227,12 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
 
         const newFormData = {
           present: getFirst(data.present_illness) || initialFormData.present,
-          past: getFirst(data.past_medical_surgical) || initialFormData.past,
-          allergies: getFirst(data.allergies) || initialFormData.allergies,
+          past: getFirst(data.past_history || data.past_medical_surgical || data.past_medical) || initialFormData.past,
+          allergies: getFirst(data.allergies || data.known_condition_allergies) || initialFormData.allergies,
           vaccination:
             getFirst(data.vaccination) || initialFormData.vaccination,
           developmental:
-            getFirst(data.developmental_history) ||
+            getFirst(data.developmental_history || data.developmental) ||
             initialFormData.developmental,
         };
         setFormData(newFormData);
@@ -297,30 +297,22 @@ const MedicalHistoryScreen: React.FC<MedicalHistoryProps> = ({ onBack }) => {
       );
     }
 
+    const currentKey = steps[step].key;
+    const currentData = formData[currentKey as keyof typeof formData];
+
     try {
-      // Save progress silently (Backend handles upsert)
-      await saveMedicalHistory(selectedPatientId, formData);
+      // Save only the current step
+      await saveMedicalHistoryStep(selectedPatientId, currentKey, currentData);
 
       if (step < steps.length - 1) {
         setStep(step + 1);
         scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       } else {
-        const isUpdate = !!(
-          formData.present.medical_id ||
-          formData.past.medical_id ||
-          formData.allergies.medical_id ||
-          formData.vaccination.medical_id ||
-          formData.developmental.development_id
-        );
-
         showAlert(
-          isUpdate ? 'Successully Updated' : 'Successfully Submitted',
-          `Medical History has been ${
-            isUpdate ? 'updated' : 'submitted'
-          } successfully.`,
+          'Success',
+          'Medical History has been saved successfully.',
           'success',
         );
-
         loadPatientData(selectedPatientId);
       }
     } catch (error: any) {

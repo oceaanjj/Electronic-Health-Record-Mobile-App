@@ -106,7 +106,7 @@ export default function SearchScreen({
   const fetchPatients = async () => {
     setLoading(true);
     try {
-      const response = await apiClient.get('/patients/');
+      const response = await apiClient.get('/patient');
       let raw = [];
       if (Array.isArray(response.data)) {
         raw = response.data;

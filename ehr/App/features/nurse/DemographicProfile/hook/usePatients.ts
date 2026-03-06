@@ -4,7 +4,7 @@ import apiClient from '@api/apiClient';
 export const usePatients = () => {
   const getPatients = useCallback(async () => {
     try {
-      const response = await apiClient.get('/patients/');
+      const response = await apiClient.get('/patient');
       return response.data;
     } catch (err: any) {
       const message = err?.response?.data || err?.message || 'Network Error';
@@ -16,7 +16,7 @@ export const usePatients = () => {
 
   const getPatientById = useCallback(async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/patients/${id}/`);
+      const response = await apiClient.get(`/patient/${id}`);
       return response.data;
     } catch (err: any) {
       const message =

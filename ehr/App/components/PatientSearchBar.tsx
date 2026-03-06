@@ -85,7 +85,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
       setLoading(true);
       setError(null);
       try {
-        const response = await apiClient.get('/patients/');
+        const response = await apiClient.get('/patient');
         let raw = [];
         if (Array.isArray(response.data)) {
           raw = response.data;

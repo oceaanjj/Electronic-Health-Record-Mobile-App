@@ -193,7 +193,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
           const result = await checkAssessmentAlerts({
             patient_id: selectedPatientId,
             ...formData,
-          });
+          }, examId);
           if (result) setBackendAlerts(result);
         } catch (e) {
           console.error('CDSS Real-time Error:', e);
@@ -202,7 +202,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [formData, selectedPatientId, checkAssessmentAlerts, isNA]);
+  }, [formData, selectedPatientId, checkAssessmentAlerts, isNA, examId]);
 
   // NEW: CDSS Button Handler to trigger ADPIE Workflow
   const handleCDSSPress = async () => {
@@ -214,11 +214,11 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     }
 
     try {
-      // Step 1: POST to /physical-exam/ to create or update the record
+      // Step 1: POST or PUT to /physical-exam/ to create or update the record
       const result = await saveAssessment({
         patient_id: selectedPatientId,
         ...formData,
-      });
+      }, examId);
 
       const id = result.id || result.physical_exam_id;
       if (id) {
@@ -242,7 +242,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
       const result = await saveAssessment({
         patient_id: selectedPatientId,
         ...formData,
-      });
+      }, examId);
 
       const newId = result.id || result.physical_exam_id;
       // Check if it was an update or a new submission
