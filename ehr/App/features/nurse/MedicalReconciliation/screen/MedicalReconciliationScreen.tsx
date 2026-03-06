@@ -272,7 +272,7 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({
                       styles.chevron,
                       (!isDataEntered || isSubmitting || !patientId) && {
                         color: theme.textMuted,
-                    },
+                      },
                     ]}
                   >
                     ›
@@ -375,7 +375,8 @@ const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
       flexDirection: 'row',
       justifyContent: 'center',
       alignItems: 'center',
-      marginTop: 10,
+      marginTop: 5,
+      marginBottom: 70,
       borderWidth: 1,
       borderColor: theme.buttonBorder,
     },
