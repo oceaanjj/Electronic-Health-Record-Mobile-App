@@ -195,7 +195,9 @@ const DashboardSummary = ({
       >
         <View style={styles.header}>
           <View>
-            <Text style={styles.greeting}>Hello, {user?.full_name?.split(' ')[0] || 'User'}</Text>
+            <Text style={styles.greeting}>
+              Hello, {user?.full_name?.split(' ')[0] || 'User'}
+            </Text>
             <Text style={styles.dateText}>{formatDate()}</Text>
           </View>
           <TouchableOpacity
@@ -348,13 +350,18 @@ const DashboardSummary = ({
                 </Text>
               </TouchableOpacity>
             ))}
-            
+
             <TouchableOpacity
-              style={[styles.recentCard, { borderColor: '#1B5E20', backgroundColor: '#E8F5E9' }]}
+              style={[
+                styles.recentCard,
+                { borderColor: '#1B5E20', backgroundColor: '#E8F5E9' },
+              ]}
               onPress={() => onNavigate('Doctor')}
             >
               <Icon name="medical-services" size={28} color={theme.primary} />
-              <Text style={[styles.cardText, { color: '#1B5E20' }]}>Doctor Portal</Text>
+              <Text style={[styles.cardText, { color: '#1B5E20' }]}>
+                Doctor Portal
+              </Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
@@ -453,7 +460,7 @@ const createStyles = (theme: any, commonStyles: any) =>
     patientLeft: { flexDirection: 'row', alignItems: 'center' },
     patientIcon: { marginRight: 25 },
     patientName: {
-      fontSize: 15,
+      fontSize: 14,
       color: theme.text,
       fontFamily: 'AlteHaasGrotesk',
     },
