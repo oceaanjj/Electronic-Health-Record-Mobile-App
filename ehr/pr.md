@@ -1,50 +1,55 @@
-# Nurse Screen Status Bar Implementation
+# Nurse Feature Standardization & UI/UX Enhancements
 
-Updated all screens in the nurse feature to have a transparent, theme-aware status bar that integrates with the existing design and transitions seamlessly from the splash screen.
+Comprehensive update to the nurse feature modules to standardize UI patterns, improve data integrity for clinical records, and enhance the diagnostics workflow.
 
 ## 🚀 Key Highlights
-* **Transparent & Translucent Status Bar**: All nurse screens now feature a transparent status bar background with `translucent={true}`, allowing screen designs to extend beneath it.
-* **Theme-Aware Icon Styling**: Status bar icons automatically toggle between `light-content` and `dark-content` based on the application's current dark mode state.
-* **Seamless Splash Screen Transition**: Updated the root application container to prevent the native Android dark green window background from appearing through the transparent status bar once the app has loaded.
-* **UI Polish - Account Modal**: Added a theme-consistent dark mode icon in the Account Modal, aligned with other menu items for a cohesive look.
-* **Theme Enhancement - Dashboard Cards**: Updated dark mode colors for dashboard feature cards (`card2` and `cardBorder`) with a more appropriate dark muted green theme, while preserving the original light mode design.
-* **Theme Enhancement - Bottom Navigation**: Implemented a theme-aware active background color for the nurse bottom navigation bar, ensuring a subtle dark green highlight in dark mode while keeping the original light green in light mode.
+* **Standardized "Mark all as N/A" Pattern**: Implemented a unified right-aligned N/A toggle across all core nurse features, enabling rapid documentation for negative findings.
+* **Clinical Data Integrity**: Updated all nurse hooks to allow empty inputs in the UI while automatically sanitizing and saving them as **"N/A"** in the database, ensuring no blank fields in permanent records.
+* **Enhanced Diagnostics Workflow**: Overhauled the Diagnostics module to support multiple image uploads per category with a new adaptive square grid layout.
+* **Patient Selection Guard**: Integrated a global "Patient Required" guard using **SweetAlert** to prevent data entry or navigation before a patient is selected.
+* **UX Flow Optimization**: Implemented automated "scroll-to-top" behavior on successful submissions and step transitions to maintain workflow context.
+* **Theme-Aware UI Polish**: Refined status bar transparency, standardized disabled button states, and optimized dark mode colors for dashboard and navigation elements.
 
 ---
 
 ## 🛠️ Changes Summary
 
-### **1. Nurse Feature Screens**
-*   **File**: `App/features/nurse/**/*Screen.tsx` (22 files)
-*   **Change**: Replaced existing or added new `StatusBar` components with `backgroundColor="transparent"` and `translucent={true}`.
-*   **Logic**: To allow the UI designs to bleed into the status bar area for a more modern, integrated look.
+### **1. Standardized Nurse Feature Pattern**
+*   **Affected Modules**: `IVs and Lines`, `Medication Administration`, `Medical Reconciliation`, `ADL`, `Vital Signs`, `Physical Exam`, `Medical History`, `Intake & Output`, `Lab Values`.
+*   **UI Update**: Positioned the "Mark all as N/A" checkbox directly above section headers or time banners for better logical flow.
+*   **Logic**: Toggling N/A populates all section fields with "N/A" and locks them from further editing.
+*   **Patient Guard**: All inputs and action buttons now trigger a SweetAlert if no patient is active.
 
-### **2. Dashboard Home Screen**
-*   **File**: `App/features/nurse/Dashboard/screen/HomeScreen.tsx`
-*   **Change**: Integrated `StatusBar` at the top level and updated `useAppTheme` to retrieve `isDarkMode`.
-*   **Logic**: To ensure the main dashboard entry point correctly handles status bar styling and icon colors.
+### **2. Data Sanitization & Empty Input Support**
+*   **Affected Hooks**: `useMedicalHistory`, `usePhysicalExam`, `useVitalSignsLogic`, `useIntakeAndOutputLogic`, `useADL`, `useLabValues`, `useIvsAndLinesData`, `useMedAdministration`, `useMedicalReconLogic`.
+*   **Change**: Removed mandatory field blockers from the UI. Added a sanitization layer in the data hooks that converts `""` (empty string) to `"N/A"` before API submission.
+*   **Logic**: Allows nurses to save partial assessments or proceed through multi-step forms without being blocked by non-applicable fields.
 
-### **3. Root Application Wrapper**
-*   **File**: `App/App.tsx`
-*   **Change**: Wrapped the main application content in a `SafeAreaView` with `backgroundColor={theme.background}`.
-*   **Logic**: To provide a theme-aware solid background under the transparent status bar, effectively masking the native Android window background (dark green) that is only intended for the splash screen.
+### **3. Enhanced Diagnostics Module**
+*   **File**: `DiagnosticsScreen.tsx`, `DiagnosticCard.tsx`, `useDiagnostics.ts`
+*   **Multi-Image Support**: Enabled adding multiple photos (X-rays, Ultrasounds, etc.) to a single diagnostic category.
+*   **Adaptive Layout**: Implemented an intelligent grid that switches from a large 2x2 view (1-2 images) to a compact 3x3 grid (3+ images) based on image count.
+*   **Prominent "ADD" Button**: Added a dedicated square "ADD" button at the start of each category's image list for clear discoverability.
+*   **Stability**: Increased upload timeout to 60s and fixed network header issues for large file transfers.
 
-### **4. Account Modal**
-*   **File**: `App/components/AccountModal.tsx`
-*   **Change**: Added a `moon-outline` icon next to the "Dark Mode" label and adjusted styling for alignment with the "Log out" item.
-*   **Logic**: To improve visual consistency and UX in the settings menu.
+### **4. Navigation & Component Fixes**
+*   **PatientSearchBar**: Added `onToggleDropdown` to disable parent scrolling while searching, fixing scrollability issues in the results list.
+*   **CustomButton**: Standardized theme-aware disabled styles across the application.
+*   **VitalSigns**: Fixed a state-flickering issue where the N/A checkbox would uncheck itself during rapid updates.
 
 ---
 
 ## 🎬 Testing & Validation
-* **Visual Check**: Verified that the status bar is transparent across all nurse screens and that the UI content is visible behind it.
-* **Theme Switching**: Confirmed that toggling dark mode correctly updates the status bar icon colors (light on dark, dark on light).
-* **Launch Sequence**: Verified that the app transitions from the dark green splash screen to the themed app screens without the dark green color lingering in the status bar area.
+* **Data Integrity**: Verified via API logs that empty fields are correctly stored as "N/A" in the MySQL database.
+* **UX Flow**: Confirmed that clicking "NEXT" or "SUBMIT" correctly scrolls the user back to the top of the screen.
+* **Diagnostics**: Successfully uploaded and viewed multiple high-resolution images in both grid and list view modes.
+* **Patient Guards**: Confirmed that all interactive elements (cards, checkboxes, buttons) correctly trigger the "Patient Required" alert when no patient is selected.
+* **Theme Switching**: Verified all new UI components (N/A rows, adaptive diagnostic squares) adapt correctly to Light and Dark mode.
 
 ---
 
 ## 📁 Key File Pathings (Aliases)
-* `@features/*`: `ehr/App/features/*`
+* `@nurse/*`: `ehr/App/features/nurse/*`
 * `@components/*`: `ehr/App/components/*`
 * `@assets/*`: `ehr/assets/*`
 * `@App/*`: `ehr/App/*`
