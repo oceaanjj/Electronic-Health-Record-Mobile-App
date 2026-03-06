@@ -26,14 +26,23 @@ export const useIntakeAndOutputLogic = () => {
 
   const ADPIE_STAGES = ['Assessment', 'Diagnosis', 'Planning', 'Intervention', 'Evaluation'];
 
-  const handleUpdateField = useCallback((field: keyof IntakeOutputData, value: string) => {
-    // Only allow numbers
-    const cleanValue = value.replace(/[^0-9]/g, '');
-    setIntakeOutput(prev => ({ ...prev, [field]: cleanValue }));
-  }, []);
+  const handleUpdateField = useCallback(
+    (field: keyof IntakeOutputData, value: string) => {
+      if (value === 'N/A') {
+        setIntakeOutput(prev => ({ ...prev, [field]: 'N/A' }));
+        return;
+      }
+      // Only allow numbers
+      const cleanValue = value.replace(/[^0-9]/g, '');
+      setIntakeOutput(prev => ({ ...prev, [field]: cleanValue }));
+    },
+    [],
+  );
 
   const isDataEntered = useMemo(() => {
-    return Object.values(intakeOutput).some(val => val.trim().length > 0);
+    return Object.values(intakeOutput).some(
+      val => val.trim().length > 0 && val !== 'N/A',
+    );
   }, [intakeOutput]);
 
   const fetchLatestIntakeOutput = useCallback(async (patientId: number) => {
@@ -143,5 +152,6 @@ export const useIntakeAndOutputLogic = () => {
     loading,
     recordId,
     ADPIE_STAGES,
+    setIntakeOutput,
   };
 };
