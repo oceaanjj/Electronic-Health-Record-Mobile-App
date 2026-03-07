@@ -140,8 +140,10 @@ const DashboardSummary = ({
   const fetchLatestPatients = async () => {
     try {
       setLoading(true);
-      // SYNC_MOBILE_APP.md suggests testing with ?all=true if data is not showing
-      const response = await apiClient.get('/patient?all=true');
+      // We use all=true to ensure we get both active and inactive patients.
+      // This ensures patients don't disappear from the list when their status changes.
+      const timestamp = new Date().getTime();
+      const response = await apiClient.get(`/patient?all=true&t=${timestamp}`);
       console.log('Fetched patients from Laravel:', response.data);
       
       let rawData = [];
@@ -152,19 +154,15 @@ const DashboardSummary = ({
       }
 
       if (rawData.length > 0) {
-        const activePatients = rawData.filter(
-          (patient: any) =>
-            patient.is_active === '1' ||
-            patient.is_active === 1 ||
-            patient.is_active === true ||
-            patient.is_active === 'true'
-        );
-        // Map id if patient_id is missing, as per SYNC_MOBILE_APP.md point 4
-        const mappedPatients = activePatients.map((p: any) => ({
-          ...p,
-          id: p.id || p.patient_id,
-          patient_id: p.patient_id || p.id
-        }));
+        // Map data and filter for active-only on the Dashboard.
+        const mappedPatients = rawData
+          .map((p: any) => ({
+            ...p,
+            id: p.id || p.patient_id,
+            patient_id: p.patient_id || p.id,
+            isActive: String(p.is_active) === '1' || p.is_active === true || p.is_active === 1
+          }))
+          .filter(p => p.isActive); // Dashboard should ONLY show active patients
         
         setPatients(mappedPatients.reverse());
       } else {
