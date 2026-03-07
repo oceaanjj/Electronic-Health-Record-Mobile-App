@@ -77,10 +77,20 @@ const DashboardSummary = ({
 
   useEffect(() => {
     if (token) {
-      fetchLatestPatients();
+      fetchLatestPatients(true);
+      
+      // Automatic polling every 2 seconds matching Demographic Profile
+      const interval = setInterval(() => {
+        fetchLatestPatients(false);
+      }, 2000);
+
+      return () => clearInterval(interval);
     }
-    loadRecentFeatures();
   }, [token]);
+
+  useEffect(() => {
+    loadRecentFeatures();
+  }, []);
 
   const loadRecentFeatures = async () => {
     try {
@@ -137,14 +147,13 @@ const DashboardSummary = ({
     onNavigate(featureId);
   };
 
-  const fetchLatestPatients = async () => {
+  const fetchLatestPatients = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       // We use all=true to ensure we get both active and inactive patients.
       // This ensures patients don't disappear from the list when their status changes.
       const timestamp = new Date().getTime();
       const response = await apiClient.get(`/patient?all=true&t=${timestamp}`);
-      console.log('Fetched patients from Laravel:', response.data);
       
       let rawData = [];
       if (Array.isArray(response.data)) {
@@ -171,7 +180,7 @@ const DashboardSummary = ({
     } catch (error) {
       console.error('Connection Error fetching patients:', error);
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -247,7 +256,7 @@ const DashboardSummary = ({
 
           <Text style={styles.sectionTitle}>New Registered Patients</Text>
 
-          {loading ? (
+          {loading && patients.length === 0 ? (
             <ActivityIndicator
               color={theme.primary}
               style={{ marginVertical: 20 }}
