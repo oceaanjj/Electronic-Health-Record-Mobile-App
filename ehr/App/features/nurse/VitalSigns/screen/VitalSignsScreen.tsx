@@ -117,17 +117,26 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({
 
   useEffect(() => {
     if (patientId) {
+      // Set the patient in the logic hook - this will trigger loadPatientData
       setSelectedPatient(patientId.toString(), initialPatientName || '');
+      
       apiClient.get(`/patients/${patientId}`).then(res => {
         setSelectedPatientFull(res.data);
       });
+
       if (!initialRecordId) {
         apiClient.get(`/vital-signs/patient/${patientId}`).then(res => {
-          if (res.data && res.data.length > 0) setRecordId(res.data[0].id);
+          if (res.data && res.data.length > 0) {
+            setRecordId(res.data[0].id);
+            // If we are in read-only mode, we might want to see THIS specific record's data
+            // even if it's not from today.
+          }
         });
+      } else {
+        setRecordId(initialRecordId);
       }
     }
-  }, [patientId, initialPatientName, initialRecordId]);
+  }, [patientId, initialPatientName, initialRecordId, setSelectedPatient]);
 
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -256,6 +265,10 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({
       />
     );
   }
+
+  const fadeColors = isDarkMode
+    ? ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.8)', 'rgba(18, 18, 18, 1)']
+    : ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 1)'];
 
   return (
     <SafeAreaView style={styles.root}>

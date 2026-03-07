@@ -54,9 +54,16 @@ const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack
 
     if (type.includes('vital')) category = 'vital_signs';
     else if (type.includes('physical')) category = 'physical_exam';
+    else if (type.includes('history') || type.includes('medical')) category = 'medical_history';
     else if (type.includes('lab')) category = 'lab_values';
     else if (type.includes('intake') || type.includes('output')) category = 'intake_output';
     else if (type.includes('adl')) category = 'adl';
+    else if (type.includes('diagnostics')) category = 'diagnostics';
+    else if (type.includes('iv') || type.includes('line')) category = 'ivs_lines';
+    else if (type.includes('medication') && type.includes('reconciliation')) category = 'medication_reconciliation';
+    else if (type.includes('medication')) category = 'medication';
+    else if (type.includes('reconciliation') || type.includes('reco')) category = 'medication_reconciliation';
+
 
     if (category) {
       if (category === 'vital_signs') {
@@ -69,6 +76,47 @@ const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack
             patientId: item.patient_id,
             patientName: item.name
         });
+      } else if (category === 'medical_history') {
+        onNavigate('MedicalHistory', {
+            patientId: item.patient_id,
+            patientName: item.name
+        });
+      } else if (category === 'intake_output') {
+         onNavigate('IntakeOutput', {
+            patientId: item.patient_id,
+            patientName: item.name
+         });
+      } else if (category === 'lab_values') {
+        onNavigate('LabValues', {
+            patientId: item.patient_id,
+            patientName: item.name
+        });
+      } else if (category === 'adl') {
+        onNavigate('ADL', {
+            patientId: item.patient_id,
+            patientName: item.name
+        });
+      } else if (category === 'diagnostics') {
+        onNavigate('Diagnostics', {
+            patientId: item.patient_id,
+            patientName: item.name
+        });
+      } else if (category === 'ivs_lines') {
+        onNavigate('IvsLines', {
+            patientId: item.patient_id,
+            patientName: item.name
+        });
+      } else if (category === 'medication') {
+        onNavigate('Medication', {
+            patientId: item.patient_id,
+            patientName: item.name
+        });
+      } else if (category === 'medication_reconciliation') {
+        onNavigate('MedicationReconciliation', {
+            patientId: item.patient_id,
+            patientName: item.name
+        });
+
       } else {
         onNavigate('DoctorPatientDetail', {
           patientId: item.patient_id,
@@ -234,7 +282,7 @@ const styles = StyleSheet.create({
   statLabel: { fontSize: 11, color: '#035022', fontWeight: 'bold', textAlign: 'center', marginBottom: 2 },
   statCount: { fontSize: 26, color: '#035022', fontWeight: 'bold' },
   filterHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
-  sectionTitle: { fontSize: 24, fontFamily: 'MinionPro-SemiboldItalic', color: '#035022' },
+  sectionTitle: { fontSize: 15, fontFamily: 'AlteHaasGroteskBold', color: '#858583' },
   viewAll: { color: '#999696', fontSize: 13, fontFamily: 'AlteHaasGrotesk' },
   chipsRow: { flexDirection: 'row', marginBottom: 20 },
   chip: { paddingHorizontal: 20, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#5EAE57', marginRight: 10 },

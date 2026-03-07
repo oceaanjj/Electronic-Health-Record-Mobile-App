@@ -66,6 +66,11 @@ const DoctorUpdatesScreen = ({ onBack, onNavigate }: { onBack?: () => void, onNa
     else if (type.includes('lab')) category = 'lab_values';
     else if (type.includes('intake') || type.includes('output')) category = 'intake_output';
     else if (type.includes('adl')) category = 'adl';
+    else if (type.includes('diagnostic')) category = 'diagnostics';
+    else if (type.includes('medical history') || type.includes('illness') || type.includes('past medical') || type.includes('allergies') || type.includes('vaccination') || type.includes('developmental')) category = 'medical_history';
+    else if (type.includes('iv') || type.includes('line')) category = 'ivs_lines';
+    else if (type.includes('medication') && type.includes('reconciliation')) category = 'medication_reconciliation';
+    else if (type.includes('medication')) category = 'medication';
 
     const params = {
         patientId: item.patient_id,
@@ -76,6 +81,18 @@ const DoctorUpdatesScreen = ({ onBack, onNavigate }: { onBack?: () => void, onNa
         onNavigate('VitalSigns', params);
     } else if (category === 'physical_exam') {
         onNavigate('PhysicalExam', params);
+    } else if (category === 'lab_values') {
+        onNavigate('LabValues', params);
+    } else if (category === 'diagnostics') {
+        onNavigate('Diagnostics', params);
+    } else if (category === 'medical_history') {
+        onNavigate('MedicalHistory', params);
+    } else if (category === 'ivs_lines') {
+        onNavigate('IvsLines', params);
+    } else if (category === 'medication') {
+        onNavigate('Medication', params);
+    } else if (category === 'medication_reconciliation') {
+        onNavigate('MedicationReconciliation', params);
     } else if (category) {
         onNavigate('DoctorPatientDetail', {
           ...params,
