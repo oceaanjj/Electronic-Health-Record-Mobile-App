@@ -23,7 +23,7 @@ export const usePhysicalExam = () => {
   const checkAssessmentAlerts = useCallback(async (payload: any) => {
     try {
       const sanitized = sanitize(payload);
-      const response = await apiClient.post('/physical-exam/', sanitized);
+      const response = await apiClient.post('/physical-exam/check-alerts', sanitized);
       return response.data;
     } catch (err) { return null; }
   }, []);
