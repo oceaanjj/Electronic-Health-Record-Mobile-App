@@ -121,9 +121,11 @@ const DemographicProfileScreen: React.FC<ProfileProps> = ({
   };
 
   if (selectedPatientId) {
+    const selectedPatient = typedPatients.find(p => (p.patient_id || (p as any).id) === selectedPatientId);
     return (
       <PatientDetailsScreen
         patientId={selectedPatientId}
+        patientData={selectedPatient}
         onBack={() => setSelectedPatientId(null)}
         onEdit={id => {
           setSelectedPatientId(null);

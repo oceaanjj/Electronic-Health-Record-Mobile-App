@@ -17,7 +17,8 @@ export const usePatients = () => {
 
   const getPatientById = useCallback(async (id: string | number) => {
     try {
-      const response = await apiClient.get(`/patient/${id}`);
+      // Use ?all=true to bypass active filter on backend when fetching specific patient
+      const response = await apiClient.get(`/patient/${id}?all=true`);
       return response.data;
     } catch (err: any) {
       const message =
