@@ -1,14 +1,33 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, Linking, Alert } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AccountModal } from '../../../components/AccountModal';
 import PatientSearchBar from '../../../components/PatientSearchBar';
+import { BASE_URL } from '../../../api/apiClient';
 
 const DoctorReportsScreen = ({ onNavigate }: { onNavigate: (route: string) => void }) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [patientName, setPatientName] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
+
+  const handleGeneratePDF = async () => {
+    if (!selectedPatientId) return;
+
+    const reportUrl = `${BASE_URL}/reports/patient/${selectedPatientId}`;
+    console.log("Attempting to open report URL:", reportUrl);
+    
+    try {
+      // Direct openURL is more reliable on modern Android versions
+      await Linking.openURL(reportUrl);
+    } catch (error) {
+      console.error("Error generating report:", error);
+      Alert.alert(
+        "Report Error", 
+        `Could not open report.\n\nURL: ${reportUrl}\n\nPlease check if your backend is running and reachable.`
+      );
+    }
+  };
 
   return (
     <SafeAreaView style={styles.root}>
@@ -50,7 +69,7 @@ const DoctorReportsScreen = ({ onNavigate }: { onNavigate: (route: string) => vo
         ) : (
           <TouchableOpacity 
             style={styles.generateButton}
-            onPress={() => console.log('Generating PDF for:', selectedPatientId)}
+            onPress={handleGeneratePDF}
             activeOpacity={0.7}
           >
             <Text style={styles.generateText}>GENERATE PDF</Text>
