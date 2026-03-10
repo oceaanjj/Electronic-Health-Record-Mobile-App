@@ -7,6 +7,7 @@ interface ExamCardsSectionProps {
   selectedPatientId: string | null;
   isNA: boolean;
   getBackendAlert: (field: string) => string | null;
+  getBackendSeverity: (field: string) => string | null;
   updateField: (field: string, val: string) => void;
   showAlert: (title: string, message: string) => void;
   styles: any;
@@ -21,6 +22,7 @@ const ExamCardsSection: React.FC<ExamCardsSectionProps> = ({
   selectedPatientId,
   isNA,
   getBackendAlert,
+  getBackendSeverity,
   updateField,
   showAlert,
   styles,
@@ -56,6 +58,7 @@ const ExamCardsSection: React.FC<ExamCardsSectionProps> = ({
           value={formData[field] ?? ''}
           disabled={!selectedPatientId || isNA}
           dataAlert={getBackendAlert(field)}
+          alertSeverity={getBackendSeverity(field)}
           onChangeText={t => updateField(field, t)}
           onDisabledPress={patientRequired}
         />

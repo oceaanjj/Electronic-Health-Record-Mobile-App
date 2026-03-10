@@ -18,6 +18,7 @@ interface ExamInputProps {
   value: string;
   disabled: boolean;
   alertText?: string;
+  alertSeverity?: string | null;
   dataAlert?: string | null;
   onChangeText: (text: string) => void;
   onDisabledPress?: () => void;
@@ -31,6 +32,7 @@ const ExamInputCard = ({
   value,
   disabled,
   alertText,
+  alertSeverity,
   dataAlert,
   onChangeText,
   onDisabledPress,
@@ -136,6 +138,7 @@ const ExamInputCard = ({
         onClose={() => setModalVisible(false)}
         category={label}
         alertText={getAlertText()}
+        severity={alertSeverity ?? undefined}
       />
     </View>
   );

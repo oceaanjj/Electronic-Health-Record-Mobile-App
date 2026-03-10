@@ -25,36 +25,43 @@ export const usePhysicalExam = () => {
     }
   }, []);
 
-  const analyzeField = useCallback(async (fieldName: string, finding: string) => {
-    if (!finding || finding.trim().length < 3 || finding === 'N/A') {
-      return null;
-    }
+  // Analyze a single field in real-time by saving to the backend (which runs CDSS automatically).
+  // Uses PUT /{id}/assessment if examId exists, else POST /physical-exam.
+  // Returns { alert, severity } for the specific field, or null if no finding.
+  const analyzeField = useCallback(async (
+    patientId: number,
+    examId: number | null,
+    fieldName: string,
+    finding: string,
+    alertKey: string,
+  ): Promise<{ alert: string; severity: string } | null> => {
+    if (!finding || finding.trim().length < 3 || finding === 'N/A') return null;
     try {
-      const response = await apiClient.post('/adpie/analyze', {
-        fieldName,
-        finding,
-        component: 'physical-exam',
-      });
-      if (response.data) {
-        const body = (response.data.data && typeof response.data.data === 'object')
-          ? response.data.data
-          : response.data;
-        const level: string = (body.level || '').toString().trim().toUpperCase();
-        const message: string = (
-          (typeof body === 'string' ? body : null) ||
-          body.message ||
-          body.recommendation ||
-          body.alert ||
-          ''
-        ).toString().trim();
-
-        if (level === 'NORMAL') return null;
-        if (!message || message.toUpperCase().includes('NO RECOMMENDATION')) return null;
-        return message;
+      let response;
+      if (examId) {
+        response = await apiClient.put(`/physical-exam/${examId}/assessment`, {
+          patient_id: patientId,
+          [fieldName]: finding,
+        });
+      } else {
+        response = await apiClient.post('/physical-exam', {
+          patient_id: patientId,
+          [fieldName]: finding,
+        });
       }
-      return null;
+      // Top-level alerts object has all _alert keys
+      const alerts = response.data?.alerts || response.data?.data || {};
+      const alertText: string = (alerts[alertKey] || '').toString().trim();
+      if (!alertText || alertText === 'No Findings') return null;
+      // Severity is not returned by this endpoint — infer from alert text
+      const upper = alertText.toUpperCase();
+      const severity = upper.includes('URGENT') || upper.includes('CRITICAL') || upper.includes('IMMEDIATELY')
+        ? 'CRITICAL'
+        : upper.includes('EVALUATE') || upper.includes('MONITOR') || upper.includes('CONSIDER')
+          ? 'WARNING'
+          : 'INFO';
+      return { alert: alertText, severity };
     } catch (e) {
-      console.error(`Failed to analyze field ${fieldName}:`, e);
       return null;
     }
   }, []);
@@ -77,38 +84,17 @@ export const usePhysicalExam = () => {
     const sanitized = sanitize(body);
     
     const targetId = existingId || payload.id || payload.physical_exam_id;
-    
+    let response;
     if (targetId) {
-      const response = await apiClient.put('/physical-exam', { ...sanitized, id: targetId });
-      return response.data;
+      response = await apiClient.put('/physical-exam', { ...sanitized, id: targetId });
     } else {
-      const response = await apiClient.post('/physical-exam', sanitized);
-      return response.data;
+      response = await apiClient.post('/physical-exam', sanitized);
     }
+    // Return full response body — callers read .data and .alerts
+    return response.data;
   }, []);
 
-  const checkAssessmentAlerts = useCallback(async (payload: any, existingId?: number | null) => {
-    try {
-      const body = {
-        ...payload,
-        patient_id: parseInt(payload.patient_id, 10)
-      };
-      const sanitized = sanitize(body);
-      
-      const targetId = existingId || payload.id || payload.physical_exam_id;
-
-      if (targetId) {
-        // PUT /physical-exam (no ID in URL) runs CDSS for all fields
-        const response = await apiClient.put('/physical-exam', { ...sanitized, id: targetId });
-        return response.data;
-      } else {
-        const response = await apiClient.post('/physical-exam', sanitized);
-        return response.data;
-      }
-    } catch (err) { return null; }
-  }, []);
-
-  const updateDPIE = useCallback(async (examId: number, stepKey: string, text: string) => {
+  const updateDPIE= useCallback(async (examId: number, stepKey: string, text: string) => {
     const sanitizedText = text.trim() === '' ? 'N/A' : text;
     const response = await apiClient.put(`/physical-exam/${examId}/${stepKey}`, {
       [stepKey]: sanitizedText
@@ -133,7 +119,6 @@ export const usePhysicalExam = () => {
 
   return { 
     saveAssessment, 
-    checkAssessmentAlerts, 
     analyzeField,
     updateDPIE, 
     fetchLatestPhysicalExam,

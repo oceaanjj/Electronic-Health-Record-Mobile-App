@@ -15,6 +15,7 @@ interface CDSSModalProps {
   title?: string;
   category?: string;
   alertText: string;
+  severity?: string;
 }
 
 const CDSSModal: React.FC<CDSSModalProps> = ({
@@ -23,7 +24,18 @@ const CDSSModal: React.FC<CDSSModalProps> = ({
   title = 'Clinical Guidance',
   category,
   alertText,
+  severity,
 }) => {
+  const getSeverityStyle = (sev?: string) => {
+    switch ((sev || '').toUpperCase()) {
+      case 'CRITICAL': return { bg: '#FDECEA', text: '#C62828', label: 'CRITICAL' };
+      case 'WARNING':  return { bg: '#FFF3E0', text: '#E65100', label: 'WARNING' };
+      case 'INFO':     return { bg: '#E8F5E9', text: '#2E7D32', label: 'INFO' };
+      default:         return null;
+    }
+  };
+
+  const severityStyle = getSeverityStyle(severity);
   const renderFormattedText = (text: string) => {
     if (!text || typeof text !== 'string') return null;
     // Split by " | " or newlines in case there are multiple concatenated alerts
@@ -108,6 +120,13 @@ const CDSSModal: React.FC<CDSSModalProps> = ({
             {category && (
               <Text style={styles.categoryText}>{category.toUpperCase()}</Text>
             )}
+            {severityStyle && (
+              <View style={[styles.severityBadge, { backgroundColor: severityStyle.bg }]}>
+                <Text style={[styles.severityText, { color: severityStyle.text }]}>
+                  [{severityStyle.label}]
+                </Text>
+              </View>
+            )}
             <View>{renderFormattedText(alertText)}</View>
           </View>
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
@@ -158,6 +177,18 @@ const styles = StyleSheet.create({
     marginBottom: 5,
   },
   alertContent: { color: '#333', fontSize: 14, lineHeight: 20 },
+  severityBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 3,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  severityText: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
   closeBtn: {
     backgroundColor: '#FDE68A',
     paddingVertical: 12,

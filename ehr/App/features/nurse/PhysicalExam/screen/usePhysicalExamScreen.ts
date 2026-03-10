@@ -6,7 +6,7 @@ import { initialFormData, ALERT_KEY_MAP } from './constants';
 export const usePhysicalExamScreen = (onBack: () => void) => {
   const {
     saveAssessment,
-    checkAssessmentAlerts,
+    analyzeField,
     fetchLatestPhysicalExam,
     dataAlert,
     fetchDataAlert,
@@ -34,7 +34,8 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
   ) => setAlertConfig({ visible: true, title, message, type });
 
   const [examId, setExamId] = useState<number | null>(null);
-  const [backendAlerts, setBackendAlerts] = useState<any>({});
+  const [backendAlerts, setBackendAlerts] = useState<Record<string, string | null>>({});
+  const [backendSeverities, setBackendSeverities] = useState<Record<string, string | null>>({});
   const [assessmentAlert, setAssessmentAlert] = useState<string | null>(null);
   const [isAdpieActive, setIsAdpieActive] = useState(false);
   const [formData, setFormData] = useState(initialFormData);
@@ -44,17 +45,19 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
   useEffect(() => { examIdRef.current = examId; }, [examId]);
 
   useEffect(() => {
-    const backAction = () => { onBack(); return true; };
-    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      onBack();
+      return true;
+    });
     return () => backHandler.remove();
   }, [onBack]);
 
   const toggleNA = () => {
     const newState = !isNA;
     setIsNA(newState);
+    Object.values(fieldTimers.current).forEach(clearTimeout);
+    fieldTimers.current = {};
     if (newState) {
-      Object.values(fieldTimers.current).forEach(clearTimeout);
-      fieldTimers.current = {};
       const updated = { ...formData };
       Object.keys(initialFormData).forEach(key => { (updated as any)[key] = 'N/A'; });
       setFormData(updated);
@@ -86,16 +89,13 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
         };
         setFormData(newFormData);
         setIsNA(Object.values(newFormData).every(v => v === 'N/A'));
-        setBackendAlerts({
-          general_appearance_alert: data.general_appearance_alert || null,
-          skin_alert: data.skin_alert || null,
-          eye_alert: data.eye_alert || null,
-          oral_alert: data.oral_alert || null,
-          cardiovascular_alert: data.cardiovascular_alert || null,
-          abdomen_alert: data.abdomen_alert || null,
-          extremities_alert: data.extremities_alert || null,
-          neurological_alert: data.neurological_alert || null,
+        // Load alerts from saved record using ALERT_KEY_MAP (DB column names)
+        const loaded: Record<string, string | null> = {};
+        Object.entries(ALERT_KEY_MAP).forEach(([field, alertKey]) => {
+          const v = data[alertKey];
+          loaded[alertKey] = (v && v !== 'No Findings') ? v : null;
         });
+        setBackendAlerts(loaded);
       } else {
         setExamId(null);
         examIdRef.current = null;
@@ -128,53 +128,42 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
 
   const getBackendAlert = (field: string): string | null => {
     const alertKey = ALERT_KEY_MAP[field];
-    if (alertKey && backendAlerts[alertKey] && backendAlerts[alertKey] !== 'N/A') {
-      return backendAlerts[alertKey];
-    }
-    return null;
+    if (!alertKey) return null;
+    const val = backendAlerts[alertKey];
+    return (val && val !== 'No Findings') ? val : null;
+  };
+
+  const getBackendSeverity = (field: string): string | null => {
+    return backendSeverities[field] ?? null;
   };
 
   const updateField = (field: string, val: string) => {
     setFormData(prev => ({ ...prev, [field]: val }));
+    formDataRef.current = { ...formDataRef.current, [field]: val };
 
     if (fieldTimers.current[field]) clearTimeout(fieldTimers.current[field]);
 
     const alertKey = ALERT_KEY_MAP[field];
-
     if (!val || val.trim().length < 3 || val === 'N/A') {
-      if (alertKey) setBackendAlerts((prev: any) => ({ ...prev, [alertKey]: null }));
+      if (alertKey) setBackendAlerts(prev => ({ ...prev, [alertKey]: null }));
+      setBackendSeverities(prev => ({ ...prev, [field]: null }));
       return;
     }
 
     fieldTimers.current[field] = setTimeout(async () => {
       if (!selectedPatientId) return;
-
-      const currentForm = { ...formDataRef.current, [field]: val };
-      const result = await checkAssessmentAlerts(
-        { patient_id: selectedPatientId, ...currentForm },
+      const result = await analyzeField(
+        parseInt(selectedPatientId, 10),
         examIdRef.current,
+        field,
+        val,
+        alertKey!,
       );
-
-      if (!result) return;
-
-      const record = (result.data && typeof result.data === 'object') ? result.data : result;
-      const newId = record.id || record.physical_exam_id;
-      if (newId) {
-        examIdRef.current = newId;
-        if (!examId) setExamId(newId);
-      }
-
-      // Check save response first; fall back to GET which always has computed alert columns
-      let alertValue = alertKey ? (record[alertKey] ?? null) : null;
-      if (alertKey && !alertValue) {
-        const fresh = await fetchLatestPhysicalExam(parseInt(selectedPatientId, 10));
-        if (fresh) alertValue = fresh[alertKey] ?? null;
-      }
-
       if (alertKey) {
-        setBackendAlerts((prev: any) => ({ ...prev, [alertKey]: alertValue || null }));
+        setBackendAlerts(prev => ({ ...prev, [alertKey]: result?.alert ?? null }));
       }
-    }, 1000);
+      setBackendSeverities(prev => ({ ...prev, [field]: result?.severity ?? null }));
+    }, 800);
   };
 
   const handleCDSSPress = async () => {
@@ -182,14 +171,24 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
       return showAlert('Patient Required', 'Please select a patient first in the search bar.');
     }
     try {
-      const result = await saveAssessment({ patient_id: selectedPatientId, ...formData }, examId);
-      const id = result?.id || result?.physical_exam_id || examId;
+      const result = await saveAssessment(
+        { patient_id: selectedPatientId, ...formData },
+        examIdRef.current,
+      );
+      const record = result?.data || result;
+      const id = record?.id || record?.physical_exam_id || examIdRef.current;
       if (id) {
         setExamId(id);
-        if (result?.assessment_alert || result?.alert) {
-          setAssessmentAlert(result.assessment_alert || result.alert);
-        }
+        examIdRef.current = id;
         setIsAdpieActive(true);
+        // Load updated alerts from save response
+        const alerts = result?.alerts || {};
+        const updated: Record<string, string | null> = { ...backendAlerts };
+        Object.entries(ALERT_KEY_MAP).forEach(([_, alertKey]) => {
+          const v = alerts[alertKey] ?? record?.[alertKey];
+          updated[alertKey] = (v && v !== 'No Findings') ? v : null;
+        });
+        setBackendAlerts(updated);
       } else {
         showAlert('Error', 'Could not retrieve assessment ID.');
       }
@@ -203,20 +202,31 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
       return showAlert('Patient Required', 'Please select a patient first in the search bar.');
     }
     try {
-      const result = await saveAssessment({ patient_id: selectedPatientId, ...formData }, examId);
-      const newId = result.id || result.physical_exam_id;
-      const isUpdate = !!examId || result.updated_at !== result.created_at;
+      const result = await saveAssessment(
+        { patient_id: selectedPatientId, ...formData },
+        examIdRef.current,
+      );
+      const record = result?.data || result;
+      const newId = record?.id || record?.physical_exam_id;
+      const isUpdate = !!examId || record?.updated_at !== record?.created_at;
       if (newId) {
         setExamId(newId);
         examIdRef.current = newId;
         fetchDataAlert(parseInt(selectedPatientId, 10));
+        // Refresh alerts from save response
+        const alerts = result?.alerts || {};
+        const updated: Record<string, string | null> = { ...backendAlerts };
+        Object.entries(ALERT_KEY_MAP).forEach(([_, alertKey]) => {
+          const v = alerts[alertKey] ?? record?.[alertKey];
+          updated[alertKey] = (v && v !== 'No Findings') ? v : null;
+        });
+        setBackendAlerts(updated);
       }
       showAlert(
         isUpdate ? 'SUCCESSFULLY UPDATED' : 'SUCCESSFULLY SUBMITTED',
         `Physical Exam has been ${isUpdate ? 'updated' : 'submitted'} successfully.`,
         'success',
       );
-      loadPatientData(parseInt(selectedPatientId, 10));
     } catch (e) {
       showAlert('Error', 'Submission failed. Please check your connection.');
     }
@@ -227,9 +237,8 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
       .filter(([_, v]) => v && v.trim() !== '' && v !== 'N/A')
       .map(([key, v]) => `${key.replace(/_/g, ' ').toUpperCase()}: ${v}`);
 
-    const alerts = Object.entries(backendAlerts)
-      .filter(([_, v]) => typeof v === 'string' && (v as string).trim() !== '' && !(v as string).toLowerCase().includes('normal'))
-      .map(([_, v]) => v as string);
+    const alerts = Object.values(backendAlerts)
+      .filter((v): v is string => typeof v === 'string' && v.trim() !== '' && !v.toLowerCase().includes('normal'));
 
     const summary = [...findings, ...alerts];
     if (dataAlert) {
@@ -239,9 +248,7 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
     return summary.join('. ');
   };
 
-  const isDataEntered = Object.values(formData).some(
-    v => v && v.trim().length > 0 && v !== 'N/A',
-  );
+  const isDataEntered = Object.values(formData).some(v => v && v.trim().length > 0 && v !== 'N/A');
 
   const getCurrentDate = () =>
     new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
@@ -250,23 +257,13 @@ export const usePhysicalExamScreen = (onBack: () => void) => {
     searchText, setSearchText,
     selectedPatientId, setSelectedPatientId,
     scrollEnabled, setScrollEnabled,
-    alertConfig, setAlertConfig,
-    showAlert,
+    alertConfig, setAlertConfig, showAlert,
     examId,
     assessmentAlert, setAssessmentAlert,
     isAdpieActive, setIsAdpieActive,
-    formData,
-    isNA,
-    backendAlerts,
-    dataAlert,
-    toggleNA,
-    loadPatientData,
-    getBackendAlert,
-    updateField,
-    handleCDSSPress,
-    handleSave,
-    generateFindingsSummary,
-    isDataEntered,
-    getCurrentDate,
+    formData, isNA, backendAlerts, dataAlert,
+    toggleNA, loadPatientData, getBackendAlert, getBackendSeverity,
+    updateField, handleCDSSPress, handleSave,
+    generateFindingsSummary, isDataEntered, getCurrentDate,
   };
 };

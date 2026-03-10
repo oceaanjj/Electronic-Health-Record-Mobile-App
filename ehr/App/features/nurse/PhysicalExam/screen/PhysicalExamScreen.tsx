@@ -42,6 +42,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     isNA,
     toggleNA,
     getBackendAlert,
+    getBackendSeverity,
     updateField,
     handleCDSSPress,
     handleSave,
@@ -139,6 +140,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
               selectedPatientId={selectedPatientId}
               isNA={isNA}
               getBackendAlert={getBackendAlert}
+              getBackendSeverity={getBackendSeverity}
               updateField={updateField}
               showAlert={showAlert}
               styles={styles}
