@@ -398,7 +398,7 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
 
           <View
             pointerEvents={selectedPatientId ? 'auto' : 'none'}
-            style={{ opacity: selectedPatientId ? 1 : 0.6 }}
+            style={{ opacity: 1 }}
           >
             <IntakeOutputCard
               label="ORAL INTAKE"

@@ -231,7 +231,7 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({
           />
 
           <TouchableOpacity
-            style={[styles.naRow, !patientId && { opacity: 0.5 }]}
+            style={[styles.naRow, !patientId && { opacity: 1 }]}
             onPress={() => {
               if (!patientId) {
                 triggerPatientAlert();
@@ -243,7 +243,7 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({
             <Text
               style={[
                 styles.naText,
-                !patientId && { color: theme.textMuted },
+                !patientId && { color: theme.primary }, // Maintain primary color
               ]}
             >
               Mark all as N/A
@@ -273,7 +273,7 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({
 
           {/* INPUT Cards Flow - Wrapped in Pressable for validation */}
           <View
-            style={{ opacity: patientId ? 1 : 0.6 }}
+            style={{ opacity: 1 }}
           >
             <MedicalReconCard
               label="Medication"
@@ -329,7 +329,7 @@ const MedicalReconciliationScreen: React.FC<MedicalReconciliationProps> = ({
             style={[
               styles.actionBtn,
               (isSubmitting || !patientId) &&
-                styles.btnDisabled,
+                { borderColor: theme.buttonDisabledBorder, backgroundColor: theme.buttonBg }, // Maintain bg color
             ]}
             onPress={handleNextPress}
             disabled={isSubmitting || !patientId}

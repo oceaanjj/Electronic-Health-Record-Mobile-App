@@ -436,22 +436,23 @@ const ADLScreen = ({ onBack }: any) => {
               : 'Checking this will disable all fields below.'}
           </Text>
 
-          <ADLInputCard
-            label="MOBILITY"
-            value={formData.mobility_assessment}
-            disabled={!selectedPatient || isNA}
-            alertText={alerts.mobility_assessment_alert}
-            dataAlert={dataAlert}
-            onChangeText={t => setFormData({ ...formData, mobility_assessment: t })}
-            onDisabledPress={() => {
-              if (!selectedPatient) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
-          />
+          <View style={{ opacity: 1 }}>
+            <ADLInputCard
+              label="MOBILITY"
+              value={formData.mobility_assessment}
+              disabled={!selectedPatient || isNA}
+              alertText={alerts.mobility_assessment_alert}
+              dataAlert={dataAlert}
+              onChangeText={t => setFormData({ ...formData, mobility_assessment: t })}
+              onDisabledPress={() => {
+                if (!selectedPatient) {
+                  showAlert(
+                    'Patient Required',
+                    'Please select a patient first in the search bar.',
+                  );
+                }
+              }}
+            />
           <ADLInputCard
             label="HYGIENE"
             value={formData.hygiene_assessment}
@@ -548,8 +549,9 @@ const ADLScreen = ({ onBack }: any) => {
               }
             }}
           />
+        </View>
 
-          <View style={styles.footerRow}>
+        <View style={styles.footerRow}>
             <TouchableOpacity
               style={[
                 styles.cdssBtn,
