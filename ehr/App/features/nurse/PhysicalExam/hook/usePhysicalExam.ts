@@ -7,9 +7,15 @@ export const usePhysicalExam = () => {
   const fetchDataAlert = useCallback(async (patientId: number) => {
     try {
       const response = await apiClient.get(`/physical-exam/data-alert/patient/${patientId}`);
-      if (response.data) {
-        // If it's a string, we keep it as is, if it's an object we store the whole object
-        setDataAlert(response.data.data || response.data);
+      const body = response.data?.data || response.data;
+
+      // API may return { alerts: "..." }, { physical_exam_alerts: "..." }, or a plain string
+      if (typeof body === 'string') {
+        setDataAlert(body.trim() || null);
+      } else if (body?.alerts && typeof body.alerts === 'string') {
+        setDataAlert(body.alerts.trim() || null);
+      } else if (body?.physical_exam_alerts && typeof body.physical_exam_alerts === 'string') {
+        setDataAlert(body.physical_exam_alerts.trim() || null);
       } else {
         setDataAlert(null);
       }
@@ -30,8 +36,21 @@ export const usePhysicalExam = () => {
         component: 'physical-exam',
       });
       if (response.data) {
-        const body = response.data.data || response.data;
-        return body.message || body.recommendation || body.alert || body;
+        const body = (response.data.data && typeof response.data.data === 'object')
+          ? response.data.data
+          : response.data;
+        const level: string = (body.level || '').toString().trim().toUpperCase();
+        const message: string = (
+          (typeof body === 'string' ? body : null) ||
+          body.message ||
+          body.recommendation ||
+          body.alert ||
+          ''
+        ).toString().trim();
+
+        if (level === 'NORMAL') return null;
+        if (!message || message.toUpperCase().includes('NO RECOMMENDATION')) return null;
+        return message;
       }
       return null;
     } catch (e) {
@@ -50,9 +69,7 @@ export const usePhysicalExam = () => {
     return sanitized;
   };
 
-  // STEP 1: ASSESSMENT (POST or PUT)
   const saveAssessment = useCallback(async (payload: any, existingId?: number | null) => {
-    // Ensure patient_id is integer
     const body = {
       ...payload,
       patient_id: parseInt(payload.patient_id, 10)
@@ -62,17 +79,14 @@ export const usePhysicalExam = () => {
     const targetId = existingId || payload.id || payload.physical_exam_id;
     
     if (targetId) {
-      // UPDATE existing record
-      const response = await apiClient.put(`/physical-exam/${targetId}/assessment`, sanitized);
+      const response = await apiClient.put('/physical-exam', { ...sanitized, id: targetId });
       return response.data;
     } else {
-      // CREATE new record
       const response = await apiClient.post('/physical-exam', sanitized);
       return response.data;
     }
   }, []);
 
-  // Real-time CDSS: Keyword matching for Assessment
   const checkAssessmentAlerts = useCallback(async (payload: any, existingId?: number | null) => {
     try {
       const body = {
@@ -84,18 +98,16 @@ export const usePhysicalExam = () => {
       const targetId = existingId || payload.id || payload.physical_exam_id;
 
       if (targetId) {
-        // UPDATE/Check on existing record
-        const response = await apiClient.put(`/physical-exam/${targetId}/assessment`, sanitized);
+        // PUT /physical-exam (no ID in URL) runs CDSS for all fields
+        const response = await apiClient.put('/physical-exam', { ...sanitized, id: targetId });
         return response.data;
       } else {
-        // CREATE/Check on new record
         const response = await apiClient.post('/physical-exam', sanitized);
         return response.data;
       }
     } catch (err) { return null; }
   }, []);
 
-  // STEPS 2-5: DPIE UPDATES (PUT)
   const updateDPIE = useCallback(async (examId: number, stepKey: string, text: string) => {
     const sanitizedText = text.trim() === '' ? 'N/A' : text;
     const response = await apiClient.put(`/physical-exam/${examId}/${stepKey}`, {
@@ -106,13 +118,13 @@ export const usePhysicalExam = () => {
 
   const fetchLatestPhysicalExam = useCallback(async (patientId: number) => {
     try {
-      // Adding patient_id as query param to satisfy strict backend requirements
       const response = await apiClient.get(`/physical-exam/patient/${patientId}?patient_id=${patientId}`);
-      const records = response.data || [];
-      if (records.length > 0) {
-        return records[0];
-      }
-      return null;
+      const records = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.data)
+          ? response.data.data
+          : [];
+      return records.length > 0 ? records[0] : null;
     } catch (err) {
       console.error('Error fetching physical exam:', err);
       return null;

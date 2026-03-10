@@ -1,0 +1,112 @@
+import React from 'react';
+import { View, Text, TouchableOpacity } from 'react-native';
+import ExamInputCard from '../components/PhysicalInputCard';
+
+interface ExamCardsSectionProps {
+  formData: Record<string, string>;
+  selectedPatientId: string | null;
+  isNA: boolean;
+  getBackendAlert: (field: string) => string | null;
+  updateField: (field: string, val: string) => void;
+  showAlert: (title: string, message: string) => void;
+  styles: any;
+  theme: any;
+  handleCDSSPress: () => void;
+  handleSave: () => void;
+  isDataEntered: boolean;
+}
+
+const ExamCardsSection: React.FC<ExamCardsSectionProps> = ({
+  formData,
+  selectedPatientId,
+  isNA,
+  getBackendAlert,
+  updateField,
+  showAlert,
+  styles,
+  theme,
+  handleCDSSPress,
+  handleSave,
+  isDataEntered,
+}) => {
+  const patientRequired = () =>
+    !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.');
+
+  const cards = [
+    { label: 'GENERAL APPEARANCE', field: 'general_appearance' },
+    { label: 'SKIN',               field: 'skin_condition' },
+    { label: 'EYES',               field: 'eye_condition' },
+    { label: 'ORAL CAVITY',        field: 'oral_condition' },
+    { label: 'CARDIOVASCULAR',     field: 'cardiovascular' },
+    { label: 'ABDOMEN',            field: 'abdomen_condition' },
+    { label: 'EXTREMITIES',        field: 'extremities' },
+    { label: 'NEUROLOGICAL',       field: 'neurological' },
+  ];
+
+  return (
+    <>
+      <View style={styles.banner}>
+        <Text style={styles.bannerText}>PHYSICAL EXAMINATION</Text>
+      </View>
+
+      {cards.map(({ label, field }) => (
+        <ExamInputCard
+          key={field}
+          label={label}
+          value={formData[field] ?? ''}
+          disabled={!selectedPatientId || isNA}
+          dataAlert={getBackendAlert(field)}
+          onChangeText={t => updateField(field, t)}
+          onDisabledPress={patientRequired}
+        />
+      ))}
+
+      <View style={styles.footerRow}>
+        <TouchableOpacity
+          style={[
+            styles.cdssBtn,
+            (!selectedPatientId || (!isDataEntered && !isNA)) && {
+              backgroundColor: theme.buttonDisabledBg,
+              borderColor: theme.buttonDisabledBorder,
+            },
+          ]}
+          onPress={handleCDSSPress}
+          disabled={!selectedPatientId}
+        >
+          <Text
+            style={[
+              styles.cdssText,
+              (!selectedPatientId || (!isDataEntered && !isNA)) && { color: theme.textMuted },
+            ]}
+          >
+            CDSS
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            styles.submitBtn,
+            !selectedPatientId && {
+              backgroundColor: theme.buttonDisabledBg,
+              borderColor: theme.buttonDisabledBorder,
+            },
+          ]}
+          onPress={handleSave}
+          disabled={!selectedPatientId}
+        >
+          <Text
+            style={[
+              styles.submitText,
+              !selectedPatientId && { color: theme.textMuted },
+            ]}
+          >
+            SUBMIT
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={{ height: 100 }} />
+    </>
+  );
+};
+
+export default ExamCardsSection;

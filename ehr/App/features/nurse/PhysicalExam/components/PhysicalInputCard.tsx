@@ -41,7 +41,7 @@ const ExamInputCard = ({
   );
 
   const hasBackendAlert = (!!alertText && alertText.trim().length > 0) || !!dataAlert;
-  const isAlertActive = (value.trim().length > 0 && value !== 'N/A') || hasBackendAlert;
+  const isAlertActive = hasBackendAlert;
 
   const visibleTypingHeight = Math.max(0, inputHeight - INPUT_PADDING_BOTTOM);
   const numLines = Math.max(
@@ -88,7 +88,6 @@ const ExamInputCard = ({
       </View>
 
       <View style={styles.content}>
-        {/* Badge is now stacked above the input to allow full-width text below */}
         <View style={styles.badge}>
           <Text style={styles.badgeText}>Findings</Text>
         </View>
@@ -123,10 +122,10 @@ const ExamInputCard = ({
           style={[
             styles.alertIcon,
             { opacity: isAlertActive ? 1.0 : 0.3 },
-            hasBackendAlert && styles.activeAlert,
+            isAlertActive && styles.activeAlert,
           ]}
-          onPress={() => isAlertActive && !disabled && setModalVisible(true)}
-          disabled={!isAlertActive || disabled}
+          onPress={() => isAlertActive && setModalVisible(true)}
+          disabled={!isAlertActive}
         >
           <Image source={alert1} style={styles.alertImage} />
         </TouchableOpacity>
@@ -163,7 +162,7 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 15,
-    position: 'relative', // Removed flexDirection: 'row' so elements stack vertically
+    position: 'relative',
   },
   badge: {
     backgroundColor: '#FFEEC2',
@@ -173,7 +172,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     width: '100%',
     alignItems: 'center',
-    marginBottom: 8, // Adds breathing room before the lines start
+    marginBottom: 8,
   },
   badgeText: {
     color: '#EDB62C',
@@ -194,7 +193,6 @@ const styles = StyleSheet.create({
     paddingBottom: INPUT_PADDING_BOTTOM,
     lineHeight: LINE_HEIGHT,
     minHeight: 112,
-    // Removed marginLeft so text starts flush with the left side
     includeFontPadding: false,
   },
   linesContainer: {

@@ -501,7 +501,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
           </View>
 
           {/* Vital Cards */}
-          <View style={{ opacity: selectedPatientId ? 1 : 0.6 }}>
+          <View style={{ opacity: 1 }}>
             <VitalCard
               label="Temperature"
               value={vitals.temperature}
