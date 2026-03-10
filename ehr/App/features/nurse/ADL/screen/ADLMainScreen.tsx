@@ -17,6 +17,14 @@ import {
   StatusBar,
   Image,
 } from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useAppTheme } from '@App/theme/ThemeContext';
+import PatientSearchBar from '@App/components/PatientSearchBar';
+import ADPIEScreen from '@App/components/ADPIEScreen';
+import SweetAlert from '@App/components/SweetAlert';
+import { useADL } from '../hook/useADL';
+import ADLInputCard from '../components/ADLInputCard';
 
 const alertIcon = require('@assets/icons/alert.png');
 
