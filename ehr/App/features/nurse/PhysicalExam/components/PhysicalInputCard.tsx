@@ -40,8 +40,8 @@ const ExamInputCard = ({
     4 * LINE_HEIGHT + INPUT_PADDING_BOTTOM,
   );
 
-  const isAlertActive = (value.trim().length > 0 && value !== 'N/A') || !!dataAlert;
   const hasBackendAlert = (!!alertText && alertText.trim().length > 0) || !!dataAlert;
+  const isAlertActive = (value.trim().length > 0 && value !== 'N/A') || hasBackendAlert;
 
   const visibleTypingHeight = Math.max(0, inputHeight - INPUT_PADDING_BOTTOM);
   const numLines = Math.max(

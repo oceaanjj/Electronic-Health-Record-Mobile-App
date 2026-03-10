@@ -53,17 +53,17 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   const {
     saveAssessment,
-    checkAssessmentAlerts,
+    analyzeField,
     fetchLatestPhysicalExam,
     dataAlert,
     fetchDataAlert,
   } = usePhysicalExam();
+  
   const [searchText, setSearchText] = useState('');
-  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(
-    null,
-  );
+  const [selectedPatientId, setSelectedPatientId] = useState<string | null>(null);
   const [scrollEnabled, setScrollEnabled] = useState(true);
   const prevPatientIdRef = useRef<string | null>(null);
+  const lastAnalyzedValues = useRef<Record<string, string>>({});
 
   // SweetAlert State
   const [alertConfig, setAlertConfig] = useState<{
@@ -88,7 +88,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   const [examId, setExamId] = useState<number | null>(null);
   const [backendAlerts, setBackendAlerts] = useState<any>({});
-
+  const [fieldAnalysis, setFieldAnalysis] = useState<Record<string, string | null>>({});
   const [assessmentAlert, setAssessmentAlert] = useState<string | null>(null);
 
   // Controls the view switch from Assessment to ADPIE Stepper
@@ -103,14 +103,12 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
     setIsNA(newState);
 
     if (newState) {
-      // Set all fields to "N/A"
       const updatedData = { ...formData };
       Object.keys(initialFormData).forEach(key => {
         (updatedData as any)[key] = 'N/A';
       });
       setFormData(updatedData);
     } else {
-      // Clear fields if they were "N/A"
       const updatedData = { ...formData };
       Object.keys(initialFormData).forEach(key => {
         if ((updatedData as any)[key] === 'N/A') {
@@ -126,12 +124,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
       onBack();
       return true;
     };
-
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      backAction,
-    );
-
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', backAction);
     return () => backHandler.remove();
   }, [onBack]);
 
@@ -153,18 +146,16 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
         };
         setFormData(newFormData);
 
-        // Check if all fields are N/A
         const allNA = Object.values(newFormData).every(v => v === 'N/A');
         setIsNA(allNA);
 
-        // Also update alerts if they exist in the loaded data
         setBackendAlerts({
           general_appearance_alert: data.general_appearance_alert,
-          skin_alert: data.skin_alert,
-          eye_alert: data.eye_alert,
-          oral_alert: data.oral_alert,
+          skin_condition_alert: data.skin_condition_alert || data.skin_alert,
+          eye_condition_alert: data.eye_condition_alert || data.eye_alert,
+          oral_condition_alert: data.oral_condition_alert || data.oral_alert,
           cardiovascular_alert: data.cardiovascular_alert,
-          abdomen_alert: data.abdomen_alert,
+          abdomen_condition_alert: data.abdomen_condition_alert || data.abdomen_alert,
           extremities_alert: data.extremities_alert,
           neurological_alert: data.neurological_alert,
         });
@@ -173,9 +164,11 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
         setFormData(initialFormData);
         setIsNA(false);
         setBackendAlerts({});
+        setFieldAnalysis({});
+        lastAnalyzedValues.current = {};
       }
     },
-    [fetchLatestPhysicalExam],
+    [fetchLatestPhysicalExam, fetchDataAlert],
   );
 
   useEffect(() => {
@@ -188,64 +181,84 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
         setFormData(initialFormData);
         setIsNA(false);
         setBackendAlerts({});
+        setFieldAnalysis({});
+        lastAnalyzedValues.current = {};
       }
     }
   }, [selectedPatientId, loadPatientData]);
 
-  // REAL-TIME CDSS: Debounced polling to update bells as you type
+  // REAL-TIME CDSS: Debounced analysis per field
   useEffect(() => {
     if (!selectedPatientId || isNA) return;
 
     const timer = setTimeout(async () => {
-      const hasContent = Object.values(formData).some(
-        v => v && v.trim().length > 0 && v !== 'N/A',
-      );
-      if (hasContent) {
-        try {
-          const result = await checkAssessmentAlerts({
-            patient_id: selectedPatientId,
-            ...formData,
-          }, examId);
-          if (result) setBackendAlerts(result);
-        } catch (e) {
-          console.error('CDSS Real-time Error:', e);
+      const fields = Object.keys(formData);
+      
+      for (const field of fields) {
+        const val = (formData as any)[field];
+        // Only analyze if value has changed significantly and isn't a repeat
+        if (
+          val && 
+          val.trim().length >= 3 && 
+          val !== 'N/A' && 
+          val !== lastAnalyzedValues.current[field]
+        ) {
+          lastAnalyzedValues.current[field] = val;
+          const analysis = await analyzeField(field, val);
+          if (analysis && analysis !== 'NO RECOMMENDATIONS') {
+            setFieldAnalysis(prev => ({ ...prev, [field]: analysis }));
+          } else {
+            setFieldAnalysis(prev => ({ ...prev, [field]: null }));
+          }
+        } else if (!val || val.trim().length < 3) {
+          setFieldAnalysis(prev => ({ ...prev, [field]: null }));
         }
       }
     }, 1000);
 
     return () => clearTimeout(timer);
-  }, [formData, selectedPatientId, checkAssessmentAlerts, isNA, examId]);
+  }, [formData, selectedPatientId, analyzeField, isNA]);
 
-  // NEW: CDSS Button Handler to trigger ADPIE Workflow
+  const getFieldAlert = (field: string) => {
+    // 1. Real-time result (Live feedback)
+    if (fieldAnalysis[field]) return fieldAnalysis[field];
+    
+    // 2. Persistent Backend alerts (Saved state)
+    const alerts = backendAlerts || {};
+    const backendKey = `${field}_alert`;
+    const simpleKey = field.replace('_condition', '') + '_alert';
+    if (alerts[backendKey] && alerts[backendKey] !== 'N/A') return alerts[backendKey];
+    if (alerts[simpleKey] && alerts[simpleKey] !== 'N/A') return alerts[simpleKey];
+
+    // 3. Split concatenated dataAlert (Section 9C)
+    if (dataAlert && typeof dataAlert === 'string') {
+      const parts = dataAlert.split(';').map(p => p.trim());
+      const simplified = field.replace('_condition', '').replace('_', ' ');
+      const match = parts.find(p => p.toLowerCase().includes(simplified.toLowerCase()));
+      if (match) return match;
+    }
+    
+    return null;
+  };
+
   const handleCDSSPress = async () => {
     if (!selectedPatientId) {
-      return showAlert(
-        'Patient Required',
-        'Please select a patient first in the search bar.',
-      );
+      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
     }
 
     try {
-      // Step 1: POST or PUT to /physical-exam/ to create or update the record
-      const result = await saveAssessment(
-        {
-          patient_id: selectedPatientId,
-          ...formData,
-        },
-        examId,
-      );
+      const result = await saveAssessment({
+        patient_id: selectedPatientId,
+        ...formData,
+      }, examId);
 
-      // Check both id and physical_exam_id based on common backend patterns
       const id = result?.id || result?.physical_exam_id || examId;
       if (id) {
         setExamId(id);
-        
-        // Capture any assessment-wide alert (often from YAML rules)
         if (result?.assessment_alert || result?.alert) {
           setAssessmentAlert(result.assessment_alert || result.alert);
         }
-        
-        setIsAdpieActive(true); // Switch to ADPIE Stepper View
+        setIsAdpieActive(true);
         scrollViewRef.current?.scrollTo({ y: 0, animated: true });
       } else {
         showAlert('Error', 'Could not retrieve assessment ID.');
@@ -258,10 +271,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   const handleSave = async () => {
     if (!selectedPatientId) {
-      return showAlert(
-        'Patient Required',
-        'Please select a patient first in the search bar.',
-      );
+      return showAlert('Patient Required', 'Please select a patient first in the search bar.');
     }
     try {
       const result = await saveAssessment({
@@ -270,22 +280,18 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
       }, examId);
 
       const newId = result.id || result.physical_exam_id;
-      // Check if it was an update or a new submission
       const isUpdate = !!examId || result.updated_at !== result.created_at;
 
       if (newId) {
         setExamId(newId);
+        fetchDataAlert(parseInt(selectedPatientId, 10)); // Refresh summary alerts
       }
 
       showAlert(
         isUpdate ? 'SUCCESSFULLY UPDATED' : 'SUCCESSFULLY SUBMITTED',
-        `Physical Exam has been ${
-          isUpdate ? 'updated' : 'submitted'
-        } successfully.`,
+        `Physical Exam has been ${isUpdate ? 'updated' : 'submitted'} successfully.`,
         'success',
       );
-
-      // Refresh to get latest state
       loadPatientData(parseInt(selectedPatientId, 10));
     } catch (e) {
       showAlert('Error', 'Submission failed. Please check your connection.');
@@ -310,11 +316,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
 
   const fadeColors = isDarkMode
     ? ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.8)', 'rgba(18, 18, 18, 1)']
-    : [
-        'rgba(255, 255, 255, 0)',
-        'rgba(255, 255, 255, 0.8)',
-        'rgba(255, 255, 255, 1)',
-      ];
+    : ['rgba(255, 255, 255, 0)', 'rgba(255, 255, 255, 0.8)', 'rgba(255, 255, 255, 1)'];
 
   const headerFadeColors = isDarkMode
     ? ['rgba(18, 18, 18, 1)', 'rgba(18, 18, 18, 0)']
@@ -323,23 +325,20 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
   const generateFindingsSummary = () => {
     const findings = Object.entries(formData)
       .filter(([_, value]) => value && value.trim() !== '' && value !== 'N/A')
-      .map(([key, value]) => {
-        const label = key.replace(/_/g, ' ').toUpperCase();
-        return `${label}: ${value}`;
-      });
+      .map(([key, value]) => `${key.replace(/_/g, ' ').toUpperCase()}: ${value}`);
     
-    // Also include alerts if they are critical
     const alerts = Object.entries(backendAlerts)
       .filter(([_, value]) => typeof value === 'string' && value.trim() !== '' && !value.toLowerCase().includes('normal'))
       .map(([_, value]) => value);
 
     const summary = [...findings, ...alerts];
-    if (dataAlert) summary.push(dataAlert);
-
+    if (dataAlert) {
+      if (typeof dataAlert === 'string') summary.push(dataAlert);
+      else Object.values(dataAlert).forEach(v => typeof v === 'string' && v.trim() !== '' && summary.push(v));
+    }
     return summary.join('. ');
   };
 
-  // Switch to ADPIE Screen if active
   if (isAdpieActive && examId && selectedPatientId) {
     return (
       <ADPIEScreen
@@ -364,13 +363,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
         translucent={true}
       />
       <View style={{ zIndex: 10 }}>
-        <View
-          style={{
-            paddingHorizontal: 40,
-            backgroundColor: theme.background,
-            paddingBottom: 15,
-          }}
-        >
+        <View style={{ paddingHorizontal: 40, backgroundColor: theme.background, paddingBottom: 15 }}>
           <View style={[styles.header, { marginBottom: 0 }]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.title}>Physical Exam</Text>
@@ -378,11 +371,7 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
             </View>
           </View>
         </View>
-        <LinearGradient
-          colors={headerFadeColors}
-          style={{ height: 20 }}
-          pointerEvents="none"
-        />
+        <LinearGradient colors={headerFadeColors} style={{ height: 20 }} pointerEvents="none" />
       </View>
 
       <View style={{ flex: 1, marginTop: -20 }}>
@@ -406,24 +395,11 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
           <TouchableOpacity
             style={[styles.naRow, !selectedPatientId && { opacity: 0.5 }]}
             onPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              } else {
-                toggleNA();
-              }
+              if (!selectedPatientId) showAlert('Patient Required', 'Please select a patient first.');
+              else toggleNA();
             }}
           >
-            <Text
-              style={[
-                styles.naText,
-                !selectedPatientId && { color: theme.textMuted },
-              ]}
-            >
-              Mark all as N/A
-            </Text>
+            <Text style={[styles.naText, !selectedPatientId && { color: theme.textMuted }]}>Mark all as N/A</Text>
             <Icon
               name={isNA ? 'check-box' : 'check-box-outline-blank'}
               size={22}
@@ -431,15 +407,8 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
             />
           </TouchableOpacity>
 
-          <Text
-            style={[
-              styles.disabledTextAtBottom,
-              isNA && { color: theme.error },
-            ]}
-          >
-            {isNA
-              ? 'All fields below are disabled.'
-              : 'Checking this will disable all fields below.'}
+          <Text style={[styles.disabledTextAtBottom, isNA && { color: theme.error }]}>
+            {isNA ? 'All fields below are disabled.' : 'Checking this will disable all fields below.'}
           </Text>
 
           <View style={styles.banner}>
@@ -451,184 +420,87 @@ const PhysicalExamScreen: React.FC<PhysicalExamProps> = ({ onBack }) => {
             label="GENERAL APPEARANCE"
             value={formData.general_appearance}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.general_appearance_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('general_appearance')}
             onChangeText={t => updateField('general_appearance', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
           <ExamInputCard
             label="SKIN"
             value={formData.skin_condition}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.skin_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('skin_condition')}
             onChangeText={t => updateField('skin_condition', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
           <ExamInputCard
             label="EYES"
             value={formData.eye_condition}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.eye_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('eye_condition')}
             onChangeText={t => updateField('eye_condition', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
           <ExamInputCard
             label="ORAL CAVITY"
             value={formData.oral_condition}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.oral_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('oral_condition')}
             onChangeText={t => updateField('oral_condition', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
           <ExamInputCard
             label="CARDIOVASCULAR"
             value={formData.cardiovascular}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.cardiovascular_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('cardiovascular')}
             onChangeText={t => updateField('cardiovascular', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
           <ExamInputCard
             label="ABDOMEN"
             value={formData.abdomen_condition}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.abdomen_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('abdomen_condition')}
             onChangeText={t => updateField('abdomen_condition', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
           <ExamInputCard
             label="EXTREMITIES"
             value={formData.extremities}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.extremities_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('extremities')}
             onChangeText={t => updateField('extremities', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
           <ExamInputCard
             label="NEUROLOGICAL"
             value={formData.neurological}
             disabled={!selectedPatientId || isNA}
-            alertText={backendAlerts.neurological_alert}
-            dataAlert={dataAlert}
+            alertText={getFieldAlert('neurological')}
             onChangeText={t => updateField('neurological', t)}
-            onDisabledPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              }
-            }}
+            onDisabledPress={() => !selectedPatientId && showAlert('Patient Required', 'Please select a patient first.')}
           />
 
           <View style={styles.footerRow}>
-            {/* CDSS Button: Triggers Nursing Process Stepper */}
             <TouchableOpacity
-              style={[
-                styles.cdssBtn,
-                (!selectedPatientId || (!isDataEntered && !isNA)) && {
-                  backgroundColor: theme.buttonDisabledBg,
-                  borderColor: theme.buttonDisabledBorder,
-                },
-              ]}
+              style={[styles.cdssBtn, (!selectedPatientId || (!isDataEntered && !isNA)) && { backgroundColor: theme.buttonDisabledBg, borderColor: theme.buttonDisabledBorder }]}
               onPress={handleCDSSPress}
               disabled={!selectedPatientId}
             >
-              <Text
-                style={[
-                  styles.cdssText,
-                  (!selectedPatientId || (!isDataEntered && !isNA))
-                    ? { color: theme.textMuted }
-                    : { color: theme.primary },
-                ]}
-              >
-                CDSS
-              </Text>
+              <Text style={[styles.cdssText, (!selectedPatientId || (!isDataEntered && !isNA)) ? { color: theme.textMuted } : { color: theme.primary }]}>CDSS</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.submitBtn,
-                !selectedPatientId && {
-                  backgroundColor: theme.buttonDisabledBg,
-                  borderColor: theme.buttonDisabledBorder,
-                },
-              ]}
+              style={[styles.submitBtn, !selectedPatientId && { backgroundColor: theme.buttonDisabledBg, borderColor: theme.buttonDisabledBorder }]}
               onPress={handleSave}
               disabled={!selectedPatientId}
             >
-              <Text
-                style={[
-                  styles.submitText,
-                  !selectedPatientId && { color: theme.textMuted },
-                ]}
-              >
-                SUBMIT
-              </Text>
+              <Text style={[styles.submitText, !selectedPatientId && { color: theme.textMuted }]}>SUBMIT</Text>
             </TouchableOpacity>
           </View>
 
           <View style={{ height: 100 }} />
         </ScrollView>
-        <LinearGradient
-          colors={fadeColors}
-          style={styles.fadeBottom}
-          pointerEvents="none"
-        />
+        <LinearGradient colors={fadeColors} style={styles.fadeBottom} pointerEvents="none" />
       </View>
 
       <SweetAlert
@@ -649,101 +521,19 @@ const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
     container: commonStyles.container,
     header: commonStyles.header,
     title: commonStyles.title,
-    subTitleDate: {
-      fontSize: 13,
-      fontFamily: 'AlteHaasGroteskBold',
-      color: theme.textMuted,
-    },
-    alertIcon: {
-      width: 45,
-      height: 45,
-      borderRadius: 22.5,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1,
-    },
-    fullImg: { width: '80%', height: '80%', resizeMode: 'contain' },
-    sectionLabel: {
-      fontSize: 12,
-      fontWeight: 'bold',
-      color: theme.primary,
-      marginBottom: 8,
-    },
-    banner: {
-      backgroundColor: theme.tableHeader,
-      paddingVertical: 10,
-      borderRadius: 25,
-      alignItems: 'center',
-      marginBottom: 20,
-    },
-    bannerText: {
-      color: theme.secondary,
-      fontFamily: 'AlteHaasGroteskBold',
-      fontSize: 14,
-    },
-    naRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      marginBottom: 5,
-      marginTop: 5,
-    },
-    naText: {
-      fontSize: 14,
-      fontFamily: 'AlteHaasGroteskBold',
-      color: theme.primary,
-      marginRight: 8,
-    },
-    disabledTextAtBottom: {
-      fontSize: 13,
-      fontFamily: 'AlteHaasGroteskBold',
-      color: theme.textMuted,
-      textAlign: 'right',
-      marginBottom: 15,
-    },
-    footerRow: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginTop: 10,
-      paddingBottom: 40,
-    },
-    cdssBtn: {
-      flex: 1,
-      backgroundColor: theme.buttonBg,
-      paddingVertical: 15,
-      borderRadius: 25,
-      alignItems: 'center',
-      marginHorizontal: 5,
-      borderWidth: 1.5,
-      borderColor: theme.buttonBorder,
-    },
-    submitBtn: {
-      flex: 1,
-      backgroundColor: theme.buttonBg,
-      paddingVertical: 15,
-      borderRadius: 25,
-      alignItems: 'center',
-      marginHorizontal: 5,
-      borderWidth: 1.5,
-      borderColor: theme.buttonBorder,
-    },
-    cdssText: {
-      color: theme.primary,
-      fontFamily: 'AlteHaasGroteskBold',
-      fontSize: 16,
-    },
-    submitText: {
-      color: theme.primary,
-      fontFamily: 'AlteHaasGroteskBold',
-      fontSize: 16,
-    },
-    fadeBottom: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 60,
-    },
+    subTitleDate: { fontSize: 13, fontFamily: 'AlteHaasGroteskBold', color: theme.textMuted },
+    sectionLabel: { fontSize: 12, fontWeight: 'bold', color: theme.primary, marginBottom: 8 },
+    banner: { backgroundColor: theme.tableHeader, paddingVertical: 10, borderRadius: 25, alignItems: 'center', marginBottom: 20 },
+    bannerText: { color: theme.secondary, fontFamily: 'AlteHaasGroteskBold', fontSize: 14 },
+    naRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginBottom: 5, marginTop: 5 },
+    naText: { fontSize: 14, fontFamily: 'AlteHaasGroteskBold', color: theme.primary, marginRight: 8 },
+    disabledTextAtBottom: { fontSize: 13, fontFamily: 'AlteHaasGroteskBold', color: theme.textMuted, textAlign: 'right', marginBottom: 15 },
+    footerRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, paddingBottom: 40 },
+    cdssBtn: { flex: 1, backgroundColor: theme.buttonBg, paddingVertical: 15, borderRadius: 25, alignItems: 'center', marginHorizontal: 5, borderWidth: 1.5, borderColor: theme.buttonBorder },
+    submitBtn: { flex: 1, backgroundColor: theme.buttonBg, paddingVertical: 15, borderRadius: 25, alignItems: 'center', marginHorizontal: 5, borderWidth: 1.5, borderColor: theme.buttonBorder },
+    cdssText: { color: theme.primary, fontFamily: 'AlteHaasGroteskBold', fontSize: 16 },
+    submitText: { color: theme.primary, fontFamily: 'AlteHaasGroteskBold', fontSize: 16 },
+    fadeBottom: { position: 'absolute', bottom: 0, left: 0, right: 0, height: 60 },
   });
 
 export default PhysicalExamScreen;

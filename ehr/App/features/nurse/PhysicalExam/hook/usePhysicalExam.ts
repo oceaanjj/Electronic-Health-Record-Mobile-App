@@ -2,22 +2,41 @@ import { useCallback, useState } from 'react';
 import apiClient from '@api/apiClient';
 
 export const usePhysicalExam = () => {
-  const [dataAlert, setDataAlert] = useState<string | null>(null);
+  const [dataAlert, setDataAlert] = useState<any>(null);
 
   const fetchDataAlert = useCallback(async (patientId: number) => {
     try {
       const response = await apiClient.get(`/physical-exam/data-alert/patient/${patientId}`);
       if (response.data) {
-        const alertMsg = typeof response.data === 'string' 
-          ? response.data 
-          : (response.data.physical_exam || response.data.alert || response.data.message || null);
-        setDataAlert(alertMsg);
+        // If it's a string, we keep it as is, if it's an object we store the whole object
+        setDataAlert(response.data.data || response.data);
       } else {
         setDataAlert(null);
       }
     } catch (e) {
       console.error('Failed to fetch physical exam data alert:', e);
       setDataAlert(null);
+    }
+  }, []);
+
+  const analyzeField = useCallback(async (fieldName: string, finding: string) => {
+    if (!finding || finding.trim().length < 3 || finding === 'N/A') {
+      return null;
+    }
+    try {
+      const response = await apiClient.post('/adpie/analyze', {
+        fieldName,
+        finding,
+        component: 'physical-exam',
+      });
+      if (response.data) {
+        const body = response.data.data || response.data;
+        return body.message || body.recommendation || body.alert || body;
+      }
+      return null;
+    } catch (e) {
+      console.error(`Failed to analyze field ${fieldName}:`, e);
+      return null;
     }
   }, []);
 
@@ -103,6 +122,7 @@ export const usePhysicalExam = () => {
   return { 
     saveAssessment, 
     checkAssessmentAlerts, 
+    analyzeField,
     updateDPIE, 
     fetchLatestPhysicalExam,
     dataAlert,
