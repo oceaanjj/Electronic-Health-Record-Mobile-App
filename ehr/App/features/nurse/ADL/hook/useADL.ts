@@ -2,22 +2,20 @@ import { useState, useCallback } from 'react';
 import apiClient from '@api/apiClient';
 
 export const useADL = () => {
-  const [alerts, setAlerts] = useState<any>({});
   const [dataAlert, setDataAlert] = useState<string | null>(null);
 
   const fetchDataAlert = useCallback(async (patientId: number) => {
     try {
       const response = await apiClient.get(`/adl/data-alert/patient/${patientId}`);
       if (response.data) {
-        const alertMsg = typeof response.data === 'string' 
-          ? response.data 
-          : (response.data.adl || response.data.alert || response.data.message || null);
+        const alertMsg = typeof response.data === 'string'
+          ? response.data
+          : (response.data.alert || response.data.adl || response.data.message || null);
         setDataAlert(alertMsg);
       } else {
         setDataAlert(null);
       }
     } catch (e) {
-      console.error('Failed to fetch ADL data alert:', e);
       setDataAlert(null);
     }
   }, []);
@@ -32,83 +30,101 @@ export const useADL = () => {
     return sanitized;
   };
 
+  const analyzeField = useCallback(async (
+    patientId: number,
+    currentAdlId: number | null,
+    fieldName: string,
+    finding: string,
+    alertKey: string,
+  ): Promise<{ alert: string | null; severity: string | null; adlId: number | null } | null> => {
+    if (!finding || finding.trim().length < 3 || finding === 'N/A') return null;
+    try {
+      let response;
+      if (currentAdlId) {
+        response = await apiClient.put(`/adl/${currentAdlId}/assessment`, {
+          patient_id: patientId,
+          [fieldName]: finding,
+        });
+      } else {
+        response = await apiClient.post('/adl', {
+          patient_id: patientId,
+          [fieldName]: finding,
+        });
+      }
+
+      const alerts = response.data?.alerts || {};
+      const data = response.data?.data || response.data;
+      const returnedAdlId: number | null = data?.id || null;
+      const alertText: string = (alerts[alertKey] || data?.[alertKey] || '').toString().trim();
+
+      if (!alertText || alertText === 'No findings.' || alertText === 'No Findings') {
+        return { alert: null, severity: null, adlId: returnedAdlId };
+      }
+
+      const upper = alertText.toUpperCase();
+      let severity = 'INFO';
+      if (
+        upper.includes('URGENT') || upper.includes('CRITICAL') ||
+        upper.includes('IMMEDIATELY') || upper.includes('EMERGENCY') ||
+        upper.includes('PERITONITIS') || upper.includes('SEPSIS')
+      ) {
+        severity = 'CRITICAL';
+      } else if (
+        upper.includes('EVALUATE') || upper.includes('MONITOR') ||
+        upper.includes('ASSESS') || upper.includes('REFER') ||
+        upper.includes('DISEASE') || upper.includes('INFECTION') ||
+        upper.includes('ABNORMAL') || upper.includes('SUSPECTED') ||
+        upper.includes('LIVER') || upper.includes('HEMOLYSIS') ||
+        upper.includes('JAUNDICE') || upper.includes('PALLOR') ||
+        upper.includes('TREAT') || upper.includes('ELEVATED')
+      ) {
+        severity = 'WARNING';
+      }
+
+      return { alert: alertText, severity, adlId: returnedAdlId };
+    } catch (e) {
+      return null;
+    }
+  }, []);
+
   const saveADLAssessment = useCallback(async (payload: any, existingId?: number | null) => {
-    // Ensure patient_id is integer
-    const body = {
-      ...payload,
-      patient_id: parseInt(payload.patient_id, 10)
-    };
+    const body = { ...payload, patient_id: parseInt(payload.patient_id, 10) };
     const sanitized = sanitize(body);
-    
-    // If we have an existing ID, UPDATE
     if (existingId) {
       const response = await apiClient.put(`/adl/${existingId}/assessment`, sanitized);
       return response.data;
     } else {
-      // CREATE
       const response = await apiClient.post('/adl', sanitized);
       return response.data;
-    }
-  }, []);
-
-  const checkADLAlerts = useCallback(async (payload: any, existingId?: number | null) => {
-    try {
-      const body = {
-        ...payload,
-        patient_id: parseInt(payload.patient_id, 10)
-      };
-      const sanitized = sanitize(body);
-      let response;
-      if (existingId) {
-        response = await apiClient.put(`/adl/${existingId}/assessment`, sanitized);
-      } else {
-        response = await apiClient.post('/adl/check-alerts', sanitized);
-      }
-      
-      if (response.data) {
-        setAlerts(response.data);
-      }
-      return response.data;
-    } catch (err) {
-      return null;
     }
   }, []);
 
   const updateADLStep = useCallback(async (recordId: number, stepKey: string, text: string) => {
     const sanitizedText = text.trim() === '' ? 'N/A' : text;
     const response = await apiClient.put(`/adl/${recordId}/${stepKey}`, {
-      [stepKey]: sanitizedText
+      [stepKey]: sanitizedText,
     });
     return response.data;
   }, []);
 
   const fetchLatestADL = useCallback(async (patientId: number) => {
     try {
-      // Trying the standard pattern from the guide
       const response = await apiClient.get(`/adl/patient/${patientId}?patient_id=${patientId}`);
       const data = response.data;
-      
-      if (Array.isArray(data)) {
-        return data.length > 0 ? data[0] : null;
-      } else if (data && typeof data === 'object') {
-        // If it's a single object, return it
-        return data;
-      }
+      if (Array.isArray(data)) return data.length > 0 ? data[0] : null;
+      if (data && typeof data === 'object') return data;
       return null;
     } catch (err) {
-      console.error('Error fetching ADL:', err);
       return null;
     }
   }, []);
 
-  return { 
-    alerts, 
-    setAlerts, 
-    saveADLAssessment, 
-    checkADLAlerts, 
-    updateADLStep, 
+  return {
+    saveADLAssessment,
+    analyzeField,
+    updateADLStep,
     fetchLatestADL,
     dataAlert,
-    fetchDataAlert
+    fetchDataAlert,
   };
 };

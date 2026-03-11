@@ -9,17 +9,16 @@ import {
   Image,
 } from 'react-native';
 import CDSSModal from '@components/CDSSModal';
-import SweetAlert from '@components/SweetAlert';
 import { useAppTheme } from '@App/theme/ThemeContext';
 
 const alert1 = require('@assets/icons/alert_bell_icon.png');
 
-interface ExamInputProps {
+interface ADLInputCardProps {
   label: string;
   value: string;
   disabled: boolean;
-  alertText?: string;
   dataAlert?: string | null;
+  alertSeverity?: string | null;
   onChangeText: (text: string) => void;
   onDisabledPress?: () => void;
 }
@@ -31,19 +30,18 @@ const ADLInputCard = ({
   label,
   value,
   disabled,
-  alertText,
   dataAlert,
+  alertSeverity,
   onChangeText,
   onDisabledPress,
-}: ExamInputProps) => {
+}: ADLInputCardProps) => {
   const { theme } = useAppTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [inputHeight, setInputHeight] = useState(
     4 * LINE_HEIGHT + INPUT_PADDING_BOTTOM,
   );
 
-  const isAlertActive = (value.trim().length > 0 && value !== 'N/A') || !!dataAlert;
-  const hasBackendAlert = (!!alertText && alertText.trim().length > 0) || !!dataAlert;
+  const hasBackendAlert = !!dataAlert;
 
   const visibleTypingHeight = Math.max(0, inputHeight - INPUT_PADDING_BOTTOM);
   const numLines = Math.max(
@@ -74,15 +72,6 @@ const ADLInputCard = ({
     return lines;
   };
 
-  const getAlertText = () => {
-    const parts = [];
-    if (dataAlert) parts.push(dataAlert);
-    if (alertText && alertText.trim() !== '') parts.push(alertText);
-    
-    if (parts.length === 0) return 'No clinical findings found.';
-    return parts.join('\n\n');
-  };
-
   return (
     <View style={styles.card}>
       <View style={styles.cardHeader}>
@@ -96,11 +85,7 @@ const ADLInputCard = ({
 
         <Pressable
           style={styles.inputArea}
-          onPress={() => {
-            if (disabled && onDisabledPress) {
-              onDisabledPress();
-            }
-          }}
+          onPress={() => disabled && onDisabledPress?.()}
         >
           <View style={styles.linesContainer} pointerEvents="none">
             {renderLines()}
@@ -114,9 +99,9 @@ const ADLInputCard = ({
             editable={!disabled}
             placeholder="Type findings..."
             pointerEvents={disabled ? 'none' : 'auto'}
-            onContentSizeChange={e => {
-              setInputHeight(e.nativeEvent.contentSize.height);
-            }}
+            onContentSizeChange={e =>
+              setInputHeight(e.nativeEvent.contentSize.height)
+            }
           />
         </Pressable>
 
@@ -130,8 +115,8 @@ const ADLInputCard = ({
               opacity: hasBackendAlert ? 1.0 : 0.3,
             },
           ]}
-          onPress={() => isAlertActive && !disabled && setModalVisible(true)}
-          disabled={!isAlertActive || disabled}
+          onPress={() => hasBackendAlert && !disabled && setModalVisible(true)}
+          disabled={!hasBackendAlert || disabled}
         >
           <Image source={alert1} style={styles.alertImage} />
         </TouchableOpacity>
@@ -141,7 +126,8 @@ const ADLInputCard = ({
         visible={modalVisible}
         onClose={() => setModalVisible(false)}
         category={label}
-        alertText={getAlertText()}
+        alertText={dataAlert || 'No clinical findings found.'}
+        severity={alertSeverity ?? undefined}
       />
     </View>
   );
@@ -227,9 +213,6 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRadius: 22,
     resizeMode: 'cover',
-  },
-  activeAlert: {
-    backgroundColor: '#FDE68A',
   },
 });
 
