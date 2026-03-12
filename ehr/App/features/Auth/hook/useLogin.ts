@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useWindowDimensions } from 'react-native';
 import apiClient from '@api/apiClient';
 import { useAuth } from '../AuthContext';
+import { useToast } from '@App/context/ToastContext';
 
 export const useLogin = () => {
   const [email, setEmail] = useState('');
@@ -21,6 +22,7 @@ export const useLogin = () => {
   });
 
   const { login } = useAuth();
+  const { showToast } = useToast();
   const { width, height } = useWindowDimensions();
   const isLandscape = width > height;
 
@@ -58,7 +60,7 @@ export const useLogin = () => {
       await login({ id: user_id, full_name, email: userEmail ?? email, role }, access_token);
       console.log('[Login] Stored email:', userEmail ?? email);
 
-      console.log('Login successful as', role);
+      showToast(`Welcome back, ${full_name || email}!`, 'success', 4000);
     } catch (error: any) {
       console.error('Login error full:', error);
       let errorMessage = 'Invalid username or password';

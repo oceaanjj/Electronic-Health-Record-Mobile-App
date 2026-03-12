@@ -36,12 +36,15 @@ const DoctorBottomNav = ({ activeRoute, onNavigate }: DoctorBottomNavProps) => {
   const styles = useMemo(() => createStyles(theme), [theme]);
 
   return (
-    <Shadow
-      distance={7}
-      startColor={'rgba(0,0,0,0.1)'}
-      containerStyle={styles.shadowContainer}
-      style={[styles.shadowShape, { backgroundColor: theme.card }]}
-    >
+    <>
+      {/* Background fill that prevents screen content from showing below the nav */}
+      <View style={[styles.bottomFill, { backgroundColor: theme.background }]} />
+      <Shadow
+        distance={7}
+        startColor={'rgba(0,0,0,0.1)'}
+        containerStyle={styles.shadowContainer}
+        style={[styles.shadowShape, { backgroundColor: theme.card }]}
+      >
       <View style={[styles.nav, { backgroundColor: theme.card }]}>
         {NAV_ITEMS.map(item => {
           const active = activeRoute === item.route;
@@ -78,7 +81,8 @@ const DoctorBottomNav = ({ activeRoute, onNavigate }: DoctorBottomNavProps) => {
           );
         })}
       </View>
-    </Shadow>
+      </Shadow>
+    </>
   );
 };
 
@@ -92,6 +96,14 @@ const createStyles = (theme: any) =>
       justifyContent: 'center',
       alignItems: 'center',
       zIndex: 1000,
+    },
+    bottomFill: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      height: 110,
+      zIndex: 999,
     },
     shadowShape: {
       width: '100%',
