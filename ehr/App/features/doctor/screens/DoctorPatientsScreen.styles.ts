@@ -1,5 +1,4 @@
 import { StyleSheet, Platform } from 'react-native';
-
 export const createStyles = (theme: any, isDarkMode: boolean) =>
   StyleSheet.create({
     root: { flex: 1, backgroundColor: theme.background },
@@ -8,7 +7,7 @@ export const createStyles = (theme: any, isDarkMode: boolean) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 35,
+      marginBottom: 25,
       marginTop: Platform.OS === 'ios' ? 20 : 40,
     },
     welcome: {
@@ -38,7 +37,13 @@ export const createStyles = (theme: any, isDarkMode: boolean) =>
       elevation: 5,
     },
     searchIcon: { marginRight: 10 },
-    searchBar: { flex: 1, height: 50, color: theme.text, fontSize: 15, fontFamily: 'AlteHaasGrotesk' },
+    searchBar: {
+      flex: 1,
+      height: 50,
+      color: theme.text,
+      fontSize: 15,
+      fontFamily: 'AlteHaasGrotesk',
+    },
     listSection: { marginTop: -10 },
     patientCard: {
       flexDirection: 'row',
@@ -78,7 +83,7 @@ export const createStyles = (theme: any, isDarkMode: boolean) =>
     },
   });
 
-export const createModalStyles= (theme: any) =>
+export const createModalStyles = (theme: any) =>
   StyleSheet.create({
     overlay: {
       flex: 1,
@@ -87,13 +92,13 @@ export const createModalStyles= (theme: any) =>
       alignItems: 'center',
     },
     modalContainer: {
-      width: '90%',
-      maxHeight: '85%',
-      backgroundColor: theme.card,
+      width: '80%',
+      maxHeight: '80%',
+      backgroundColor: theme.background,
       borderRadius: 20,
       padding: 25,
       elevation: 15,
-      borderWidth: 3,
+      borderWidth: 1.5,
       borderColor: theme.primary,
     },
     header: {
@@ -105,19 +110,24 @@ export const createModalStyles= (theme: any) =>
     title: {
       fontSize: 24,
       color: theme.primary,
-      fontWeight: 'bold',
-      fontFamily: 'MinionPro-SemiboldItalic',
+      fontFamily: 'AlteHaasGroteskBold',
+      marginLeft: 5,
     },
-    patientName: { fontSize: 16, color: theme.textMuted, marginTop: 4 },
+    patientName: {
+      fontSize: 16,
+      color: theme.textMuted,
+      fontFamily: 'AlteHaasGrotesk',
+      marginLeft: 5,
+    },
     closeButton: { padding: 5, marginTop: -5, marginRight: -5 },
     scrollContent: { paddingBottom: 10 },
     categoryCard: {
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'center',
-      backgroundColor: theme.card2,
+      backgroundColor: 'theme.card2',
       borderRadius: 18,
-      padding: 16,
+      padding: 10,
       marginBottom: 12,
       borderWidth: 0,
     },
@@ -130,12 +140,18 @@ export const createModalStyles= (theme: any) =>
       justifyContent: 'center',
       alignItems: 'center',
       marginRight: 15,
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOpacity: 0.05,
-      shadowRadius: 3,
+      marginLeft: 5,
     },
     cardInfo: { justifyContent: 'center', flex: 1 },
-    categoryName: { fontSize: 16, fontWeight: '600', color: theme.primary },
-    updateText: { fontSize: 12, color: theme.textMuted, marginTop: 2 },
+    categoryName: {
+      fontSize: 16,
+      fontFamily: 'AlteHaasGroteskBold',
+      color: theme.primary,
+    },
+    updateText: {
+      fontSize: 14,
+      fontFamily: 'AlteHaasGrotesk',
+      color: theme.textMuted,
+      marginTop: 1,
+    },
   });

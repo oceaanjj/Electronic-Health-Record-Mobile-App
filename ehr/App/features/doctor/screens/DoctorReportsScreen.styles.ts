@@ -8,11 +8,20 @@ export const createStyles = (theme: any, isDarkMode: boolean) =>
       flexDirection: 'row',
       justifyContent: 'space-between',
       alignItems: 'flex-start',
-      marginBottom: 35,
+      marginBottom: 25,
       marginTop: Platform.OS === 'ios' ? 20 : 40,
     },
-    welcome: { fontSize: 35, color: theme.primary, fontFamily: 'MinionPro-SemiboldItalic' },
-    date: { fontSize: 14, color: theme.textMuted, marginTop: 4, fontFamily: 'AlteHaasGroteskBold' },
+    welcome: {
+      fontSize: 35,
+      color: theme.primary,
+      fontFamily: 'MinionPro-SemiboldItalic',
+    },
+    date: {
+      fontSize: 14,
+      color: theme.textMuted,
+      marginTop: 4,
+      fontFamily: 'AlteHaasGroteskBold',
+    },
     searchBarContainer: { marginBottom: 25, zIndex: 999 },
     searchBarWrapper: {
       backgroundColor: theme.card,
@@ -74,4 +83,3 @@ export const createStyles = (theme: any, isDarkMode: boolean) =>
       letterSpacing: 0.5,
     },
   });
-
