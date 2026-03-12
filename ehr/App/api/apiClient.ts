@@ -5,7 +5,7 @@ const BACKEND_PORT = 8000;
 const YOUR_IP = '192.168.1.21';
 const host = YOUR_IP;
 
-export const BASE_URL = `http://${host}:${BACKEND_PORT}/api`;
+export const BASE_URL = `https://electronichealthrecord.bscs3a.com/api`;
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -28,7 +28,11 @@ apiClient.interceptors.request.use(
     } catch (error) {
       console.error('Error fetching token from storage', error);
     }
-    console.log('Starting Request to:', config.baseURL, config.url?.split('?')[0]);
+    console.log(
+      'Starting Request to:',
+      config.baseURL,
+      config.url?.split('?')[0],
+    );
     return config;
   },
   error => {
