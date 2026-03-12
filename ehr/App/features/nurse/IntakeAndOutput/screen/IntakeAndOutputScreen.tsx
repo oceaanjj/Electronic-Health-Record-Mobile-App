@@ -1,38 +1,26 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from 'react';import {
+import React, { useMemo } from 'react';
+import {
   View,
   Text,
-  StyleSheet,
   SafeAreaView,
   ScrollView,
   TouchableOpacity,
-  Pressable,
   StatusBar,
   ActivityIndicator,
-  Modal,
-  FlatList,
   Image,
-  Dimensions,
-  BackHandler,
-  Platform,
   Animated,
 } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const backArrow = require('@assets/icons/back_arrow.png');
 import IntakeOutputCard from '../component/IntakeOutputCard';
 import SweetAlert from '@components/SweetAlert';
 import PatientSearchBar from '@components/PatientSearchBar';
-import { useIntakeAndOutputLogic } from '../hook/useIntakeAndOutputLogic';
 import ADPIEScreen from '@components/ADPIEScreen';
 import CDSSModal from '@components/CDSSModal';
 import { useAppTheme } from '@App/theme/ThemeContext';
+import { useIntakeAndOutputScreen } from './useIntakeAndOutputScreen';
+import { createStyles } from './styles';
 
 const alertBellActiveIcon = require('@assets/icons/alert_bell_icon.png');
 const alertBellInactiveIcon = require('@assets/icons/alert_bell_icon_inactive.png');
@@ -59,230 +47,34 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
   const {
     patientName,
     selectedPatientId,
-    selectedPatient,
     handleSelectPatient,
     intakeOutput,
-    handleUpdateField,
     isDataEntered,
-    saveAssessment,
-    analyzeField,
-    assessmentAlert,
-    assessmentSeverity,
-    currentAlert,
-    dataAlert,
-    setBackendAlert,
-    triggerPatientAlert,
     loading,
     recordId,
     isExistingRecord,
-    setIsExistingRecord,
-    ADPIE_STAGES,
-    setIntakeOutput,
-  } = useIntakeAndOutputLogic();
-
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [cdssModalVisible, setCdssModalVisible] = useState(false);
-  const [successVisible, setSuccessVisible] = useState(false);
-  const [successMessage, setSuccessMessage] = useState({
-    title: '',
-    message: '',
-  });
-  const [isMenuVisible, setIsMenuVisible] = useState(false);
-  const [isAdpieActive, setIsAdpieActive] = useState(false);
-  const [currentDate, setCurrentDate] = useState('');
-  const [scrollEnabled, setScrollEnabled] = useState(true);
-  const [isNA, setIsNA] = useState(false);
-  const scrollViewRef = useRef<ScrollView>(null);
-  const fieldTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
-  const [backendAlert, setLocalBackendAlert] = useState<string | null>(null);
-  const [backendSeverity, setLocalBackendSeverity] = useState<string | null>(
-    null,
-  );
-  const [isAlertLoading, setIsAlertLoading] = useState(false);
-  const analyzeCountRef = useRef(0);
-  const bellFadeAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    if (readOnly && patientId) {
-      handleSelectPatient(patientId, initialPatientName || '', null);
-    }
-  }, [readOnly, patientId]);
-
-  const handleFieldChange = useCallback(
-    (field: string, value: string) => {
-      handleUpdateField(field, value);
-      if (!selectedPatientId) return;
-      if (fieldTimers.current[field]) clearTimeout(fieldTimers.current[field]);
-      setIsAlertLoading(true);
-      analyzeCountRef.current += 1;
-      const thisCount = analyzeCountRef.current;
-      fieldTimers.current[field] = setTimeout(async () => {
-        const currentData = { ...intakeOutput, [field]: value };
-        const toInt = (v: string) => {
-          const n = parseInt(v, 10);
-          return isNaN(n) ? null : n;
-        };
-        const payload = {
-          patient_id: parseInt(selectedPatientId, 10),
-          day_no: parseInt(calculateDayNumber(), 10) || 1,
-          oral_intake: toInt(currentData.oral_intake),
-          iv_fluids_volume: toInt(currentData.iv_fluids_volume),
-          urine_output: toInt(currentData.urine_output),
-        };
-        const result = await analyzeField(payload);
-        if (result) {
-          setLocalBackendAlert(result.alert);
-          setLocalBackendSeverity(result.severity);
-        }
-        if (thisCount === analyzeCountRef.current) {
-          setIsAlertLoading(false);
-        }
-      }, 800);
-    },
-    [selectedPatientId, intakeOutput, analyzeField, handleUpdateField],
-  );
-
-  const toggleNA = () => {
-    const newState = !isNA;
-    setIsNA(newState);
-    if (newState) {
-      setIntakeOutput({
-        oral_intake: 'N/A',
-        iv_fluids_volume: 'N/A',
-        urine_output: 'N/A',
-      });
-    } else {
-      setIntakeOutput(prev => ({
-        oral_intake: prev.oral_intake === 'N/A' ? '' : prev.oral_intake,
-        iv_fluids_volume:
-          prev.iv_fluids_volume === 'N/A' ? '' : prev.iv_fluids_volume,
-        urine_output: prev.urine_output === 'N/A' ? '' : prev.urine_output,
-      }));
-    }
-  };
-
-  useEffect(() => {
-    if (selectedPatientId) {
-      const fields = ['oral_intake', 'iv_fluids_volume', 'urine_output'];
-      const allNA = fields.every(f => (intakeOutput as any)[f] === 'N/A');
-      setIsNA(allNA);
-    } else {
-      setIsNA(false);
-    }
-  }, [selectedPatientId, intakeOutput]);
-
-  const handleBackPress = useCallback(() => {
-    if (isAdpieActive) {
-      setIsAdpieActive(false);
-      scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-      return true;
-    }
-    if (cdssModalVisible) {
-      setCdssModalVisible(false);
-      return true;
-    }
-    onBack();
-    return true;
-  }, [isAdpieActive, cdssModalVisible, onBack]);
-
-  useEffect(() => {
-    const backHandler = BackHandler.addEventListener(
-      'hardwareBackPress',
-      handleBackPress,
-    );
-    return () => backHandler.remove();
-  }, [handleBackPress]);
-
-  useEffect(() => {
-    const now = new Date();
-    const days = [
-      'Sunday',
-      'Monday',
-      'Tuesday',
-      'Wednesday',
-      'Thursday',
-      'Friday',
-      'Saturday',
-    ];
-    const months = [
-      'January',
-      'February',
-      'March',
-      'April',
-      'May',
-      'June',
-      'July',
-      'August',
-      'September',
-      'October',
-      'November',
-      'December',
-    ];
-    setCurrentDate(
-      `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`,
-    );
-  }, []);
-
-  const calculateDayNumber = () => {
-    if (!selectedPatient?.admission_date) return '';
-    const admission = new Date(selectedPatient.admission_date);
-    const today = new Date();
-    admission.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    const diffDays =
-      Math.floor(
-        (today.getTime() - admission.getTime()) / (1000 * 60 * 60 * 24),
-      ) + 1;
-    return diffDays > 0 ? diffDays.toString() : '1';
-  };
-
-  const handleAlertPress = () => {
-    if (!selectedPatientId) {
-      triggerPatientAlert();
-      setAlertVisible(true);
-      return;
-    }
-    setCdssModalVisible(true);
-  };
-
-  const handleCDSSPress = () => {
-    if (!selectedPatientId) {
-      triggerPatientAlert();
-      setAlertVisible(true);
-      return;
-    }
-    setCdssModalVisible(true);
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedPatientId) {
-      triggerPatientAlert();
-      setAlertVisible(true);
-      return;
-    }
-    const dayNo = parseInt(calculateDayNumber(), 10) || 1;
-    const res = await saveAssessment(dayNo);
-    if (res) {
-      setSuccessMessage({
-        title: isExistingRecord ? 'Record Updated' : 'Record Saved',
-        message: 'Intake and Output data has been successfully processed.',
-      });
-      setSuccessVisible(true);
-    }
-  };
-
-  const isValidDataAlert = (v: string | null | undefined): v is string =>
-    !!v &&
-    !v.toLowerCase().includes('no findings') &&
-    !v.toLowerCase().includes('no result') &&
-    !v.toLowerCase().includes('no alert') &&
-    v.trim() !== '';
-
-  const hasRealAlert =
-    isValidDataAlert(backendAlert) ||
-    isValidDataAlert(assessmentAlert) ||
-    isValidDataAlert(dataAlert);
-  const isAlertActive = !!selectedPatientId && hasRealAlert;
+    alertVisible, setAlertVisible,
+    cdssModalVisible, setCdssModalVisible,
+    successVisible, setSuccessVisible,
+    successMessage,
+    isAdpieActive, setIsAdpieActive,
+    currentDate,
+    scrollEnabled, setScrollEnabled,
+    isNA, toggleNA,
+    scrollViewRef,
+    isAlertLoading,
+    bellFadeAnim,
+    handleFieldChange,
+    calculateDayNumber,
+    handleAlertPress,
+    handleCDSSPress,
+    handleSubmit,
+    getCleanedAlertText,
+    backendSeverity,
+    assessmentSeverity,
+    assessmentAlert,
+    isAlertActive,
+  } = useIntakeAndOutputScreen(onBack, readOnly, patientId, initialPatientName);
 
   const fadeColors = isDarkMode
     ? ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.8)', 'rgba(18, 18, 18, 1)']
@@ -296,19 +88,21 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
     ? ['rgba(18, 18, 18, 1)', 'rgba(18, 18, 18, 0)']
     : ['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0)'];
 
-  const getCleanedAlertText = () => {
-    const parts = [
-      backendAlert,
-      assessmentAlert,
-      isValidDataAlert(dataAlert) ? dataAlert : null,
-    ].filter(Boolean);
-    if (!parts.length) return 'No clinical findings found.';
-    return parts
-      .join('\n\n')
-      .replace(/[🔴🟠✓⚠️❌]/g, '')
-      .replace(/\[(CRITICAL|WARNING|INFO)\]/gi, '$1')
-      .trim();
-  };
+  if (isAdpieActive && recordId && selectedPatientId) {
+    return (
+      <ADPIEScreen
+        recordId={recordId}
+        patientName={patientName}
+        feature="intake-output"
+        findingsSummary={`Oral: ${intakeOutput.oral_intake}, IV: ${intakeOutput.iv_fluids_volume}, Urine: ${intakeOutput.urine_output}`}
+        initialAlert={assessmentAlert || undefined}
+        onBack={() => {
+          setIsAdpieActive(false);
+          scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+        }}
+      />
+    );
+  }
 
   return (
     <SafeAreaView style={styles.root}>
@@ -380,7 +174,6 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
               style={[styles.naRow, !selectedPatientId && { opacity: 0.5 }]}
               onPress={() => {
                 if (!selectedPatientId) {
-                  triggerPatientAlert();
                   setAlertVisible(true);
                 } else {
                   toggleNA();
@@ -427,7 +220,6 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
               disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
-                  triggerPatientAlert();
                   setAlertVisible(true);
                 }
               }}
@@ -440,7 +232,6 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
               disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
-                  triggerPatientAlert();
                   setAlertVisible(true);
                 }
               }}
@@ -453,7 +244,6 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
               disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
-                  triggerPatientAlert();
                   setAlertVisible(true);
                 }
               }}
@@ -555,17 +345,9 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
 
       <SweetAlert
         visible={alertVisible}
-        title={
-          !selectedPatientId
-            ? 'Patient Required'
-            : currentAlert?.title || 'ALERT'
-        }
-        message={
-          !selectedPatientId
-            ? 'Please select a patient first in the search bar.'
-            : currentAlert?.message || 'Please fill out the form.'
-        }
-        type={!selectedPatientId ? 'error' : currentAlert?.type || 'success'}
+        title="Patient Required"
+        message="Please select a patient first in the search bar."
+        type="error"
         onConfirm={() => setAlertVisible(false)}
       />
 
@@ -579,167 +361,5 @@ const IntakeAndOutputScreen: React.FC<IntakeAndOutputScreenProps> = ({
     </SafeAreaView>
   );
 };
-
-const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
-  StyleSheet.create({
-    root: { flex: 1, backgroundColor: theme.background },
-    scrollContent: { paddingHorizontal: 40, paddingBottom: 130 },
-    header: commonStyles.header,
-    title: commonStyles.title,
-    subDate: {
-      color: theme.textMuted,
-      fontFamily: 'AlteHaasGroteskBold',
-      fontSize: 13,
-    },
-    row: { flexDirection: 'row', marginBottom: 15 },
-    fieldLabel: {
-      color: theme.primary,
-      fontFamily: 'AlteHaasGroteskBold',
-      fontSize: 14,
-      marginBottom: 8,
-    },
-    pillInput: {
-      borderWidth: 1.5,
-      borderColor: theme.border,
-      borderRadius: 25,
-      height: 45,
-      paddingHorizontal: 20,
-      justifyContent: 'center',
-      backgroundColor: theme.card,
-    },
-    dateVal: { color: theme.text, fontFamily: 'AlteHaasGrotesk' },
-    naRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'flex-end',
-      marginBottom: 5,
-      marginTop: 5,
-    },
-    naText: {
-      fontSize: 14,
-      fontFamily: 'AlteHaasGroteskBold',
-      color: theme.primary,
-      marginRight: 8,
-    },
-    disabledTextAtBottom: {
-      fontSize: 13,
-      fontFamily: 'AlteHaasGroteskBold',
-      color: theme.textMuted,
-      textAlign: 'right',
-      marginBottom: 15,
-    },
-    footerAction: { flexDirection: 'row', alignItems: 'center', marginTop: 10 },
-    alertIcon: {
-      width: 45,
-      height: 45,
-      borderRadius: 22.5,
-      justifyContent: 'center',
-      alignItems: 'center',
-      overflow: 'hidden',
-    },
-    fullImg: { width: '100%', height: '100%', resizeMode: 'contain' },
-    buttonGroup: { flex: 1, flexDirection: 'row', marginLeft: 15 },
-    cdssButton: {
-      flex: 1,
-      height: 48,
-      backgroundColor: theme.buttonBg,
-      borderRadius: 25,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1.5,
-      borderColor: theme.buttonBorder,
-      marginRight: 5,
-    },
-    cdssBtnText: {
-      color: theme.primary,
-      fontFamily: 'AlteHaasGroteskBold',
-      fontSize: 14,
-    },
-    submitButton: {
-      flex: 1,
-      height: 48,
-      backgroundColor: theme.buttonBg,
-      borderRadius: 25,
-      justifyContent: 'center',
-      alignItems: 'center',
-      borderWidth: 1.5,
-      borderColor: theme.buttonBorder,
-      marginLeft: 5,
-    },
-    submitBtnText: {
-      color: theme.primary,
-      fontFamily: 'AlteHaasGroteskBold',
-      fontSize: 14,
-    },
-    disabledButton: {
-      backgroundColor: theme.surface,
-      borderColor: theme.border,
-      opacity: 0.6,
-    },
-    modalOverlay: {
-      flex: 1,
-      backgroundColor: theme.overlay,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    menuContainer: {
-      width: '85%',
-      backgroundColor: theme.card,
-      borderRadius: 25,
-      padding: 25,
-      maxHeight: '80%',
-    },
-    menuTitle: {
-      fontSize: 18,
-      fontWeight: 'bold',
-      color: theme.primary,
-      marginBottom: 20,
-      textAlign: 'center',
-    },
-    menuItem: {
-      paddingVertical: 15,
-      borderBottomWidth: 1,
-      borderBottomColor: theme.border,
-    },
-    menuItemText: { fontSize: 16, color: theme.text, textAlign: 'center' },
-    activeMenuText: { color: theme.secondary, fontWeight: 'bold' },
-    closeMenuBtn: {
-      marginTop: 20,
-      backgroundColor: theme.surface,
-      paddingVertical: 12,
-      borderRadius: 20,
-      alignItems: 'center',
-    },
-    closeMenuText: { color: theme.primary, fontWeight: 'bold' },
-    fadeBottom: {
-      position: 'absolute',
-      bottom: 0,
-      left: 0,
-      right: 0,
-      height: 60,
-    },
-    staticPatientContainer: {
-      marginBottom: 20,
-      backgroundColor: theme.card,
-      padding: 15,
-      borderRadius: 15,
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: theme.border,
-    },
-    staticPatientLabel: {
-      fontFamily: 'AlteHaasGroteskBold',
-      color: theme.primary,
-      fontSize: 12,
-      marginRight: 10,
-    },
-    staticPatientName: {
-      fontFamily: 'AlteHaasGrotesk',
-      color: theme.text,
-      fontSize: 16,
-      fontWeight: 'bold',
-    },
-  });
 
 export default IntakeAndOutputScreen;
