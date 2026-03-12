@@ -55,52 +55,24 @@ const DoctorUpdatesScreen = ({ onBack, onNavigate }: { onBack?: () => void, onNa
   };
 
   const handleUpdatePress = (item: any) => {
-    if (item.status === 'Unread') markAsRead(item.id);
-
-    // MAPPING: Convert update_type to category
-    let category = '';
-    const type = item.type.toLowerCase();
-
-    if (type.includes('vital')) category = 'vital_signs';
-    else if (type.includes('physical')) category = 'physical_exam';
-    else if (type.includes('lab')) category = 'lab_values';
-    else if (type.includes('intake') || type.includes('output')) category = 'intake_output';
-    else if (type.includes('adl')) category = 'adl';
-    else if (type.includes('diagnostic')) category = 'diagnostics';
-    else if (type.includes('medical history') || type.includes('illness') || type.includes('past medical') || type.includes('allergies') || type.includes('vaccination') || type.includes('developmental')) category = 'medical_history';
-    else if (type.includes('iv') || type.includes('line')) category = 'ivs_lines';
-    else if (type.includes('medication') && type.includes('reconciliation')) category = 'medication_reconciliation';
-    else if (type.includes('medication')) category = 'medication';
-
-    const params = {
-        patientId: item.patient_id,
-        patientName: item.name
+    if (item.status === 'Unread') markAsRead(item.id, item.type_key, item.record_id);
+    const typeKeyToRoute: Record<string, string> = {
+      'vital-signs': 'VitalSigns',
+      'physical-exam': 'PhysicalExam',
+      'intake-output': 'IntakeOutput',
+      'lab-values': 'LabValues',
+      'adl': 'ADL',
+      'ivs-lines': 'IvsLines',
+      'medication': 'Medication',
+      'medical-history': 'MedicalHistory',
+      'diagnostics': 'Diagnostics',
+      'medical-reconciliation': 'MedicationReconciliation',
     };
-
-    if (category === 'vital_signs') {
-        onNavigate('VitalSigns', params);
-    } else if (category === 'physical_exam') {
-        onNavigate('PhysicalExam', params);
-    } else if (category === 'lab_values') {
-        onNavigate('LabValues', params);
-    } else if (category === 'diagnostics') {
-        onNavigate('Diagnostics', params);
-    } else if (category === 'medical_history') {
-        onNavigate('MedicalHistory', params);
-    } else if (category === 'ivs_lines') {
-        onNavigate('IvsLines', params);
-    } else if (category === 'medication') {
-        onNavigate('Medication', params);
-    } else if (category === 'medication_reconciliation') {
-        onNavigate('MedicationReconciliation', params);
-    } else if (category) {
-        onNavigate('DoctorPatientDetail', {
-          ...params,
-          category: category
-        });
-    } else {
-        console.log('Unmapped update type:', item.type);
-    }
+    const route = typeKeyToRoute[item.type_key] ?? 'DoctorPatientDetail';
+    onNavigate(route, {
+      patientId: item.patient_id,
+      patientName: item.name,
+    });
   };
 
   return (
@@ -178,7 +150,7 @@ const DoctorUpdatesScreen = ({ onBack, onNavigate }: { onBack?: () => void, onNa
         <NavItem label="Home" icon={require('../../../../assets/doctors-page/doctor-home.png')} active onPress={onBack} />
         <NavItem label="Patients" icon={require('../../../../assets/doctors-page/doctor-patients.png')} onPress={() => onNavigate('DoctorPatients')} />
         <NavItem label="Reports" icon={require('../../../../assets/doctors-page/doctor-reports.png')} onPress={() => onNavigate('DoctorReports')} />
-        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} />
+        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} onPress={() => onNavigate('DoctorSettings')} />
       </View>
 
       <AccountModal visible={modalVisible} onClose={() => setModalVisible(false)} onLogout={() => setModalVisible(false)} />

@@ -383,8 +383,8 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({
                         images={images}
                         onImport={() => handleImport(item.id)}
                         onDelete={handleDelete}
-                        // Disable interactions if readOnly
                         disabled={loading || readOnly}
+                        hideImport={readOnly}
                       />
                     </View>
                   );
@@ -419,6 +419,7 @@ const DiagnosticsScreen: React.FC<DiagnosticsProps> = ({
                       onImport={() => handleImport(item.id)}
                       onDelete={handleDelete}
                       disabled={loading || readOnly}
+                      hideImport={readOnly}
                     />
                   </View>
                 );

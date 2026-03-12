@@ -47,9 +47,12 @@ const nextArrow = require('@assets/icons/next_arrow.png');
 
 interface VitalSignsScreenProps {
   onBack: () => void;
+  readOnly?: boolean;
+  patientId?: number;
+  initialPatientName?: string;
 }
 
-const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
+const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack, readOnly = false, patientId, initialPatientName }) => {
   const { isDarkMode, theme, commonStyles } = useAppTheme();
   const styles = useMemo(
     () => createStyles(theme, commonStyles, isDarkMode),
@@ -67,6 +70,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     vitalKeys,
     chartData,
     handleNextTime,
+    handlePrevTime,
     selectTime,
     TIME_SLOTS,
     isDataEntered,
@@ -102,6 +106,12 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
   const [isAlertLoading, setIsAlertLoading] = useState(false);
   const fieldTimers = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
   const analyzeCountRef = useRef(0);
+
+  useEffect(() => {
+    if (readOnly && patientId) {
+      setSelectedPatient(patientId.toString(), initialPatientName || '');
+    }
+  }, [readOnly, patientId]);
 
   const handleVitalChange = useCallback((key: string, value: string) => {
     handleUpdateVital(key, value);
@@ -241,6 +251,11 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
     scrollViewRef.current?.scrollTo({ y: 0, animated: true });
   };
 
+  const handlePrevPress = () => {
+    handlePrevTime();
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  };
+
   const handleSubmitPress = async () => {
     if (!selectedPatientId) {
       return setAlertVisible(true);
@@ -306,6 +321,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
   }, [handleBackPress]);
 
   const isLastTimeSlot = currentTimeIndex === TIME_SLOTS.length - 1;
+  const isFirstTimeSlot = currentTimeIndex === 0;
 
   const fadeColors = isDarkMode
     ? ['rgba(18, 18, 18, 0)', 'rgba(18, 18, 18, 0.8)', 'rgba(18, 18, 18, 1)']
@@ -370,6 +386,11 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
                   day: 'numeric',
                 })}
               </Text>
+              {readOnly && (
+                <Text style={{ fontSize: 14, color: '#E8572A', fontFamily: 'AlteHaasGroteskBold', marginTop: 5 }}>
+                  [READ ONLY]
+                </Text>
+              )}
             </View>
             <TouchableOpacity onPress={() => setIsMenuVisible(true)}>
               <Text style={styles.menuDots}>⋮</Text>
@@ -393,14 +414,21 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
         >
           <View style={{ height: 20 }} />
           {/* Info Section / Search Bar */}
-          <PatientSearchBar
-            onPatientSelect={(id, name, patientObj) => {
-              setSelectedPatient(id ? id.toString() : null, name);
-              setSelectedPatientFull(patientObj);
-            }}
-            onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
-            initialPatientName={patientName}
-          />
+          {!readOnly ? (
+            <PatientSearchBar
+              onPatientSelect={(id, name, patientObj) => {
+                setSelectedPatient(id ? id.toString() : null, name);
+                setSelectedPatientFull(patientObj);
+              }}
+              onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
+              initialPatientName={patientName}
+            />
+          ) : (
+            <View style={styles.staticPatientContainer}>
+              <Text style={styles.staticPatientLabel}>PATIENT:</Text>
+              <Text style={styles.staticPatientName}>{initialPatientName || 'Unknown Patient'}</Text>
+            </View>
+          )}
 
           <View style={styles.row}>
             <View style={{ flex: 1.2, marginRight: 10 }}>
@@ -487,41 +515,45 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
             )}
           </View>
 
-          <TouchableOpacity
-            style={[styles.naRow, !selectedPatientId && { opacity: 0.5 }]}
-            onPress={() => {
-              if (!selectedPatientId) {
-                setAlertVisible(true);
-              } else {
-                toggleNA();
-              }
-            }}
-          >
+          {!readOnly && (
+            <TouchableOpacity
+              style={[styles.naRow, !selectedPatientId && { opacity: 0.5 }]}
+              onPress={() => {
+                if (!selectedPatientId) {
+                  setAlertVisible(true);
+                } else {
+                  toggleNA();
+                }
+              }}
+            >
+              <Text
+                style={[
+                  styles.naText,
+                  !selectedPatientId && { color: theme.textMuted },
+                ]}
+              >
+                Mark all as N/A
+              </Text>
+              <Icon
+                name={isNA ? 'check-box' : 'check-box-outline-blank'}
+                size={22}
+                color={selectedPatientId ? theme.primary : theme.textMuted}
+              />
+            </TouchableOpacity>
+          )}
+
+          {!readOnly && (
             <Text
               style={[
-                styles.naText,
-                !selectedPatientId && { color: theme.textMuted },
+                styles.disabledTextAtBottom,
+                isNA && { color: theme.error },
               ]}
             >
-              Mark all as N/A
+              {isNA
+                ? 'All fields below are disabled.'
+                : 'Checking this will disable all fields below.'}
             </Text>
-            <Icon
-              name={isNA ? 'check-box' : 'check-box-outline-blank'}
-              size={22}
-              color={selectedPatientId ? theme.primary : theme.textMuted}
-            />
-          </TouchableOpacity>
-
-          <Text
-            style={[
-              styles.disabledTextAtBottom,
-              isNA && { color: theme.error },
-            ]}
-          >
-            {isNA
-              ? 'All fields below are disabled.'
-              : 'Checking this will disable all fields below.'}
-          </Text>
+          )}
 
           <View style={styles.timeBanner}>
             <Text style={styles.timeText}>{currentTime}</Text>
@@ -533,7 +565,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
               label="Temperature"
               value={vitals.temperature}
               onChangeText={v => handleVitalChange('temperature', v)}
-              disabled={!selectedPatientId || isNA}
+              disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
                   setAlertVisible(true);
@@ -544,7 +576,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
               label="HR"
               value={vitals.hr}
               onChangeText={v => handleVitalChange('hr', v)}
-              disabled={!selectedPatientId || isNA}
+              disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
                   setAlertVisible(true);
@@ -555,7 +587,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
               label="RR"
               value={vitals.rr}
               onChangeText={v => handleVitalChange('rr', v)}
-              disabled={!selectedPatientId || isNA}
+              disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
                   setAlertVisible(true);
@@ -567,7 +599,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
               value={vitals.bp}
               onChangeText={v => handleVitalChange('bp', v)}
               keyboardType="numbers-and-punctuation"
-              disabled={!selectedPatientId || isNA}
+              disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
                   setAlertVisible(true);
@@ -578,7 +610,7 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
               label="SP02"
               value={vitals.spo2}
               onChangeText={v => handleVitalChange('spo2', v)}
-              disabled={!selectedPatientId || isNA}
+              disabled={!selectedPatientId || isNA || readOnly}
               onDisabledPress={() => {
                 if (!selectedPatientId) {
                   setAlertVisible(true);
@@ -587,107 +619,149 @@ const VitalSignsScreen: React.FC<VitalSignsScreenProps> = ({ onBack }) => {
             />
           </View>
 
-          {/* Footer Action Area */}
-          <View style={styles.footerAction}>
-            <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
-              <TouchableOpacity
-                style={[
-                  styles.alertIcon,
-                  {
-                    backgroundColor: !selectedPatientId
-                      ? theme.alertBellDisabledBg
-                      : realtimeAlert || currentAlert
-                      ? theme.alertBellOnBg
-                      : theme.alertBellOffBg,
-                    borderColor: !selectedPatientId
-                      ? theme.border
-                      : '#EDB62C',
-                    opacity: !selectedPatientId ? 1 : realtimeAlert || currentAlert ? 1 : 0.3,
-                  },
-                ]}
-                disabled={!isDataEntered}
-                onPress={handleAlertPress}
-              >
-                <Image
-                  source={alertIcon}
-                  style={[
-                    styles.fullImg,
-                    !selectedPatientId
-                      ? { tintColor: theme.textMuted }
-                      : { tintColor: '#EDB62C' },
-                  ]}
-                />
-              </TouchableOpacity>
-            </Animated.View>
-
-            {isLastTimeSlot ? (
-              <View style={styles.buttonGroup}>
+          {!readOnly ? (
+            <View style={styles.footerAction}>
+              <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
                 <TouchableOpacity
                   style={[
-                    styles.cdssButton,
-                    (!selectedPatientId || (!isDataEntered && !isNA)) && {
-                      backgroundColor: theme.buttonDisabledBg,
-                      borderColor: theme.buttonDisabledBorder,
+                    styles.alertIcon,
+                    {
+                      backgroundColor: !selectedPatientId
+                        ? theme.alertBellDisabledBg
+                        : realtimeAlert || currentAlert
+                        ? theme.alertBellOnBg
+                        : theme.alertBellOffBg,
+                      borderColor: !selectedPatientId
+                        ? theme.border
+                        : '#EDB62C',
+                      opacity: !selectedPatientId ? 1 : realtimeAlert || currentAlert ? 1 : 0.3,
                     },
                   ]}
-                  onPress={handleCDSSPress}
-                  disabled={!selectedPatientId}
+                  disabled={!isDataEntered}
+                  onPress={handleAlertPress}
                 >
-                  <Text
+                  <Image
+                    source={alertIcon}
                     style={[
-                      styles.cdssBtnText,
+                      styles.fullImg,
+                      !selectedPatientId
+                        ? { tintColor: theme.textMuted }
+                        : { tintColor: '#EDB62C' },
+                    ]}
+                  />
+                </TouchableOpacity>
+              </Animated.View>
+
+              {isLastTimeSlot ? (
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity
+                    style={[
+                      styles.cdssButton,
                       (!selectedPatientId || (!isDataEntered && !isNA)) && {
-                        color: theme.textMuted,
+                        backgroundColor: theme.buttonDisabledBg,
+                        borderColor: theme.buttonDisabledBorder,
                       },
                     ]}
+                    onPress={handleCDSSPress}
+                    disabled={!selectedPatientId}
                   >
-                    CDSS
-                  </Text>
-                </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.cdssBtnText,
+                        (!selectedPatientId || (!isDataEntered && !isNA)) && {
+                          color: theme.textMuted,
+                        },
+                      ]}
+                    >
+                      CDSS
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.submitButton,
+                      !selectedPatientId && {
+                        backgroundColor: theme.buttonDisabledBg,
+                        borderColor: theme.buttonDisabledBorder,
+                      },
+                    ]}
+                    onPress={handleSubmitPress}
+                    disabled={!selectedPatientId}
+                  >
+                    <Text
+                      style={[
+                        styles.submitBtnText,
+                        !selectedPatientId && { color: theme.textMuted },
+                      ]}
+                    >
+                      SUBMIT
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
                 <TouchableOpacity
                   style={[
-                    styles.submitButton,
+                    styles.nextButton,
                     !selectedPatientId && {
                       backgroundColor: theme.buttonDisabledBg,
                       borderColor: theme.buttonDisabledBorder,
                     },
                   ]}
-                  onPress={handleSubmitPress}
+                  onPress={handleNextPress}
                   disabled={!selectedPatientId}
                 >
                   <Text
                     style={[
-                      styles.submitBtnText,
+                      styles.nextBtnText,
                       !selectedPatientId && { color: theme.textMuted },
                     ]}
                   >
-                    SUBMIT
+                    NEXT ›
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          ) : (
+            <View style={{ marginTop: 20 }}>
+              <View style={[styles.footerAction, { marginBottom: 10 }]}>
+                <TouchableOpacity
+                  style={[
+                    styles.nextButton,
+                    isFirstTimeSlot && {
+                      backgroundColor: theme.buttonDisabledBg,
+                      borderColor: theme.buttonDisabledBorder,
+                    },
+                  ]}
+                  onPress={handlePrevPress}
+                  disabled={isFirstTimeSlot}
+                >
+                  <Text style={[styles.nextBtnText, isFirstTimeSlot && { color: theme.textMuted }]}>
+                    ‹ PREV
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.nextButton,
+                    isLastTimeSlot && {
+                      backgroundColor: theme.buttonDisabledBg,
+                      borderColor: theme.buttonDisabledBorder,
+                    },
+                  ]}
+                  onPress={handleNextPress}
+                  disabled={isLastTimeSlot}
+                >
+                  <Text style={[styles.nextBtnText, isLastTimeSlot && { color: theme.textMuted }]}>
+                    NEXT ›
                   </Text>
                 </TouchableOpacity>
               </View>
-            ) : (
               <TouchableOpacity
-                style={[
-                  styles.nextButton,
-                  !selectedPatientId && {
-                    backgroundColor: theme.buttonDisabledBg,
-                    borderColor: theme.buttonDisabledBorder,
-                  },
-                ]}
-                onPress={handleNextPress}
-                disabled={!selectedPatientId}
+                style={styles.submitButton}
+                onPress={onBack}
               >
-                <Text
-                  style={[
-                    styles.nextBtnText,
-                    !selectedPatientId && { color: theme.textMuted },
-                  ]}
-                >
-                  NEXT ›
-                </Text>
+                <Text style={styles.submitBtnText}>CLOSE</Text>
               </TouchableOpacity>
-            )}
-          </View>
+            </View>
+          )}
         </ScrollView>
         <LinearGradient
           colors={fadeColors}
@@ -998,6 +1072,28 @@ const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) =>
       left: 0,
       right: 0,
       height: 60,
+    },
+    staticPatientContainer: {
+      marginBottom: 20,
+      backgroundColor: theme.card,
+      padding: 15,
+      borderRadius: 15,
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: theme.border,
+    },
+    staticPatientLabel: {
+      fontFamily: 'AlteHaasGroteskBold',
+      color: theme.primary,
+      fontSize: 12,
+      marginRight: 10,
+    },
+    staticPatientName: {
+      fontFamily: 'AlteHaasGrotesk',
+      color: theme.text,
+      fontSize: 16,
+      fontWeight: 'bold',
     },
   });
 

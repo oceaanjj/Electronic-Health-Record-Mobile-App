@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   View, 
   Text, 
@@ -14,9 +14,12 @@ import {
   Dimensions,
   Platform
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { AccountModal } from '../../../components/AccountModal';
 import apiClient from '../../../api/apiClient';
+
+const CACHE_PATIENTS_KEY = 'doctor_cache_patients';
 
 // --- UPDATED PATIENT RECORD MODAL COMPONENT (CENTERED BOX STYLE) ---
 const PatientRecordModal = ({ visible, onClose, patient, onSelectCategory }: any) => {
@@ -81,7 +84,7 @@ const PatientRecordModal = ({ visible, onClose, patient, onSelectCategory }: any
   );
 };
 
-const DoctorPatientsScreen = ({ onNavigate }: { onNavigate: (route: string) => void }) => {
+const DoctorPatientsScreen = ({ onNavigate }: { onNavigate: (route: string, params?: any) => void }) => {
   const [accountModalVisible, setAccountModalVisible] = useState(false);
   const [recordVisible, setRecordVisible] = useState(false);
   const [selectedPatient, setSelectedPatient] = useState<any>(null);
@@ -89,35 +92,70 @@ const DoctorPatientsScreen = ({ onNavigate }: { onNavigate: (route: string) => v
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const fetchPatients = async () => {
+  // Load cache on mount for instant display
+  useEffect(() => {
+    const loadCache = async () => {
+      try {
+        const cached = await AsyncStorage.getItem(CACHE_PATIENTS_KEY);
+        if (cached) {
+          setPatients(JSON.parse(cached));
+          setLoading(false);
+        }
+      } catch {}
+    };
+    loadCache();
+  }, []);
+
+  const fetchPatients = useCallback(async () => {
     try {
-      setLoading(true);
-      const response = await apiClient.get('/patient/');
+      setPatients(prev => {
+        if (prev.length === 0) setLoading(true);
+        return prev;
+      });
+      const response = await apiClient.get('/doctor/patients');
       if (response.data && Array.isArray(response.data)) {
         setPatients(response.data);
+        AsyncStorage.setItem(CACHE_PATIENTS_KEY, JSON.stringify(response.data)).catch(() => {});
       }
     } catch (error) {
       console.error('Error fetching patients:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchPatients();
-  }, []);
+  }, [fetchPatients]);
 
   const filteredPatients = useMemo(() => {
-    return patients.filter(p => 
-      `${p.first_name} ${p.last_name}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      p.patient_id.toString().includes(searchQuery)
+    return patients.filter(p =>
+      `${p.first_name ?? ''} ${p.last_name ?? ''}`.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      String(p.patient_id ?? p.id ?? '').includes(searchQuery)
     );
   }, [patients, searchQuery]);
 
   const handleCategoryPress = (categoryName: string) => {
     setRecordVisible(false);
-    if (categoryName === 'Medical Reconciliation') {
-      onNavigate('MedicalReconciliation'); 
+
+    const categoryToRoute: Record<string, string> = {
+      'Vital Signs': 'VitalSigns',
+      'Physical Exam': 'PhysicalExam',
+      'Intake and Output': 'IntakeOutput',
+      'Lab Values': 'LabValues',
+      'IVs & Lines': 'IvsLines',
+      'Activities of Daily Living': 'ADL',
+      'Medical Administration': 'Medication',
+      'Medical History': 'MedicalHistory',
+      'Diagnostics': 'Diagnostics',
+      'Medical Reconciliation': 'MedicationReconciliation',
+    };
+
+    const route = categoryToRoute[categoryName];
+    if (route && selectedPatient) {
+      const patientId = selectedPatient.patient_id ?? selectedPatient.id;
+      const patientName = `${selectedPatient.first_name ?? ''} ${selectedPatient.last_name ?? ''}`.trim();
+      onNavigate(route, { patientId, patientName });
     }
   };
 
@@ -200,7 +238,7 @@ const DoctorPatientsScreen = ({ onNavigate }: { onNavigate: (route: string) => v
         <NavItem label="Home" icon={require('../../../../assets/doctors-page/doctor-home.png')} onPress={() => onNavigate('DoctorHome')} />
         <NavItem label="Patients" icon={require('../../../../assets/doctors-page/doctor-patients.png')} active />
         <NavItem label="Reports" icon={require('../../../../assets/doctors-page/doctor-reports.png')} onPress={() => onNavigate('DoctorReports')} />
-        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} />
+        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} onPress={() => onNavigate('DoctorSettings')} />
       </View>
 
       <AccountModal 

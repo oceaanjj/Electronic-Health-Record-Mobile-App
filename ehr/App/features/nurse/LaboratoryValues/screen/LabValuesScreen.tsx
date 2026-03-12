@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -22,7 +22,12 @@ import { LAB_TESTS, getTestPrefix } from './constants';
 
 const alertIcon = require('@assets/icons/alert.png');
 
-const LabValuesScreen = ({ onBack }: any) => {
+const LabValuesScreen = ({ onBack, readOnly = false, patientId, initialPatientName }: {
+  onBack: any;
+  readOnly?: boolean;
+  patientId?: number;
+  initialPatientName?: string;
+}) => {
   const { isDarkMode, theme, commonStyles } = useAppTheme();
   const styles = useMemo(() => createStyles(theme, commonStyles, isDarkMode), [theme, commonStyles, isDarkMode]);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -52,6 +57,12 @@ const LabValuesScreen = ({ onBack }: any) => {
     generateFindingsSummary,
     isAlertLoading,
   } = useLabValuesScreen(onBack);
+
+  useEffect(() => {
+    if (readOnly && patientId) {
+      handlePatientSelect(patientId, initialPatientName || '');
+    }
+  }, [readOnly, patientId]);
 
   const selectedTest = LAB_TESTS[selectedTestIndex];
   const prefix = getTestPrefix(selectedTest);
@@ -110,6 +121,11 @@ const LabValuesScreen = ({ onBack }: any) => {
                   day: 'numeric',
                 })}
               </Text>
+              {readOnly && (
+                <Text style={{ fontSize: 14, color: '#E8572A', fontFamily: 'AlteHaasGroteskBold', marginTop: 5 }}>
+                  [READ ONLY]
+                </Text>
+              )}
             </View>
             <TouchableOpacity onPress={() => setShowLabList(!showLabList)}>
               <Icon name="more-vert" size={35} color={theme.primary} />
@@ -133,8 +149,7 @@ const LabValuesScreen = ({ onBack }: any) => {
           scrollEnabled={scrollEnabled}
         >
           <View style={{ height: 20 }} />
-          {showLabList && (
-            <View style={styles.dropdownOverlay}>
+          {showLabList && (            <View style={styles.dropdownOverlay}>
               <ScrollView nestedScrollEnabled={true}>
                 {LAB_TESTS.map((test, index) => (
                   <TouchableOpacity
@@ -155,50 +170,61 @@ const LabValuesScreen = ({ onBack }: any) => {
             </View>
           )}
 
-          <PatientSearchBar
-            initialPatientName={searchText}
-            onPatientSelect={handlePatientSelect}
-            onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
-          />
+          {!readOnly ? (
+            <PatientSearchBar
+              initialPatientName={searchText}
+              onPatientSelect={handlePatientSelect}
+              onToggleDropdown={isOpen => setScrollEnabled(!isOpen)}
+            />
+          ) : (
+            <View style={styles.staticPatientContainer}>
+              <Text style={styles.staticPatientLabel}>PATIENT:</Text>
+              <Text style={styles.staticPatientName}>{initialPatientName || 'Unknown Patient'}</Text>
+            </View>
+          )}
 
-          <TouchableOpacity
-            style={[styles.naRow, !selectedPatientId && { opacity: 0.5 }]}
-            onPress={() => {
-              if (!selectedPatientId) {
-                showAlert(
-                  'Patient Required',
-                  'Please select a patient first in the search bar.',
-                );
-              } else {
-                toggleNA();
-              }
-            }}
-          >
+          {!readOnly && (
+            <TouchableOpacity
+              style={[styles.naRow, !selectedPatientId && { opacity: 0.5 }]}
+              onPress={() => {
+                if (!selectedPatientId) {
+                  showAlert(
+                    'Patient Required',
+                    'Please select a patient first in the search bar.',
+                  );
+                } else {
+                  toggleNA();
+                }
+              }}
+            >
+              <Text
+                style={[
+                  styles.naText,
+                  !selectedPatientId && { color: theme.textMuted },
+                ]}
+              >
+                Mark all as N/A
+              </Text>
+              <Icon
+                name={isNA ? 'check-box' : 'check-box-outline-blank'}
+                size={22}
+                color={selectedPatientId ? theme.primary : theme.textMuted}
+              />
+            </TouchableOpacity>
+          )}
+
+          {!readOnly && (
             <Text
               style={[
-                styles.naText,
-                !selectedPatientId && { color: theme.textMuted },
+                styles.disabledTextAtBottom,
+                isNA && { color: theme.error },
               ]}
             >
-              Mark all as N/A
+              {isNA
+                ? 'All fields below are disabled.'
+                : 'Checking this will disable all fields below.'}
             </Text>
-            <Icon
-              name={isNA ? 'check-box' : 'check-box-outline-blank'}
-              size={22}
-              color={selectedPatientId ? theme.primary : theme.textMuted}
-            />
-          </TouchableOpacity>
-
-          <Text
-            style={[
-              styles.disabledTextAtBottom,
-              isNA && { color: theme.error },
-            ]}
-          >
-            {isNA
-              ? 'All fields below are disabled.'
-              : 'Checking this will disable all fields below.'}
-          </Text>
+          )}
 
           <LabResultCard
             testLabel={selectedTest}
@@ -206,7 +232,7 @@ const LabValuesScreen = ({ onBack }: any) => {
             rangeValue={normalRange}
             onResultChange={setResult}
             onRangeChange={setNormalRange}
-            disabled={!selectedPatientId || isNA}
+            disabled={!selectedPatientId || isNA || readOnly}
             onDisabledPress={() => {
               if (!selectedPatientId) {
                 showAlert(
@@ -217,114 +243,123 @@ const LabValuesScreen = ({ onBack }: any) => {
             }}
           />
 
-          <View style={styles.footerRow}>
-            <TouchableOpacity
-              style={[
-                styles.alertIcon,
-                {
-                  backgroundColor: !selectedPatientId
-                    ? theme.alertBellDisabledBg
-                    : isClinicalAlert
-                    ? theme.alertBellOnBg
-                    : theme.alertBellOffBg,
-                  borderColor: !selectedPatientId
-                    ? theme.border
-                    : '#EDB62C',
-                  opacity: !selectedPatientId ? 1 : isClinicalAlert ? 1 : 0.3,
-                },
-              ]}
-              disabled={!selectedPatientId}
-              onPress={() => setModalVisible(true)}
-            >
-              <Image
-                source={alertIcon}
+          {!readOnly ? (
+            <View style={styles.footerRow}>
+              <TouchableOpacity
                 style={[
-                  styles.fullImg,
-                  !selectedPatientId
-                    ? { tintColor: theme.textMuted }
-                    : isClinicalAlert
-                    ? { tintColor: '#EDB62C' }
-                    : { tintColor: '#EDB62C' },
+                  styles.alertIcon,
+                  {
+                    backgroundColor: !selectedPatientId
+                      ? theme.alertBellDisabledBg
+                      : isClinicalAlert
+                      ? theme.alertBellOnBg
+                      : theme.alertBellOffBg,
+                    borderColor: !selectedPatientId
+                      ? theme.border
+                      : '#EDB62C',
+                    opacity: !selectedPatientId ? 1 : isClinicalAlert ? 1 : 0.3,
+                  },
                 ]}
-              />
-            </TouchableOpacity>
-
-            {selectedTestIndex === LAB_TESTS.length - 1 ? (
-              <View style={styles.buttonGroup}>
-                <TouchableOpacity
+                disabled={!selectedPatientId}
+                onPress={() => setModalVisible(true)}
+              >
+                <Image
+                  source={alertIcon}
                   style={[
-                    styles.cdssBtn,
-                    (!selectedPatientId || (!hasInputData && !isNA)) && {
-                      backgroundColor: theme.buttonDisabledBg,
-                      borderColor: theme.buttonDisabledBorder,
-                    },
+                    styles.fullImg,
+                    !selectedPatientId
+                      ? { tintColor: theme.textMuted }
+                      : isClinicalAlert
+                      ? { tintColor: '#EDB62C' }
+                      : { tintColor: '#EDB62C' },
                   ]}
-                  onPress={handleCDSSPress}
-                  disabled={!selectedPatientId}
-                >
-                  <Text
+                />
+              </TouchableOpacity>
+
+              {selectedTestIndex === LAB_TESTS.length - 1 ? (
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity
                     style={[
-                      styles.cdssText,
-                      (!selectedPatientId || (!hasInputData && !isNA))
-                        ? { color: theme.textMuted }
-                        : { color: theme.primary },
+                      styles.cdssBtn,
+                      (!selectedPatientId || (!hasInputData && !isNA)) && {
+                        backgroundColor: theme.buttonDisabledBg,
+                        borderColor: theme.buttonDisabledBorder,
+                      },
                     ]}
+                    onPress={handleCDSSPress}
+                    disabled={!selectedPatientId}
                   >
-                    CDSS
-                  </Text>
-                </TouchableOpacity>
+                    <Text
+                      style={[
+                        styles.cdssText,
+                        (!selectedPatientId || (!hasInputData && !isNA))
+                          ? { color: theme.textMuted }
+                          : { color: theme.primary },
+                      ]}
+                    >
+                      CDSS
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.submitBtn,
+                      !selectedPatientId && {
+                        backgroundColor: theme.buttonDisabledBg,
+                        borderColor: theme.buttonDisabledBorder,
+                      },
+                    ]}
+                    onPress={handleNextOrSave}
+                    disabled={!selectedPatientId}
+                  >
+                    <Text
+                      style={[
+                        styles.submitText,
+                        !selectedPatientId && { color: theme.textMuted },
+                      ]}
+                    >
+                      {isExistingRecord ? 'UPDATE' : 'SUBMIT'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
                 <TouchableOpacity
                   style={[
-                    styles.submitBtn,
+                    styles.nextBtn,
                     !selectedPatientId && {
                       backgroundColor: theme.buttonDisabledBg,
                       borderColor: theme.buttonDisabledBorder,
                     },
                   ]}
-                  onPress={handleNextOrSave}
+                  onPress={async () => {
+                    await handleNextOrSave();
+                    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+                  }}
                   disabled={!selectedPatientId}
                 >
                   <Text
                     style={[
-                      styles.submitText,
+                      styles.nextText,
                       !selectedPatientId && { color: theme.textMuted },
                     ]}
                   >
-                    {isExistingRecord ? 'UPDATE' : 'SUBMIT'}
+                    NEXT
                   </Text>
+                  <Icon
+                    name="chevron-right"
+                    size={20}
+                    color={selectedPatientId ? theme.primary : theme.textMuted}
+                  />
                 </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={[
-                  styles.nextBtn,
-                  !selectedPatientId && {
-                    backgroundColor: theme.buttonDisabledBg,
-                    borderColor: theme.buttonDisabledBorder,
-                  },
-                ]}
-                onPress={async () => {
-                  await handleNextOrSave();
-                  scrollViewRef.current?.scrollTo({ y: 0, animated: true });
-                }}
-                disabled={!selectedPatientId}
-              >
-                <Text
-                  style={[
-                    styles.nextText,
-                    !selectedPatientId && { color: theme.textMuted },
-                  ]}
-                >
-                  NEXT
-                </Text>
-                <Icon
-                  name="chevron-right"
-                  size={20}
-                  color={selectedPatientId ? theme.primary : theme.textMuted}
-                />
-              </TouchableOpacity>
-            )}
-          </View>
+              )}
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={[styles.submitBtn, { marginTop: 10 }]}
+              onPress={onBack}
+            >
+              <Text style={[styles.submitText, { color: theme.primary }]}>CLOSE</Text>
+            </TouchableOpacity>
+          )}
         </ScrollView>
         <LinearGradient
           colors={fadeColors}
@@ -471,6 +506,28 @@ const createStyles = (theme: any, commonStyles: any, isDarkMode: boolean) => Sty
     left: 0,
     right: 0,
     height: 60,
+  },
+  staticPatientContainer: {
+    marginBottom: 20,
+    backgroundColor: theme.card,
+    padding: 15,
+    borderRadius: 15,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.border,
+  },
+  staticPatientLabel: {
+    fontFamily: 'AlteHaasGroteskBold',
+    color: theme.primary,
+    fontSize: 12,
+    marginRight: 10,
+  },
+  staticPatientName: {
+    fontFamily: 'AlteHaasGrotesk',
+    color: theme.text,
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 

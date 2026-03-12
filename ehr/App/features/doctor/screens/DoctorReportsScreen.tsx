@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, Linking, Alert } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity, Image, Alert, ActivityIndicator, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNBlobUtil from 'react-native-blob-util';
 import { AccountModal } from '../../../components/AccountModal';
 import PatientSearchBar from '../../../components/PatientSearchBar';
 import { BASE_URL } from '../../../api/apiClient';
@@ -10,22 +12,37 @@ const DoctorReportsScreen = ({ onNavigate }: { onNavigate: (route: string) => vo
   const [selectedPatientId, setSelectedPatientId] = useState<number | null>(null);
   const [patientName, setPatientName] = useState('');
   const [scrollEnabled, setScrollEnabled] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGeneratePDF = async () => {
     if (!selectedPatientId) return;
+    setIsLoading(true);
 
-    const reportUrl = `${BASE_URL}/reports/patient/${selectedPatientId}`;
-    console.log("Attempting to open report URL:", reportUrl);
-    
     try {
-      // Direct openURL is more reliable on modern Android versions
-      await Linking.openURL(reportUrl);
-    } catch (error) {
-      console.error("Error generating report:", error);
-      Alert.alert(
-        "Report Error", 
-        `Could not open report.\n\nURL: ${reportUrl}\n\nPlease check if your backend is running and reachable.`
-      );
+      const token = await AsyncStorage.getItem('token');
+      const pdfUrl = `${BASE_URL}/doctor/patient/${selectedPatientId}/pdf`;
+      const fileName = `${patientName.replace(/\s+/g, '_')}_Results.pdf`;
+
+      const dirs = RNBlobUtil.fs.dirs;
+      const filePath = `${dirs.CacheDir}/${fileName}`;
+
+      const res = await RNBlobUtil.config({
+        path: filePath,
+        fileCache: true,
+      }).fetch('GET', pdfUrl, {
+        Authorization: `Bearer ${token}`,
+      });
+
+      if (Platform.OS === 'android') {
+        await RNBlobUtil.android.actionViewIntent(res.path(), 'application/pdf');
+      } else {
+        await RNBlobUtil.ios.openDocument(res.path());
+      }
+    } catch (error: any) {
+      console.error('PDF generation error:', error);
+      Alert.alert('Error', `Failed to generate PDF report.\n\n${error.message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -59,6 +76,7 @@ const DoctorReportsScreen = ({ onNavigate }: { onNavigate: (route: string) => vo
           placeholder="Search Patients"
           containerStyle={styles.searchBarContainer}
           inputBarStyle={styles.searchBarWrapper}
+          apiEndpoint="/doctor/patients"
         />
 
         {/* Conditional Content based on selection */}
@@ -68,11 +86,15 @@ const DoctorReportsScreen = ({ onNavigate }: { onNavigate: (route: string) => vo
           </View>
         ) : (
           <TouchableOpacity 
-            style={styles.generateButton}
+            style={[styles.generateButton, isLoading && { opacity: 0.6 }]}
             onPress={handleGeneratePDF}
+            disabled={isLoading}
             activeOpacity={0.7}
           >
-            <Text style={styles.generateText}>GENERATE PDF</Text>
+            {isLoading
+              ? <ActivityIndicator color="#FFF" size="small" />
+              : <Text style={styles.generateText}>GENERATE PDF</Text>
+            }
           </TouchableOpacity>
         )}
 
@@ -85,7 +107,7 @@ const DoctorReportsScreen = ({ onNavigate }: { onNavigate: (route: string) => vo
         <NavItem label="Home" icon={require('../../../../assets/doctors-page/doctor-home.png')} onPress={() => onNavigate('DoctorHome')} />
         <NavItem label="Patients" icon={require('../../../../assets/doctors-page/doctor-patients.png')} onPress={() => onNavigate('DoctorPatients')} />
         <NavItem label="Reports" icon={require('../../../../assets/doctors-page/doctor-reports.png')} active />
-        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} />
+        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} onPress={() => onNavigate('DoctorSettings')} />
       </View>
 
       <AccountModal visible={modalVisible} onClose={() => setModalVisible(false)} onLogout={() => setModalVisible(false)} />

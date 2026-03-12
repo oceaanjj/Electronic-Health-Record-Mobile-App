@@ -8,6 +8,7 @@ import DoctorPatientsScreen from './DoctorPatientsScreen';
 import DoctorReportsScreen from './DoctorReportsScreen';
 import DoctorUpdatesScreen from './DoctorUpdatesScreen';
 import DoctorPatientDetailScreen from './DoctorPatientDetailScreen';
+import DoctorSettingsScreen from './DoctorSettingsScreen';
 
 // --- NURSE SCREENS (RE-USED IN READ-ONLY) ---
 import VitalSignsScreen from '../../nurse/VitalSigns/screen/VitalSignsScreen';
@@ -62,6 +63,7 @@ export default function DoctorMainScreen() {
     if (activeTab === 'DoctorPatients') return <DoctorPatientsScreen onNavigate={handleNavigation} />;
     if (activeTab === 'DoctorReports') return <DoctorReportsScreen onNavigate={handleNavigation} />;
     if (activeTab === 'DoctorUpdates') return <DoctorUpdatesScreen onNavigate={handleNavigation} onBack={handleBack} />;
+    if (activeTab === 'DoctorSettings') return <DoctorSettingsScreen onNavigate={handleNavigation} />;
     
     if (!selectedPatientData) return <DoctorHomeScreen onNavigate={handleNavigation} onViewAll={() => handleNavigation('DoctorUpdates')} />;
 

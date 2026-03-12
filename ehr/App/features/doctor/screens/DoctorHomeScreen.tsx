@@ -33,8 +33,8 @@ const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack
     markAsRead 
   } = useDoctorDashboardLogic();
 
-  const unreadCount = updates.filter(u => u.status === 'Unread').length;
-  const readCount = updates.filter(u => u.status === 'Read').length;
+  const unreadCount = updates.filter(u => !u.isRead).length;
+  const readCount = updates.filter(u => u.isRead).length;
 
   const renderEmptyState = () => {
     return (
@@ -46,87 +46,24 @@ const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack
   };
 
   const handleUpdatePress = (item: any) => {
-    if (item.status === 'Unread') markAsRead(item.id);
-
-    // MAPPING: Convert update_type to category
-    let category = '';
-    const type = item.type.toLowerCase();
-
-    if (type.includes('vital')) category = 'vital_signs';
-    else if (type.includes('physical')) category = 'physical_exam';
-    else if (type.includes('history') || type.includes('medical')) category = 'medical_history';
-    else if (type.includes('lab')) category = 'lab_values';
-    else if (type.includes('intake') || type.includes('output')) category = 'intake_output';
-    else if (type.includes('adl')) category = 'adl';
-    else if (type.includes('diagnostics')) category = 'diagnostics';
-    else if (type.includes('iv') || type.includes('line')) category = 'ivs_lines';
-    else if (type.includes('medication') && type.includes('reconciliation')) category = 'medication_reconciliation';
-    else if (type.includes('medication')) category = 'medication';
-    else if (type.includes('reconciliation') || type.includes('reco')) category = 'medication_reconciliation';
-
-
-    if (category) {
-      if (category === 'vital_signs') {
-        onNavigate('VitalSigns', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'physical_exam') {
-        onNavigate('PhysicalExam', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'medical_history') {
-        onNavigate('MedicalHistory', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'intake_output') {
-         onNavigate('IntakeOutput', {
-            patientId: item.patient_id,
-            patientName: item.name
-         });
-      } else if (category === 'lab_values') {
-        onNavigate('LabValues', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'adl') {
-        onNavigate('ADL', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'diagnostics') {
-        onNavigate('Diagnostics', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'ivs_lines') {
-        onNavigate('IvsLines', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'medication') {
-        onNavigate('Medication', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-      } else if (category === 'medication_reconciliation') {
-        onNavigate('MedicationReconciliation', {
-            patientId: item.patient_id,
-            patientName: item.name
-        });
-
-      } else {
-        onNavigate('DoctorPatientDetail', {
-          patientId: item.patient_id,
-          category: category
-        });
-      }
-    } else {
-      // Fallback for types we haven't mapped yet
-      console.log('Unmapped update type:', item.type);
-    }
+    if (item.status === 'Unread') markAsRead(item.id, item.type_key, item.record_id);
+    const typeKeyToRoute: Record<string, string> = {
+      'vital-signs': 'VitalSigns',
+      'physical-exam': 'PhysicalExam',
+      'intake-output': 'IntakeOutput',
+      'lab-values': 'LabValues',
+      'adl': 'ADL',
+      'ivs-lines': 'IvsLines',
+      'medication': 'Medication',
+      'medical-history': 'MedicalHistory',
+      'diagnostics': 'Diagnostics',
+      'medical-reconciliation': 'MedicationReconciliation',
+    };
+    const route = typeKeyToRoute[item.type_key] ?? 'DoctorPatientDetail';
+    onNavigate(route, {
+      patientId: item.patient_id,
+      patientName: item.name,
+    });
   };
 
   return (
@@ -198,29 +135,28 @@ const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack
         <View style={styles.listContainer}>
             {filteredUpdates.length > 0 ? (
             filteredUpdates.map((item, index) => (
-                <TouchableOpacity 
-                    key={item.id || index} 
-                    onPress={() => handleUpdatePress(item)}
-                    activeOpacity={0.7}
-                    style={styles.patientRow}
-                >
-                    <View style={[styles.patientLeft, { flex: 1 }]}>
-                        <View style={[styles.statusDot, { backgroundColor: item.status === 'Unread' ? '#29A539' : 'transparent' }]} />
-                        <View style={styles.avatarContainer}>
-                            <Icon name="person" size={20} color="#035022" />
-                        </View>
-                        <Text style={[styles.patientName, { fontFamily: item.status === 'Unread' ? 'AlteHaasGroteskBold' : 'AlteHaasGrotesk', marginLeft: 12 }]}>{item.name}</Text>
+              <TouchableOpacity 
+                key={item.id || index} 
+                onPress={() => handleUpdatePress(item)}
+                activeOpacity={0.7}
+                style={styles.patientRow}
+              >
+                <View style={[styles.patientLeft, { flex: 1 }]}>
+                  <View style={[styles.statusDot, { backgroundColor: item.status === 'Unread' ? '#29A539' : 'transparent' }]} />
+                  <View style={styles.avatarContainer}>
+                    <Icon name="person" size={20} color="#035022" />
+                  </View>
+                  <Text style={[styles.patientName, { fontFamily: item.status === 'Unread' ? 'AlteHaasGroteskBold' : 'AlteHaasGrotesk', marginLeft: 12 }]}>{item.name}</Text>
+                </View>
+                <View style={styles.patientRightContainer}>
+                  <View style={styles.patientRight}>
+                    <View style={styles.badge}>
+                      <Text style={[styles.badgeText, { fontFamily: item.status === 'Unread' ? 'AlteHaasGroteskBold' : 'AlteHaasGrotesk' }]}>{item.type}</Text>
                     </View>
-
-                    <View style={styles.patientRightContainer}>
-                        <View style={styles.patientRight}>
-                            <View style={styles.badge}>
-                                <Text style={[styles.badgeText, { fontFamily: item.status === 'Unread' ? 'AlteHaasGroteskBold' : 'AlteHaasGrotesk' }]}>{item.type}</Text>
-                            </View>
-                            <Text style={styles.timeText}>{item.time}</Text>
-                        </View>
-                    </View>
-                </TouchableOpacity>
+                    <Text style={styles.timeText}>{item.time}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
             ))
             ) : renderEmptyState()}
         </View>
@@ -230,7 +166,7 @@ const DoctorHomeScreen = ({ onBack = () => {}, onViewAll, onNavigate }: { onBack
         <NavItem label="Home" icon={require('../../../../assets/doctors-page/doctor-home.png')} active />
         <NavItem label="Patients" icon={require('../../../../assets/doctors-page/doctor-patients.png')} onPress={() => onNavigate('DoctorPatients')} />
         <NavItem label="Reports" icon={require('../../../../assets/doctors-page/doctor-reports.png')} onPress={() => onNavigate('DoctorReports')} />
-        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} />
+        <NavItem label="Settings" icon={require('../../../../assets/doctors-page/doctor-settings.png')} onPress={() => onNavigate('DoctorSettings')} />
       </View>
 
       <AccountModal visible={modalVisible} onClose={() => setModalVisible(false)} onLogout={() => setModalVisible(false)} />

@@ -13,8 +13,13 @@ import {
   Keyboard,
   Platform,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient from '@api/apiClient';
 import { useAppTheme } from '@App/theme/ThemeContext';
+
+// Cache key derived from endpoint so nurse and doctor endpoints are stored separately
+const getCacheKey = (endpoint: string) =>
+  `psb_cache_${endpoint.replace(/[^a-z0-9]/gi, '_')}`;
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -43,6 +48,7 @@ interface PatientSearchBarProps {
   label?: string;
   initialPatientName?: string;
   placeholder?: string;
+  apiEndpoint?: string;
 }
 
 const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
@@ -55,6 +61,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   label = 'PATIENT NAME :',
   initialPatientName = '',
   placeholder = 'Select Patient name',
+  apiEndpoint = '/patient?all=true',
 }) => {
   const { theme, isDarkMode } = useAppTheme();
   const styles = useMemo(() => createStyles(theme, isDarkMode), [theme, isDarkMode]);
@@ -81,12 +88,25 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
   }, [showDropdown, onToggleDropdown]);
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    const cacheKey = getCacheKey(apiEndpoint);
+
+    const loadAndFetch = async () => {
+      // Load cache for instant display
+      try {
+        const cached = await AsyncStorage.getItem(cacheKey);
+        if (cached) {
+          const parsed: Patient[] = JSON.parse(cached);
+          setPatients(parsed);
+          setFilteredPatients(parsed);
+          setLoading(false); // show cached data immediately
+        }
+      } catch {}
+
+      // Always fetch fresh data in background
       setLoading(true);
       setError(null);
       try {
-        // Use all=true to ensure we get both active and inactive patients.
-        const response = await apiClient.get('/patient?all=true');
+        const response = await apiClient.get(apiEndpoint);
         let raw = [];
         if (Array.isArray(response.data)) {
           raw = response.data;
@@ -122,6 +142,7 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
 
         setPatients(normalized);
         setFilteredPatients(normalized);
+        AsyncStorage.setItem(cacheKey, JSON.stringify(normalized)).catch(() => {});
       } catch (err: any) {
         console.error('PatientSearchBar Error:', err);
         setError('Connection failed.');
@@ -129,8 +150,9 @@ const PatientSearchBar: React.FC<PatientSearchBarProps> = ({
         setLoading(false);
       }
     };
-    fetchPatients();
-  }, []);
+
+    loadAndFetch();
+  }, [apiEndpoint]);
 
   const handleSearch = (text: string) => {
     setSearchText(text);
